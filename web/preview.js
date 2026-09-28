@@ -55,7 +55,7 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
 	document.getElementById('hl').href = theme === 'light' ? 'hl-light.css' : 'hl-dark.css';
 	// diagrams use the body font and size too
 	const ff = `'${font}', 'Malgun Gothic', sans-serif`;
-	MERMAID = { startOnLoad: false, securityLevel: 'loose', theme: theme === 'light' ? 'default' : 'dark',
+	MERMAID = { startOnLoad: false, securityLevel: 'strict', theme: theme === 'light' ? 'default' : 'dark',
 		fontFamily: ff, themeVariables: { fontFamily: ff, fontSize: size + 'pt' } };
 	mermaid.initialize(MERMAID);
 }
@@ -63,9 +63,23 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
 function render(src, base) {
 	SRC = src; BASE = base;
 	const y = window.scrollY;
-	document.getElementById('c').innerHTML = md.render(src);
+	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
 	window.scrollTo(0, y);
 	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true });
+}
+
+// Raw HTML in markdown is allowed (<br>, <details>...) but sanitized by DOMPurify before insertion.
+// Only http(s)/mailto/file (doc-relative links) and #anchors survive as URLs.
+const PURIFY = { RETURN_DOM_FRAGMENT: true, FORBID_TAGS: ['style', 'form'],
+	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|file):|#|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i };
+function sanitize(html) {
+	const f = DOMPurify.sanitize(html, PURIFY);
+	for (const e of f.querySelectorAll('[src],[href]')) // raw <img src="x.svg"> -> relative to the document too
+		for (const a of ['src', 'href']) {
+			const v = e.getAttribute(a);
+			if (v && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(v)) e.setAttribute(a, BASE + v);
+		}
+	return f;
 }
 
 // first source line of the block at the top of the viewport
@@ -91,5 +105,5 @@ function exportDoc() {
 	return `<!doctype html><html data-theme="light" style="${vars}"><head><meta charset="utf-8">`
 		+ '<link rel="stylesheet" href="preview.css"><link rel="stylesheet" href="hl-light.css">'
 		+ '<script src="mermaid.min.js"></script><script>mermaid.initialize(' + JSON.stringify({ ...MERMAID, startOnLoad: true, theme: 'default' }).replace(/</g, '\\u003c') + ')</script>'
-		+ `</head><body class="export"><div id="c">${md.render(SRC)}</div></body></html>`;
+		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC))); return d.innerHTML; })()}</div></body></html>`;
 }

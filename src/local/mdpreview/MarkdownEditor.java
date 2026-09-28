@@ -165,8 +165,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
 				if (files.length > 0) IDE.openEditor(getSite().getPage(), files[0]);
 				else IDE.openEditorOnFileStore(getSite().getPage(), EFS.getLocalFileSystem().getStore(uri));
-			} else {
-				Program.launch(u);
+			} else if (u.matches("(?i)(https?|mailto):.*")) {
+				Program.launch(u); // never hand file:/other schemes to the shell (would run executables)
 			}
 		} catch (Exception x) {
 			MessageDialog.openError(getSite().getShell(), "Markdown Viewer", x.toString());

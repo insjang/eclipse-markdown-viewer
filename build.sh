@@ -5,7 +5,7 @@ ECLIPSE=/mnt/c/appdev/apps/eclipse.2609
 HERE=$(cd "$(dirname "$0")" && pwd)
 OUT=$HERE/build
 # new qualifier every build so a plain (non -clean) restart picks up the replaced JAR
-VER=$(sed -n 's/^Bundle-Version: //p' "$HERE/META-INF/MANIFEST.MF" | tr -d '\r' | sed -E "s/\.v[0-9-]+$/.v$(date +%Y%m%d-%H%M)/")
+VER=$(sed -n 's/^Bundle-Version: //p' "$HERE/META-INF/MANIFEST.MF" | tr -d '\r' | sed -E "s/\.v[0-9-]+$/.v$(date +%Y%m%d-%H%M%S)/")
 JAR=local.mdpreview_$VER.jar
 CP="$(find $ECLIPSE/plugins -maxdepth 1 -name '*.jar' | tr '\n' ':')"
 rm -rf "$OUT/classes" && mkdir -p "$OUT/classes"
