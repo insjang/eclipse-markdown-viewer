@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Markdown Viewer (local)
+Bundle-SymbolicName: local.mdpreview;singleton:=true
+Bundle-Version: 1.0.0.v20260928
+Bundle-Activator: local.mdpreview.Activator
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources,
+ org.eclipse.core.filesystem,
+ org.eclipse.ui.ide,
+ org.eclipse.ui.editors,
+ org.eclipse.ui.workbench.texteditor,
+ org.eclipse.jface.text,
+ org.eclipse.text,
+ org.eclipse.ui.genericeditor

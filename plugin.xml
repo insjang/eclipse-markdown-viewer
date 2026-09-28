@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension point="org.eclipse.ui.editors">
+      <editor id="local.mdpreview.editor" name="Markdown Viewer"
+            class="local.mdpreview.MarkdownEditor"
+            contributorClass="local.mdpreview.Contributor"
+            extensions="md,markdown,mdown,mkd" default="true"/>
+   </extension>
+   <extension point="org.eclipse.ui.preferencePages">
+      <page id="local.mdpreview.prefs" name="Markdown Viewer"
+            category="org.eclipse.ui.preferencePages.Editors"
+            class="local.mdpreview.MarkdownPreferencePage"/>
+   </extension>
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer class="local.mdpreview.PrefInit"/>
+   </extension>
+</plugin>
