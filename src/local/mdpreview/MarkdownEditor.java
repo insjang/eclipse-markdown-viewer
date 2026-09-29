@@ -135,28 +135,22 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			if (stale) render();
 			// once the browser is showing again; the page itself waits for its layout
 			browser.getDisplay().asyncExec(() -> {
-				if (!browser.isDisposed()) browser.execute("scrollToLine(" + target + ")");
+				if (!browser.isDisposed()) browser.execute("scrollToFraction(" + target + ")");
 			});
 		}
 	}
 
 	/**
-	 * Where the preview should open: the caret's block, at the height it has on the
-	 * editor's screen, when the caret is in view (just typed text is what one wants
-	 * to see); otherwise the top line at the top.
+	 * The editor's scroll position as a fraction of how far it can scroll, which the
+	 * preview takes over: at the bottom of the source means at the bottom of the preview.
 	 */
 	private String previewTarget() {
 		ITextViewer v = viewer();
 		int top = v.getTopIndex(), bottom = v.getBottomIndex();
-		try {
-			int caret = document().getLineOfOffset(v.getSelectedRange().x);
-			if (caret >= top && caret <= bottom && bottom > top) {
-				return caret + "," + String.format(java.util.Locale.ROOT, "%.3f", (double) (caret - top) / (bottom - top)); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		} catch (BadLocationException e) {
-			// fall back to the top line
-		}
-		return top + ",0"; //$NON-NLS-1$
+		int last = document().getNumberOfLines() - 1;
+		int room = last - (bottom - top); // lines the editor can scroll through
+		double f = bottom >= last ? 1 : room <= 0 ? 0 : Math.min(1, (double) top / room);
+		return String.format(java.util.Locale.ROOT, "%.4f", f); //$NON-NLS-1$
 	}
 
 	private void render() {

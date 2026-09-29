@@ -3,7 +3,7 @@
 	--code-bg:#1f232a; --pre-bg:#151b23; --quote:#9198a1; --border:#3d444d; --th-bg:#0d1117; --row-alt:#151b23;
 	--font:'Malgun Gothic',sans-serif; --size:11pt; --code-font:D2Coding,Consolas,monospace; --code-size:10pt; --lh:1.6; --indent:4ch }
 html { background:var(--bg) }
-body { margin:0; padding:16px 32px 60vh; color:var(--fg); background:var(--bg); font-family:var(--font); font-size:var(--size); line-height:var(--lh); overflow-wrap:break-word }
+body { margin:0; padding:16px 32px 32px; color:var(--fg); background:var(--bg); font-family:var(--font); font-size:var(--size); line-height:var(--lh); overflow-wrap:break-word }
 body.export { padding:0 }
 h1, h2, h3, h4, h5, h6 { margin:1.5em 0 1em; line-height:1.25; font-weight:600; color:var(--heading) }
 h1, h2 { padding-bottom:.3em; border-bottom:1px solid var(--border) }

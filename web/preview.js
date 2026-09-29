@@ -129,23 +129,19 @@ function topLine() {
 	return line;
 }
 
-// A line to scroll to, kept until the page has settled: the preview was hidden a
-// moment ago and has no layout yet, and Mermaid draws asynchronously.
-let PENDING = -1, PENDING_UNTIL = 0, PENDING_AT = 0;
-// at: where the line should end up, as a fraction of the window height (0 = top)
-function scrollToLine(n, at) {
-	PENDING = n;
-	PENDING_AT = at || 0;
+// Source -> preview goes by the scrollbar: the editor's scroll position as a fraction
+// (0 top, 1 bottom) is applied to the preview. Kept until the page has settled: the
+// preview was hidden a moment ago and has no layout yet, and Mermaid draws later.
+let PENDING = -1, PENDING_UNTIL = 0;
+function scrollToFraction(f) {
+	PENDING = Math.min(1, Math.max(0, f));
 	PENDING_UNTIL = Date.now() + 3000;
 	requestAnimationFrame(() => requestAnimationFrame(doScroll));
 }
 
 function doScroll() {
 	if (PENDING < 0 || Date.now() > PENDING_UNTIL) return;
-	if (PENDING === 0) { window.scrollTo(0, 0); return; }
-	let best = null;
-	for (const e of document.querySelectorAll('#c [data-line]')) { if (+e.dataset.line > PENDING) break; best = e; }
-	if (best) window.scrollTo(0, best.getBoundingClientRect().top + window.scrollY - 4 - PENDING_AT * window.innerHeight);
+	window.scrollTo(0, PENDING * (document.documentElement.scrollHeight - window.innerHeight));
 }
 
 // the user scrolling takes over from a pending jump
