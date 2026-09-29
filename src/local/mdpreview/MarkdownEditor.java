@@ -129,12 +129,34 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	@Override
 	protected void pageChange(int page) {
 		if (page == SOURCE && loaded) revealLine(((Number) browser.evaluate("return topLine();")).intValue());
-		int line = page == PREVIEW ? viewer().getTopIndex() : 0;
+		String target = page == PREVIEW ? previewTarget() : null;
 		super.pageChange(page);
 		if (page == PREVIEW && loaded) {
 			if (stale) render();
-			browser.execute("scrollToLine(" + line + ")");
+			// once the browser is showing again; the page itself waits for its layout
+			browser.getDisplay().asyncExec(() -> {
+				if (!browser.isDisposed()) browser.execute("scrollToLine(" + target + ")");
+			});
 		}
+	}
+
+	/**
+	 * Where the preview should open: the caret's block, at the height it has on the
+	 * editor's screen, when the caret is in view (just typed text is what one wants
+	 * to see); otherwise the top line at the top.
+	 */
+	private String previewTarget() {
+		ITextViewer v = viewer();
+		int top = v.getTopIndex(), bottom = v.getBottomIndex();
+		try {
+			int caret = document().getLineOfOffset(v.getSelectedRange().x);
+			if (caret >= top && caret <= bottom && bottom > top) {
+				return caret + "," + String.format(java.util.Locale.ROOT, "%.3f", (double) (caret - top) / (bottom - top)); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		} catch (BadLocationException e) {
+			// fall back to the top line
+		}
+		return top + ",0"; //$NON-NLS-1$
 	}
 
 	private void render() {

@@ -71,7 +71,8 @@ function render(src, base) {
 	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
 	drawPlantUml(document.getElementById('c'), THEME);
 	window.scrollTo(0, y);
-	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true });
+	// diagrams grow once drawn, which moves everything below them: aim again then
+	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(() => doScroll(), () => doScroll());
 }
 
 // Raw HTML in markdown is allowed (<br>, <details>...) but sanitized by DOMPurify before insertion.
@@ -128,11 +129,29 @@ function topLine() {
 	return line;
 }
 
-function scrollToLine(n) {
-	if (n <= 0) { window.scrollTo(0, 0); return; }
+// A line to scroll to, kept until the page has settled: the preview was hidden a
+// moment ago and has no layout yet, and Mermaid draws asynchronously.
+let PENDING = -1, PENDING_UNTIL = 0, PENDING_AT = 0;
+// at: where the line should end up, as a fraction of the window height (0 = top)
+function scrollToLine(n, at) {
+	PENDING = n;
+	PENDING_AT = at || 0;
+	PENDING_UNTIL = Date.now() + 3000;
+	requestAnimationFrame(() => requestAnimationFrame(doScroll));
+}
+
+function doScroll() {
+	if (PENDING < 0 || Date.now() > PENDING_UNTIL) return;
+	if (PENDING === 0) { window.scrollTo(0, 0); return; }
 	let best = null;
-	for (const e of document.querySelectorAll('#c [data-line]')) { if (+e.dataset.line > n) break; best = e; }
-	if (best) window.scrollTo(0, best.getBoundingClientRect().top + window.scrollY - 4);
+	for (const e of document.querySelectorAll('#c [data-line]')) { if (+e.dataset.line > PENDING) break; best = e; }
+	if (best) window.scrollTo(0, best.getBoundingClientRect().top + window.scrollY - 4 - PENDING_AT * window.innerHeight);
+}
+
+// the user scrolling takes over from a pending jump
+if (typeof window !== 'undefined') {
+	window.addEventListener('wheel', () => { PENDING = -1; }, { passive: true });
+	window.addEventListener('keydown', () => { PENDING = -1; });
 }
 
 // standalone light-theme page for headless Edge --print-to-pdf (mermaid renders there on load)
