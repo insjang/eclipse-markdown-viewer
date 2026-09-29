@@ -107,5 +107,8 @@ test/
 
 ## License
 
+Developed with the help of AI coding assistants, including Claude (Anthropic).
+
+
 [Eclipse Public License 2.0](LICENSE).
 Bundled third-party libraries (markdown-it, markdown-it-task-lists, Mermaid, highlight.js, DOMPurify, PlantUML) keep their own licenses, listed in [NOTICE](NOTICE).

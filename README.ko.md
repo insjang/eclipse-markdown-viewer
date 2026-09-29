@@ -119,6 +119,8 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 
 ## 라이선스
 
+- AI 코딩 도구(Anthropic의 Claude 등)의 도움을 받아 개발.
+
 - 이 플러그인: [EPL-2.0](LICENSE)
 - 포함 라이브러리는 각자의 라이선스를 따름: [NOTICE](NOTICE)
 
