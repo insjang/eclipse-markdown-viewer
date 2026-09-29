@@ -5,6 +5,16 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 
 [한국어 README](README.ko.md)
 
+![Preview tab in Eclipse](docs/images/eclipse-preview.png)
+
+![Mermaid and PlantUML in the preview](docs/images/eclipse-diagrams.png)
+
+| Dark theme | Light theme (also used for PDF) |
+|---|---|
+| ![Diagrams, dark theme](docs/images/diagrams-dark.png) | ![Diagrams, light theme](docs/images/diagrams-light.png) |
+
+The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
+
 ## Features
 
 | Feature | Details |
@@ -26,8 +36,9 @@ The Source tab is Eclipse's Generic Editor, so TM4E syntax highlighting and the 
 
 ## Requirements
 
-- Windows 10 or 11 with Microsoft Edge (WebView2): the preview and the PDF export use it
 - Eclipse 2026-09 (4.41) or later with `org.eclipse.ui.genericeditor` (included in the Eclipse IDE packages)
+- Windows 10 or 11 with Microsoft Edge (WebView2): everything, including the PDF export
+- Linux: the preview works with WebKitGTK (`libwebkit2gtk-4.1`), checked on Ubuntu 24.04 under WSL; the PDF export does not (it uses Edge)
 
 ## Install
 
@@ -80,7 +91,7 @@ Markdown from elsewhere can be opened safely.
 
 ## Limitations
 
-- Windows only: the Edge path is fixed and the PDF is printed by headless Edge. Linux and macOS support would need another browser backend and PDF path.
+- PDF export is Windows only: the Edge path is fixed and the PDF is printed by headless Edge. macOS is untested.
 - No outline view.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 

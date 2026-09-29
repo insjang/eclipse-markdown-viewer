@@ -2,6 +2,16 @@
 
 [English README](README.md)
 
+![Eclipse 안의 Preview 탭](docs/images/eclipse-preview.png)
+
+![미리보기의 Mermaid와 PlantUML](docs/images/eclipse-diagrams.png)
+
+| 다크 테마 | 라이트 테마 (PDF에도 사용) |
+|---|---|
+| ![다크 테마 다이어그램](docs/images/diagrams-dark.png) | ![라이트 테마 다이어그램](docs/images/diagrams-light.png) |
+
+스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면.
+
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
 기본 Mylyn WikiText 미리보기가 지원하지 않는 GFM 표·체크박스·Mermaid를 VS Code와 같은 파서(markdown-it)로 표시.
 
@@ -25,7 +35,8 @@ TM4E 구문 강조와 Wild Web Developer의 Markdown 자동완성이 그대로 �
 
 ## 요구 사항
 
-- Windows 10/11 + Microsoft Edge (Preview 표시와 PDF 생성에 사용)
+- Windows 10/11 + Microsoft Edge (WebView2): 모든 기능, PDF 내보내기 포함
+- Linux: WebKitGTK(`libwebkit2gtk-4.1`)가 있으면 미리보기 동작 (WSL의 Ubuntu 24.04에서 확인), PDF 내보내기는 안 됨 (Edge 사용)
 - Eclipse 2026-09 (4.41) 이상에서 확인
   - 필요 번들: `org.eclipse.ui.genericeditor`, `org.eclipse.ui.editors`, `org.eclipse.jface.text` (Eclipse IDE 패키지에 기본 포함)
 - 빌드: JDK 21 이상, bash (WSL 가능)
@@ -137,6 +148,6 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 
 ## 제약
 
-- Windows 전용: Edge 경로 고정 (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`)
+- PDF 내보내기는 Windows 전용: Edge 경로 고정 (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`), macOS는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선
 - 아웃라인 뷰 미지원
