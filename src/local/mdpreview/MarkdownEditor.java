@@ -128,9 +128,14 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	@Override
 	protected void pageChange(int page) {
-		if (page == SOURCE && loaded) revealLine(((Number) browser.evaluate("return topLine();")).intValue());
+		// both ways by the scrollbar: the position, as a fraction, is read from the page
+		// being left and applied to the one shown, once it is showing and laid out
+		double previewAt = page == SOURCE && loaded ? ((Number) browser.evaluate("return scrollFraction();")).doubleValue() : 0;
 		String target = page == PREVIEW ? previewTarget() : null;
 		super.pageChange(page);
+		if (page == SOURCE && loaded) {
+			browser.getDisplay().asyncExec(() -> revealFraction(previewAt));
+		}
 		if (page == PREVIEW && loaded) {
 			if (stale) render();
 			// once the browser is showing again; the page itself waits for its layout
@@ -170,15 +175,20 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		render(); // mermaid picks up the theme only on render
 	}
 
-	private void revealLine(int line) {
+	/** Scrolls the editor to the fraction of its range, 1 being the end, and puts the caret on its top line. */
+	private void revealFraction(double f) {
+		ITextViewer v = viewer();
+		if (v == null || v.getTextWidget() == null || v.getTextWidget().isDisposed()) return;
 		IDocument d = document();
-		line = Math.max(0, Math.min(line, d.getNumberOfLines() - 1));
+		int visible = v.getBottomIndex() - v.getTopIndex() + 1;
+		int room = Math.max(0, d.getNumberOfLines() - visible);
+		int top = (int) Math.round(Math.max(0, Math.min(1, f)) * room);
 		try {
-			source.selectAndReveal(d.getLineOffset(line), 0);
+			v.setSelectedRange(d.getLineOffset(top), 0);
 		} catch (BadLocationException e) {
-			return;
+			// keep the caret where it was
 		}
-		viewer().setTopIndex(line);
+		v.setTopIndex(top);
 	}
 
 	private void linkClicked(LocationEvent e) {

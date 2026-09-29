@@ -119,14 +119,10 @@ function drawPlantUml(root, theme) {
 	}
 }
 
-// first source line of the block at the top of the viewport
-function topLine() {
-	let line = 0;
-	for (const e of document.querySelectorAll('#c [data-line]')) {
-		if (e.getBoundingClientRect().top > 8) break;
-		line = +e.dataset.line;
-	}
-	return line;
+// Preview -> source goes by the scrollbar too: how far down the preview is, 0 to 1
+function scrollFraction() {
+	const max = document.documentElement.scrollHeight - window.innerHeight;
+	return max <= 0 ? 0 : Math.min(1, window.scrollY / max);
 }
 
 // Source -> preview goes by the scrollbar: the editor's scroll position as a fraction
