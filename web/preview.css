@@ -28,10 +28,12 @@ tr:nth-child(2n) td { background:var(--row-alt) }
 img { max-width:100% }
 hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border) }
 .task-list-item { list-style:none } .task-list-item input { margin:0 .4em 0 -1.4em; vertical-align:middle }
-.mermaid { text-align:center }
+.mermaid, .plantuml { text-align:center }
+.plantuml svg { max-width:100%; height:auto }
+.plantuml-error { text-align:left; color:#f85149 }
 @page { size:A4; margin:14mm 12mm }
 @media print {
 	* { -webkit-print-color-adjust:exact; print-color-adjust:exact }
 	table { display:table; width:100%; max-width:none } pre { white-space:pre-wrap }
-	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .mermaid { break-inside:avoid }
+	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .mermaid, .plantuml { break-inside:avoid }
 }

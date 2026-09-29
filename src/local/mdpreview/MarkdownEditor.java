@@ -24,6 +24,7 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressListener;
@@ -102,6 +103,14 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			applyStyle();
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
+		new BrowserFunction(browser, "mdPlantUml") { //$NON-NLS-1$
+			@Override
+			public Object function(Object[] args) {
+				return args.length == 2 && args[0] instanceof String src && args[1] instanceof String style
+						? PlantUml.svg(src, style)
+						: ""; //$NON-NLS-1$
+			}
+		};
 		try {
 			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
 			browser.setUrl(pageUrl);

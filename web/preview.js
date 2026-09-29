@@ -21,7 +21,9 @@ function createMd(markdownit, taskLists, hljs, getBase) {
 	const fence = md.renderer.rules.fence;
 	md.renderer.rules.fence = (tokens, i, opt, env, self) => {
 		const t = tokens[i];
-		if (t.info.trim() === 'mermaid') return `<div class="mermaid" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
+		const lang = t.info.trim().split(/\s+/)[0];
+		if (lang === 'mermaid') return `<div class="mermaid" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
+		if (lang === 'plantuml' || lang === 'puml') return `<div class="plantuml" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
 		return fence(tokens, i, opt, env, self);
 	};
 	const norm = md.normalizeLink.bind(md);
@@ -30,7 +32,7 @@ function createMd(markdownit, taskLists, hljs, getBase) {
 }
 if (typeof module !== 'undefined') module.exports = { createMd };
 
-let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} };
+let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'Malgun Gothic', size: 11 }, THEME = 'dark';
 const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE) : null;
 
 function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
@@ -49,6 +51,8 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
 	document.body.appendChild(m);
 	s.setProperty('--indent', m.getBoundingClientRect().width + 'px');
 	m.remove();
+	FONT = { name: font, size: size };
+	THEME = theme;
 	FONTVARS = s.cssText;
 	COLORS = colors || COLORS;
 	for (const [k, v] of Object.entries(COLORS[theme] || {})) s.setProperty(k, v);
@@ -64,6 +68,7 @@ function render(src, base) {
 	SRC = src; BASE = base;
 	const y = window.scrollY;
 	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
+	drawPlantUml(document.getElementById('c'), THEME);
 	window.scrollTo(0, y);
 	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true });
 }
@@ -80,6 +85,25 @@ function sanitize(html) {
 			if (v && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(v)) e.setAttribute(a, BASE + v);
 		}
 	return f;
+}
+
+// PlantUML blocks are drawn by the plugin (Java) through the mdPlantUml browser function,
+// with the preview's body font and the colors of the given theme.
+function plantUmlStyle(theme) {
+	const c = COLORS[theme] || {}, px = Math.round(FONT.size * 4 / 3); // pt -> px, as the page uses pt
+	const f = FONT.name.replace(/"/g, '');
+	return `skinparam defaultFontName "${f}"\nskinparam defaultFontSize ${px}\nskinparam backgroundColor transparent\n`
+		+ `<style>\nroot { FontName "${f}"; FontSize ${px}; FontColor ${c['--fg'] || '#1f2328'}; LineColor ${c['--quote'] || '#59636e'}; BackGroundColor ${c['--pre-bg'] || '#f6f8fa'} }\n`
+		+ `document { BackGroundColor transparent }\n</style>`;
+}
+
+function drawPlantUml(root, theme) {
+	if (typeof window.mdPlantUml !== 'function') return;
+	for (const e of root.querySelectorAll('.plantuml')) {
+		const svg = window.mdPlantUml(e.textContent, plantUmlStyle(theme));
+		// the SVG carries the diagram's own text and links: sanitized like any other HTML
+		e.replaceChildren(DOMPurify.sanitize(svg, { RETURN_DOM_FRAGMENT: true, USE_PROFILES: { svg: true, svgFilters: true, html: true } }));
+	}
 }
 
 // first source line of the block at the top of the viewport
@@ -105,5 +129,5 @@ function exportDoc() {
 	return `<!doctype html><html data-theme="light" style="${vars}"><head><meta charset="utf-8">`
 		+ '<link rel="stylesheet" href="preview.css"><link rel="stylesheet" href="hl-light.css">'
 		+ '<script src="mermaid.min.js"></script><script>mermaid.initialize(' + JSON.stringify({ ...MERMAID, startOnLoad: true, theme: 'default' }).replace(/</g, '\\u003c') + ')</script>'
-		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC))); return d.innerHTML; })()}</div></body></html>`;
+		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC))); drawPlantUml(d, 'light'); return d.innerHTML; })()}</div></body></html>`;
 }

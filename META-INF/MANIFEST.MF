@@ -5,6 +5,9 @@ Bundle-SymbolicName: local.mdpreview;singleton:=true
 Bundle-Version: 1.0.0.v20260928
 Bundle-Activator: local.mdpreview.Activator
 Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .,
+ lib/plantuml-mit.jar
+DynamicImport-Package: *
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,

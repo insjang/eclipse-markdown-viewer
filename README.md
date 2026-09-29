@@ -9,7 +9,7 @@ Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
 |---|---|
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환 (기본: Preview로 열림) |
 | 위치 동기화 | Preview → Source 전환 시 보던 위치의 원본 줄로 이동 (표는 행 단위), 반대 방향도 동일 |
-| 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, 제목 앵커(목차 링크) |
+| 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid 포함 (Edge 헤드리스 인쇄) |
@@ -32,7 +32,7 @@ TM4E 구문 강조와 Wild Web Developer의 Markdown 자동완성이 그대로 �
 `build.sh` 상단의 `ECLIPSE` 경로를 설치 위치에 맞게 수정.
 
 ```bash
-./build.sh            # build/local.mdpreview_<버전>.jar 생성
+./build.sh            # build/local.mdpreview_<버전>.jar 생성 (처음 한 번 PlantUML JAR을 Maven Central에서 받아 체크섬 확인)
 ./build.sh install    # Eclipse 종료 상태에서 dropins/ 에 복사 (이전 버전 JAR은 삭제)
 ```
 
@@ -65,6 +65,10 @@ Preferences → General → Editors → Markdown Viewer
 
 - 들여쓰기: 코드 글꼴 영문 4자 폭 (목록, 인용문, 코드 탭)
 - Mermaid: 본문 글꼴·크기 사용
+- PlantUML: ` ```plantuml ` 또는 ` ```puml ` 블록, 본문 글꼴·크기와 테마 색 적용
+  - 플러그인 안의 PlantUML(MIT판)이 로컬에서 그림: 서버 전송 없음, Graphviz 불필요 (내장 smetana 배치)
+  - `!include`로 로컬 파일·URL 읽기 차단 (PlantUML SANDBOX 보안 설정)
+  - 처음 한 번은 엔진 로딩으로 1~2초 걸릴 수 있음
 - PDF: 같은 글꼴 + 라이트 색
 
 ## 보안
@@ -86,12 +90,15 @@ src/local/mdpreview/
   Colors.java                  테마별 색 (GitHub 기본값)
   MarkdownPreferencePage.java  설정 화면
   Contributor.java             실행 취소·찾기 등 편집 동작 연결
+  PlantUml.java                PlantUML 블록을 SVG로 (글꼴·색 주입, 캐시, 샌드박스)
 web/
   preview.html / .js / .css    렌더링, 줄 번호 앵커, 스타일
   *.min.js, hl-*.css           외부 라이브러리
 test/
   check.js                     렌더링 검사 (node)
   sanitize.js                  HTML 정화 검사 (node + jsdom)
+  plantuml.js                  PlantUML 블록 연결 검사 (node + jsdom)
+  PlantUmlCheck.java           PlantUML 렌더링 검사 (한글, 글꼴, include 차단)
   JsEscape.java                Java → JS 문자열 변환 검사
 ```
 
@@ -111,6 +118,7 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 | mermaid | 11.17.2 | MIT |
 | highlight.js | 11.12.0 | BSD-3-Clause |
 | DOMPurify | 3.4.16 | Apache-2.0 / MPL-2.0 |
+| PlantUML (plantuml-mit) | 1.2026.8 | MIT |
 
 ## 제약
 
