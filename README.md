@@ -5,7 +5,9 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 
 [한국어 README](README.ko.md)
 
-![Preview tab in Eclipse](docs/images/eclipse-preview.png)
+| Dark theme | Light theme |
+|---|---|
+| ![Preview tab in Eclipse, dark theme](docs/images/eclipse-preview.png) | ![Preview tab in Eclipse, light theme](docs/images/eclipse-light.png) |
 
 ![Mermaid and PlantUML in the preview](docs/images/eclipse-diagrams.png)
 

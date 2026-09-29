@@ -2,7 +2,9 @@
 
 [English README](README.md)
 
-![Eclipse 안의 Preview 탭](docs/images/eclipse-preview.png)
+| 다크 테마 | 라이트 테마 |
+|---|---|
+| ![Eclipse 안의 Preview 탭, 다크 테마](docs/images/eclipse-preview.png) | ![Eclipse 안의 Preview 탭, 라이트 테마](docs/images/eclipse-light.png) |
 
 ![미리보기의 Mermaid와 PlantUML](docs/images/eclipse-diagrams.png)
 
