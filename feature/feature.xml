@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature id="io.github.insjang.mdviewer" label="Markdown Viewer" version="1.0.0.qualifier" provider-name="insjang">
+	<description url="https://github.com/insjang/eclipse-markdown-viewer">
+Markdown editor with a preview tab: GitHub Flavored Markdown, Mermaid and PlantUML diagrams, scroll sync, PDF export.
+	</description>
+	<copyright>Copyright (c) 2026 insjang</copyright>
+	<license url="https://www.eclipse.org/legal/epl-2.0/">
+Eclipse Public License 2.0: https://www.eclipse.org/legal/epl-2.0/
+Bundled third-party libraries keep their own licenses, listed in NOTICE:
+https://github.com/insjang/eclipse-markdown-viewer/blob/main/NOTICE
+	</license>
+	<plugin id="io.github.insjang.mdviewer" version="0.0.0"/>
+</feature>
