@@ -67,6 +67,8 @@ Every build gets a new version qualifier, so a plain restart picks up a replaced
 
 Preferences > General > Editors > Markdown Viewer
 
+![Markdown Viewer preferences (the values shown are customized, not the defaults)](docs/images/preferences.png)
+
 | Setting | Default |
 |---|---|
 | Body font | Malgun Gothic 11 pt |

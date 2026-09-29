@@ -70,6 +70,8 @@ ECLIPSE=/path/to/eclipse ./build.sh install    # Eclipse 종료 상태에서 dro
 
 Preferences → General → Editors → Markdown Viewer
 
+![Markdown Viewer 설정 화면 (기본값이 아닌 사용자 설정 상태)](docs/images/preferences.png)
+
 | 항목 | 기본값 |
 |---|---|
 | 본문 글꼴 | 맑은 고딕 11pt |
