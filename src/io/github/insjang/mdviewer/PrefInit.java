@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;

@@ -1,0 +1,32 @@
+Markdown Viewer for Eclipse
+Copyright (c) 2026 insjang
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 (see LICENSE).
+SPDX-License-Identifier: EPL-2.0
+
+Third-party content bundled in the plugin JAR, each under its own license:
+
+- markdown-it 14.3.2 (web/markdown-it.min.js)
+  MIT License, Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin
+  https://github.com/markdown-it/markdown-it
+
+- markdown-it-task-lists 2.1.1 (web/markdown-it-task-lists.min.js)
+  ISC License, Copyright (c) 2016 Revin Guillen
+  https://github.com/revin/markdown-it-task-lists
+
+- Mermaid 11.17.2 (web/mermaid.min.js)
+  MIT License, Copyright (c) 2014 - 2022 Knut Sveidqvist
+  https://github.com/mermaid-js/mermaid
+
+- highlight.js 11.12.0 (web/highlight.min.js, web/hl-dark.css, web/hl-light.css)
+  BSD 3-Clause License, Copyright (c) 2006, Ivan Sagalaev
+  https://github.com/highlightjs/highlight.js
+
+- DOMPurify 3.4.16 (web/purify.min.js)
+  Apache License 2.0 or Mozilla Public License 2.0, Copyright (c) Cure53 and other contributors
+  https://github.com/cure53/DOMPurify
+
+- PlantUML 1.2026.8, MIT build (lib/plantuml-mit.jar, fetched by build.sh)
+  MIT License, Copyright (C) 2009-2024 Arnaud Roques
+  https://plantuml.com

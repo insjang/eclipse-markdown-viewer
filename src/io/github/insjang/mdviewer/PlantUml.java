@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;

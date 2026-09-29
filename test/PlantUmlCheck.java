@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 /** java PlantUmlCheck: renders a sequence and a class diagram (Korean text) with the preview style */
 public class PlantUmlCheck {

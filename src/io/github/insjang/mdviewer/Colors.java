@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
@@ -8,19 +8,19 @@ import org.eclipse.swt.graphics.RGB;
 final class Colors {
 	/** CSS variable, label, dark default, light default */
 	static final String[][] ITEMS = {
-			{ "bg", "배경", "#0d1117", "#ffffff" },
-			{ "fg", "본문", "#f0f6fc", "#1f2328" },
-			{ "heading", "제목", "#f0f6fc", "#1f2328" },
-			{ "strong", "굵게", "#f0f6fc", "#1f2328" },
-			{ "em", "기울임", "#f0f6fc", "#1f2328" },
-			{ "link", "링크", "#4493f8", "#0969da" },
-			{ "code", "인라인 코드 글자", "#f0f6fc", "#1f2328" },
-			{ "code-bg", "인라인 코드 배경", "#1f232a", "#eff1f3" },
-			{ "pre-bg", "코드 블록 배경", "#151b23", "#f6f8fa" },
-			{ "quote", "인용문 글자", "#9198a1", "#59636e" },
-			{ "border", "테두리·구분선", "#3d444d", "#d1d9e0" },
-			{ "th-bg", "표 머리글 배경", "#0d1117", "#ffffff" },
-			{ "row-alt", "표 짝수 행 배경", "#151b23", "#f6f8fa" } };
+			{ "bg", Messages.color_bg, "#0d1117", "#ffffff" },
+			{ "fg", Messages.color_fg, "#f0f6fc", "#1f2328" },
+			{ "heading", Messages.color_heading, "#f0f6fc", "#1f2328" },
+			{ "strong", Messages.color_strong, "#f0f6fc", "#1f2328" },
+			{ "em", Messages.color_em, "#f0f6fc", "#1f2328" },
+			{ "link", Messages.color_link, "#4493f8", "#0969da" },
+			{ "code", Messages.color_code, "#f0f6fc", "#1f2328" },
+			{ "code-bg", Messages.color_code_bg, "#1f232a", "#eff1f3" },
+			{ "pre-bg", Messages.color_pre_bg, "#151b23", "#f6f8fa" },
+			{ "quote", Messages.color_quote, "#9198a1", "#59636e" },
+			{ "border", Messages.color_border, "#3d444d", "#d1d9e0" },
+			{ "th-bg", Messages.color_th_bg, "#0d1117", "#ffffff" },
+			{ "row-alt", Messages.color_row_alt, "#151b23", "#f6f8fa" } };
 	static final String[] THEMES = { "dark", "light" };
 
 	static String key(String theme, String var) {

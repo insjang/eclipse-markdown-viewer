@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -16,34 +16,34 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 public class MarkdownPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
-	static final String ID = "local.mdpreview.prefs";
+	static final String ID = "io.github.insjang.mdviewer.prefs";
 
 	public MarkdownPreferencePage() {
 		super(GRID);
 		setPreferenceStore(Activator.prefs());
-		setDescription("Markdown Viewer Preview 탭의 표시 설정 (PDF 내보내기에도 같은 글꼴 사용)");
+		setDescription(Messages.prefs_description);
 	}
 
 	@Override
 	protected void createFieldEditors() {
-		addField(new FontFieldEditor(PrefInit.BODY_FONT, "본문 글꼴:", "가나다 ABC abc 123", getFieldEditorParent()));
-		addField(new FontFieldEditor(PrefInit.CODE_FONT, "코드 글꼴:", "code() 0O 1lI", getFieldEditorParent()));
-		addField(new StringFieldEditor(PrefInit.LINE_HEIGHT, "줄 간격 (배수):", getFieldEditorParent()));
-		addField(new RadioGroupFieldEditor(PrefInit.THEME, "테마", 2,
-				new String[][] { { "어둡게", "dark" }, { "밝게", "light" } }, getFieldEditorParent(), true));
-		addField(new BooleanFieldEditor(PrefInit.BREAKS, "원문 줄바꿈을 그대로 표시 (끄면 표준 Markdown처럼 한 문단으로 합침)", getFieldEditorParent()));
-		addField(new BooleanFieldEditor(PrefInit.OPEN_PREVIEW, "파일을 열 때 Preview 탭으로 시작", getFieldEditorParent()));
+		addField(new FontFieldEditor(PrefInit.BODY_FONT, Messages.prefs_bodyFont, Messages.prefs_fontSample, getFieldEditorParent()));
+		addField(new FontFieldEditor(PrefInit.CODE_FONT, Messages.prefs_codeFont, Messages.prefs_codeSample, getFieldEditorParent()));
+		addField(new StringFieldEditor(PrefInit.LINE_HEIGHT, Messages.prefs_lineHeight, getFieldEditorParent()));
+		addField(new RadioGroupFieldEditor(PrefInit.THEME, Messages.prefs_theme, 2,
+				new String[][] { { Messages.prefs_themeDark, "dark" }, { Messages.prefs_themeLight, "light" } }, getFieldEditorParent(), true));
+		addField(new BooleanFieldEditor(PrefInit.BREAKS, Messages.prefs_breaks, getFieldEditorParent()));
+		addField(new BooleanFieldEditor(PrefInit.OPEN_PREVIEW, Messages.prefs_openPreview, getFieldEditorParent()));
 		Composite row = new Composite(getFieldEditorParent(), SWT.NONE);
 		GridDataFactory.fillDefaults().span(2, 1).grab(true, false).applyTo(row);
 		GridLayoutFactory.fillDefaults().numColumns(2).equalWidth(true).applyTo(row);
-		colorGroup(row, "dark", "다크 테마 색");
-		colorGroup(row, "light", "라이트 테마 색 (PDF에도 사용)");
+		colorGroup(row, "dark", Messages.prefs_darkColors);
+		colorGroup(row, "light", Messages.prefs_lightColors);
 		Group g = new Group(getFieldEditorParent(), SWT.NONE);
-		g.setText("Mermaid 다이어그램 간격 (px, 블록 안 %%{init}%%가 우선)");
+		g.setText(Messages.prefs_spacing);
 		GridDataFactory.fillDefaults().span(2, 1).grab(true, false).applyTo(g);
-		spacing(g, PrefInit.DIAGRAM_NODE_SPACING, "노드 사이 간격 (Mermaid 기본 50):");
-		spacing(g, PrefInit.DIAGRAM_RANK_SPACING, "단계 사이 간격 (Mermaid 기본 50):");
-		spacing(g, PrefInit.DIAGRAM_PADDING, "상자 안 여백 (Mermaid 기본 15):");
+		spacing(g, PrefInit.DIAGRAM_NODE_SPACING, Messages.prefs_nodeSpacing);
+		spacing(g, PrefInit.DIAGRAM_RANK_SPACING, Messages.prefs_rankSpacing);
+		spacing(g, PrefInit.DIAGRAM_PADDING, Messages.prefs_padding);
 		GridLayoutFactory.swtDefaults().numColumns(2).applyTo(g);
 	}
 

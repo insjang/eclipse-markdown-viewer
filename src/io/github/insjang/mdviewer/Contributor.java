@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;

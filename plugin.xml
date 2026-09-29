@@ -2,17 +2,17 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension point="org.eclipse.ui.editors">
-      <editor id="local.mdpreview.editor" name="Markdown Viewer"
-            class="local.mdpreview.MarkdownEditor"
-            contributorClass="local.mdpreview.Contributor"
+      <editor id="io.github.insjang.mdviewer.editor" name="Markdown Viewer"
+            class="io.github.insjang.mdviewer.MarkdownEditor"
+            contributorClass="io.github.insjang.mdviewer.Contributor"
             extensions="md,markdown,mdown,mkd" default="true"/>
    </extension>
    <extension point="org.eclipse.ui.preferencePages">
-      <page id="local.mdpreview.prefs" name="Markdown Viewer"
+      <page id="io.github.insjang.mdviewer.prefs" name="Markdown Viewer"
             category="org.eclipse.ui.preferencePages.Editors"
-            class="local.mdpreview.MarkdownPreferencePage"/>
+            class="io.github.insjang.mdviewer.MarkdownPreferencePage"/>
    </extension>
    <extension point="org.eclipse.core.runtime.preferences">
-      <initializer class="local.mdpreview.PrefInit"/>
+      <initializer class="io.github.insjang.mdviewer.PrefInit"/>
    </extension>
 </plugin>

@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import java.io.File;
 import java.net.URI;
@@ -22,6 +22,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -93,10 +94,10 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
 		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
-		item(bar, "PDF 내보내기", this::exportPdf);
+		item(bar, Messages.toolbar_pdf, this::exportPdf);
 		item(bar, "A-", () -> Activator.zoom(-1));
 		item(bar, "A+", () -> Activator.zoom(1));
-		item(bar, "글꼴 설정...", () -> PreferencesUtil
+		item(bar, Messages.toolbar_fonts, () -> PreferencesUtil
 				.createPreferenceDialogOn(getSite().getShell(), MarkdownPreferencePage.ID, null, null).open());
 		browser = new Browser(c, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(browser);
@@ -216,7 +217,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (out == null) return;
 		String html = (String) browser.evaluate("return exportDoc();");
 		Display display = getSite().getShell().getDisplay();
-		Job.create("Markdown PDF 내보내기", monitor -> {
+		Job.create(Messages.pdf_job, monitor -> {
 			try {
 				File web = Activator.web(), page = new File(web, "export.html");
 				Files.writeString(page.toPath(), html);
@@ -228,12 +229,12 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				p.waitFor();
 				boolean ok = new File(out).length() > 0;
 				display.asyncExec(() -> {
-					if (!ok) MessageDialog.openError(display.getActiveShell(), "PDF 내보내기", "PDF 생성 실패: " + out);
-					else if (MessageDialog.openQuestion(display.getActiveShell(), "PDF 내보내기", "저장했습니다.\n" + out + "\n\n열어볼까요?")) Program.launch(out);
+					if (!ok) MessageDialog.openError(display.getActiveShell(), Messages.pdf_title, NLS.bind(Messages.pdf_failed, out));
+					else if (MessageDialog.openQuestion(display.getActiveShell(), Messages.pdf_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
 				});
 				return Status.OK_STATUS;
 			} catch (Exception x) {
-				return new Status(IStatus.ERROR, Activator.ID, "PDF 내보내기 실패", x);
+				return new Status(IStatus.ERROR, Activator.ID, Messages.pdf_error, x);
 			}
 		}).schedule();
 	}

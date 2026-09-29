@@ -1,9 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Markdown Viewer (local)
-Bundle-SymbolicName: local.mdpreview;singleton:=true
-Bundle-Version: 1.0.0.v20260928
-Bundle-Activator: local.mdpreview.Activator
+Bundle-Name: Markdown Viewer
+Bundle-Vendor: insjang
+Bundle-SymbolicName: io.github.insjang.mdviewer;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: io.github.insjang.mdviewer.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/plantuml-mit.jar

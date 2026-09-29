@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 public class JsEscape {
 	public static void main(String[] a) throws Exception {
 		String s = "a\"b\\c\nd\r\te f</script>한글|표";

@@ -1,4 +1,4 @@
-package local.mdpreview;
+package io.github.insjang.mdviewer;
 
 import java.io.File;
 import java.io.InputStream;
@@ -12,7 +12,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 public class Activator extends AbstractUIPlugin {
-	static final String ID = "local.mdpreview";
+	static final String ID = "io.github.insjang.mdviewer";
 	static final String[] WEB = { "preview.html", "preview.js", "preview.css", "hl-dark.css", "hl-light.css",
 			"markdown-it.min.js", "markdown-it-task-lists.min.js", "highlight.min.js", "mermaid.min.js", "purify.min.js" };
 	private static Activator plugin;
