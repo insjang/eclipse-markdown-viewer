@@ -30,10 +30,12 @@ import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.program.Program;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IEditorInput;
@@ -145,16 +147,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		}
 	}
 
-	/**
-	 * The editor's scroll position as a fraction of how far it can scroll, which the
-	 * preview takes over: at the bottom of the source means at the bottom of the preview.
-	 */
+	/** How far down the editor is, 0 to 1, from its scrollbar in pixels (wrapped and folded lines count as shown). */
 	private String previewTarget() {
-		ITextViewer v = viewer();
-		int top = v.getTopIndex(), bottom = v.getBottomIndex();
-		int last = document().getNumberOfLines() - 1;
-		int room = last - (bottom - top); // lines the editor can scroll through
-		double f = bottom >= last ? 1 : room <= 0 ? 0 : Math.min(1, (double) top / room);
+		ScrollBar bar = viewer().getTextWidget().getVerticalBar();
+		int range = bar == null ? 0 : bar.getMaximum() - bar.getThumb();
+		double f = range <= 0 ? 0 : Math.min(1, (double) bar.getSelection() / range);
 		return String.format(java.util.Locale.ROOT, "%.4f", f); //$NON-NLS-1$
 	}
 
@@ -175,20 +172,18 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		render(); // mermaid picks up the theme only on render
 	}
 
-	/** Scrolls the editor to the fraction of its range, 1 being the end, and puts the caret on its top line. */
+	/** Scrolls the editor to the fraction of its scroll range in pixels, 1 being the end, caret on the top line. */
 	private void revealFraction(double f) {
 		ITextViewer v = viewer();
-		if (v == null || v.getTextWidget() == null || v.getTextWidget().isDisposed()) return;
-		IDocument d = document();
-		int visible = v.getBottomIndex() - v.getTopIndex() + 1;
-		int room = Math.max(0, d.getNumberOfLines() - visible);
-		int top = (int) Math.round(Math.max(0, Math.min(1, f)) * room);
+		StyledText text = v == null ? null : v.getTextWidget();
+		if (text == null || text.isDisposed() || text.getVerticalBar() == null) return;
+		ScrollBar bar = text.getVerticalBar();
+		text.setTopPixel((int) Math.round(Math.max(0, Math.min(1, f)) * Math.max(0, bar.getMaximum() - bar.getThumb())));
 		try {
-			v.setSelectedRange(d.getLineOffset(top), 0);
+			v.setSelectedRange(document().getLineOffset(v.getTopIndex()), 0);
 		} catch (BadLocationException e) {
 			// keep the caret where it was
 		}
-		v.setTopIndex(top);
 	}
 
 	private void linkClicked(LocationEvent e) {
