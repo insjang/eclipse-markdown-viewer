@@ -5,6 +5,7 @@
       <editor id="io.github.insjang.mdviewer.editor" name="Markdown Viewer"
             class="io.github.insjang.mdviewer.MarkdownEditor"
             contributorClass="io.github.insjang.mdviewer.Contributor"
+            icon="icons/markdown.png"
             extensions="md,markdown,mdown,mkd" default="true"/>
    </extension>
    <extension point="org.eclipse.ui.preferencePages">

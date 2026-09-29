@@ -21,7 +21,7 @@ fi
 CP="$PUML:$(find $ECLIPSE/plugins -maxdepth 1 -name '*.jar' | tr '\n' ':')"
 rm -rf "$OUT/classes" && mkdir -p "$OUT/classes"
 javac -encoding UTF-8 --release 21 -nowarn -cp "$CP" -d "$OUT/classes" $(find "$HERE/src" -name '*.java')
-cp -r "$HERE/web" "$HERE/plugin.xml" "$OUT/classes/"
+cp -r "$HERE/web" "$HERE/icons" "$HERE/plugin.xml" "$OUT/classes/"
 (cd "$HERE/src" && find . -type f ! -name "*.java" -exec cp --parents {} "$OUT/classes/" \;) # messages*.properties
 mkdir -p "$OUT/classes/lib" && cp "$PUML" "$OUT/classes/lib/"
 sed -E "s/^Bundle-Version: .*/Bundle-Version: $VER/" "$HERE/META-INF/MANIFEST.MF" > "$OUT/MANIFEST.MF"
