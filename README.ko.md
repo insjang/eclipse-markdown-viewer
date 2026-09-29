@@ -50,13 +50,17 @@ Eclipse 설치 경로를 `ECLIPSE` 환경 변수로 지정.
 ```bash
 ECLIPSE=/path/to/eclipse ./build.sh            # build/io.github.insjang.mdviewer_<버전>.jar 생성 (처음 한 번 PlantUML JAR을 Maven Central에서 받아 체크섬 확인)
 ECLIPSE=/path/to/eclipse ./build.sh install    # Eclipse 종료 상태에서 dropins/ 에 복사 (이전 버전 JAR은 삭제)
+ECLIPSE=/path/to/eclipse ./build.sh site       # build/site 에 p2 업데이트 사이트 생성 (feature/ 에 feature.xml)
 ```
 
 - 설치 후 Eclipse를 평소처럼 실행 (`-clean` 불필요)
   - 빌드마다 버전 끝자리에 빌드 시각이 붙어 캐시된 옛 번들과 겹치지 않음
-- 배포판 설치: [Releases](https://github.com/insjang/eclipse-markdown-viewer/releases)에서 JAR을 받아 Eclipse 종료 상태에서 `dropins/`에 복사
-- 제거: `dropins/io.github.insjang.mdviewer_*.jar` 삭제 후 재시작
-- p2(Install New Software, Marketplace) 사용 안 함
+- 배포판 설치 (둘 중 하나)
+  - 업데이트 사이트: Help → Install New Software → Work with에 `https://insjang.github.io/eclipse-markdown-viewer/updates/` 입력 후 Enter → Markdown Viewer 체크 → 설치 → 재시작
+    - 코드 서명이 없어 서명 안 된 콘텐츠 신뢰 여부를 물음: Trust Selected
+    - 이후 Help → Check for Updates로 업데이트
+  - JAR 하나: [Releases](https://github.com/insjang/eclipse-markdown-viewer/releases)에서 받아 Eclipse 종료 상태에서 `dropins/`에 복사
+- 제거: Help → About Eclipse IDE → Installation Details → Installed Software → Markdown Viewer → Uninstall, 또는 `dropins/io.github.insjang.mdviewer_*.jar` 삭제 후 재시작
 
 ## 사용법
 
@@ -117,6 +121,8 @@ src/io/github/insjang/mdviewer/
 web/
   preview.html / .js / .css    렌더링, 줄 번호 앵커, 스타일
   *.min.js, hl-*.css           외부 라이브러리
+feature/                       업데이트 사이트용 feature.xml, category.xml
+icons/                         편집기 아이콘
 test/
   check.js                     렌더링 검사 (node)
   sanitize.js                  HTML 정화 검사 (node + jsdom)

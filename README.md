@@ -44,12 +44,22 @@ The Source tab is Eclipse's Generic Editor, so TM4E syntax highlighting and the 
 
 ## Install
 
+**Update site** (Eclipse can then update it with Help > Check for Updates):
+
+1. Help > Install New Software > Work with: `https://insjang.github.io/eclipse-markdown-viewer/updates/` and press Enter.
+2. Check **Markdown Viewer**, Next, accept the license, Finish.
+   The plugin is not code-signed, so Eclipse asks whether to trust unsigned content: choose Trust Selected.
+3. Restart Eclipse. `.md` files now open in the Markdown Viewer.
+
+**Or a single JAR, no p2:**
+
 1. Download `io.github.insjang.mdviewer_<version>.jar` from [Releases](https://github.com/insjang/eclipse-markdown-viewer/releases).
 2. Close Eclipse and copy the JAR into the `dropins` folder of your Eclipse installation.
-3. Start Eclipse. `.md` files now open in the Markdown Viewer.
-   If they still open in another editor: right-click the file > Open With > Markdown Viewer, or set it as the default under Preferences > General > Editors > File Associations > `*.md`.
+3. Start Eclipse.
 
-To uninstall, delete the JAR from `dropins` and restart Eclipse.
+If `.md` files still open in another editor: right-click the file > Open With > Markdown Viewer, or set it as the default under Preferences > General > Editors > File Associations > `*.md`.
+
+To uninstall: Help > About Eclipse IDE > Installation Details > Installed Software > Markdown Viewer > Uninstall, or delete the JAR from `dropins`, then restart Eclipse.
 
 ## Build
 
@@ -58,6 +68,7 @@ JDK 21 or later and bash (WSL works).
 ```bash
 ECLIPSE=/path/to/eclipse ./build.sh           # build/io.github.insjang.mdviewer_<version>.jar
 ECLIPSE=/path/to/eclipse ./build.sh install   # also copy it into $ECLIPSE/dropins (close Eclipse first)
+ECLIPSE=/path/to/eclipse ./build.sh site      # also build a p2 update site in build/site (feature/ holds feature.xml)
 ```
 
 The first build downloads PlantUML (MIT build, 17 MB) from Maven Central and checks its SHA-1; it is not kept in git.
@@ -114,6 +125,8 @@ src/io/github/insjang/mdviewer/
 web/
   preview.html / .js / .css    rendering, sanitizing, scrolling, styles
   *.min.js, hl-*.css           bundled libraries
+feature/                       feature.xml, category.xml for the update site
+icons/                         editor icon
 test/
   check.js                     rendering (node)
   sanitize.js, plantuml.js     sanitizing and PlantUML wiring (node + jsdom)
