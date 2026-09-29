@@ -6,6 +6,7 @@ import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ColorFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FontFieldEditor;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.SWT;
@@ -37,6 +38,19 @@ public class MarkdownPreferencePage extends FieldEditorPreferencePage implements
 		GridLayoutFactory.fillDefaults().numColumns(2).equalWidth(true).applyTo(row);
 		colorGroup(row, "dark", "다크 테마 색");
 		colorGroup(row, "light", "라이트 테마 색 (PDF에도 사용)");
+		Group g = new Group(getFieldEditorParent(), SWT.NONE);
+		g.setText("Mermaid 다이어그램 간격 (px, 블록 안 %%{init}%%가 우선)");
+		GridDataFactory.fillDefaults().span(2, 1).grab(true, false).applyTo(g);
+		spacing(g, PrefInit.DIAGRAM_NODE_SPACING, "노드 사이 간격 (Mermaid 기본 50):");
+		spacing(g, PrefInit.DIAGRAM_RANK_SPACING, "단계 사이 간격 (Mermaid 기본 50):");
+		spacing(g, PrefInit.DIAGRAM_PADDING, "상자 안 여백 (Mermaid 기본 15):");
+		GridLayoutFactory.swtDefaults().numColumns(2).applyTo(g);
+	}
+
+	private void spacing(Group g, String key, String label) {
+		IntegerFieldEditor f = new IntegerFieldEditor(key, label, g, 3);
+		f.setValidRange(0, 200);
+		addField(f);
 	}
 
 	/** Defaults are GitHub colors; "Restore Defaults" brings them back. */

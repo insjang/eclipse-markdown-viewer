@@ -32,10 +32,10 @@ function createMd(markdownit, taskLists, hljs, getBase) {
 }
 if (typeof module !== 'undefined') module.exports = { createMd };
 
-let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'Malgun Gothic', size: 11 }, THEME = 'dark';
+let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'Malgun Gothic', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
 const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE) : null;
 
-function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
+function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing) {
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
 	const r = document.documentElement, s = r.style;
 	r.dataset.theme = theme;
@@ -52,6 +52,7 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
 	s.setProperty('--indent', m.getBoundingClientRect().width + 'px');
 	m.remove();
 	FONT = { name: font, size: size };
+	SPACING = spacing || SPACING;
 	THEME = theme;
 	FONTVARS = s.cssText;
 	COLORS = colors || COLORS;
@@ -60,7 +61,7 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors) {
 	// diagrams use the body font and size too
 	const ff = `'${font}', 'Malgun Gothic', sans-serif`;
 	MERMAID = { startOnLoad: false, securityLevel: 'strict', theme: theme === 'light' ? 'default' : 'dark',
-		fontFamily: ff, themeVariables: { fontFamily: ff, fontSize: size + 'pt' } };
+		fontFamily: ff, themeVariables: { fontFamily: ff, fontSize: size + 'pt' }, ...mermaidSpacing(SPACING) };
 	mermaid.initialize(MERMAID);
 }
 
@@ -85,6 +86,17 @@ function sanitize(html) {
 			if (v && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(v)) e.setAttribute(a, BASE + v);
 		}
 	return f;
+}
+
+// Spacing from the preferences; Mermaid's defaults are node 50, rank 50, padding 15.
+// Sequence and ER diagrams have their own settings, scaled from their defaults.
+function mermaidSpacing({ node, rank, pad }) {
+	const scale = (value, of, by) => Math.max(2, Math.round(value * by / of));
+	return {
+		flowchart: { nodeSpacing: node, rankSpacing: rank, padding: pad, diagramPadding: 4 },
+		sequence: { actorMargin: scale(50, 50, node), messageMargin: scale(35, 50, rank), boxMargin: scale(10, 15, pad), noteMargin: scale(10, 15, pad) },
+		er: { nodeSpacing: scale(140, 50, node), rankSpacing: scale(80, 50, rank), entityPadding: pad, diagramPadding: 4 }
+	};
 }
 
 // PlantUML blocks are drawn by the plugin (Java) through the mdPlantUml browser function,

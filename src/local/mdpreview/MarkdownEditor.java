@@ -149,7 +149,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		FontData b = PreferenceConverter.getFontData(s, PrefInit.BODY_FONT);
 		FontData c = PreferenceConverter.getFontData(s, PrefInit.CODE_FONT);
 		browser.execute("applyStyle(" + js(b.getName()) + "," + b.getHeight() + "," + js(c.getName()) + ","
-				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(s.getString(PrefInit.THEME)) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ")");
+				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(s.getString(PrefInit.THEME)) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ",{\"node\":" + s.getInt(PrefInit.DIAGRAM_NODE_SPACING)
+				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "})");
 		render(); // mermaid picks up the theme only on render
 	}
 

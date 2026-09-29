@@ -62,9 +62,13 @@ Preferences → General → Editors → Markdown Viewer
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
 | 다크·라이트 색 13종 | GitHub 색 (`Restore Defaults`로 복원) |
+| Mermaid 간격 (노드·단계·상자 안 여백) | 25 · 30 · 6 px |
 
 - 들여쓰기: 코드 글꼴 영문 4자 폭 (목록, 인용문, 코드 탭)
 - Mermaid: 본문 글꼴·크기 사용
+- Mermaid 간격: 노드 사이 25, 단계 사이 30, 상자 안 여백 6 (Mermaid 기본 50·50·15보다 촘촘), 설정에서 조정. 블록 첫 줄의 `%%{init: {...}}%%`가 우선
+  - 흐름도·시퀀스·ER에 적용 (시퀀스·ER은 각자 기본값에서 같은 비율로 축소)
+  - PlantUML 내장 배치 엔진(smetana)은 간격 설정을 무시하므로 적용 안 함 (기본 배치가 이미 촘촘)
 - PlantUML: ` ```plantuml ` 또는 ` ```puml ` 블록, 본문 글꼴·크기와 테마 색 적용
   - 플러그인 안의 PlantUML(MIT판)이 로컬에서 그림: 서버 전송 없음, Graphviz 불필요 (내장 smetana 배치)
   - `!include`로 로컬 파일·URL 읽기 차단 (PlantUML SANDBOX 보안 설정)
