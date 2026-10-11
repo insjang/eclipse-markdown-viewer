@@ -29,6 +29,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
 | Links | `.md` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams included |
+| Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Font size | `A-` / `A+` on the preview toolbar |
 | Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |

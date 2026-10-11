@@ -27,6 +27,7 @@ Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid 포함 (Edge 헤드리스 인쇄) |
+| 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
 | 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |
