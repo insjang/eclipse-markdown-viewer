@@ -1,6 +1,7 @@
 # Markdown Viewer for Eclipse
 
 A Markdown editor for Eclipse with a preview tab.
+Source and Preview are tabs of one editor, not a split screen or a separate view, so the document gets the whole editor area and a terminal or other views keep their room beside it.
 It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams, keeps the source and the preview at the same scroll position, and exports a PDF in one click.
 
 [한국어 README](README.ko.md)
@@ -21,7 +22,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
 
 | Feature | Details |
 |---|---|
-| Tabs | Source and Preview tabs in one editor area, opening on Preview by default |
+| Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |

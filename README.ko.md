@@ -15,13 +15,14 @@
 스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면.
 
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
+Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 뷰를 띄우지 않음: 문서가 편집 영역 전체를 쓰고, 옆에 터미널 등 다른 뷰를 둘 공간이 남음.
 기본 Mylyn WikiText 미리보기가 지원하지 않는 GFM 표·체크박스·Mermaid를 VS Code와 같은 파서(markdown-it)로 표시.
 
 ## 주요 기능
 
 | 기능 | 내용 |
 |---|---|
-| 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환 (기본: Preview로 열림) |
+| 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
 | 위치 동기화 | Preview → Source 전환 시 보던 위치의 원본 줄로 이동 (표는 행 단위), 반대 방향도 동일 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
