@@ -55,7 +55,11 @@ ECLIPSE=/path/to/eclipse ./build.sh site       # build/site 에 p2 업데이트 
 
 - 설치 후 Eclipse를 평소처럼 실행 (`-clean` 불필요)
   - 빌드마다 버전 끝자리에 빌드 시각이 붙어 캐시된 옛 번들과 겹치지 않음
-- 배포판 설치 (둘 중 하나)
+- 배포판 설치 (셋 중 하나)
+  - Eclipse Marketplace: 아래 버튼을 실행 중인 Eclipse로 끌어다 놓기, 또는 Help → Eclipse Marketplace에서 "Markdown Viewer" 검색 ([등록 페이지](https://marketplace.eclipse.org/content/markdown-viewer))
+
+    [![Drag to your running Eclipse workspace to install Markdown Viewer](https://marketplace.eclipse.org/modules/custom/eclipsefdn/eclipsefdn_marketplace/images/btn-install.svg)](https://marketplace.eclipse.org/marketplace-client-intro?mpc_install=7567639 "Drag to your running Eclipse workspace to install Markdown Viewer")
+
   - 업데이트 사이트: Help → Install New Software → Work with에 `https://insjang.github.io/eclipse-markdown-viewer/updates/` 입력 후 Enter → Markdown Viewer 체크 → 설치 → 재시작
     - 코드 서명이 없어 서명 안 된 콘텐츠 신뢰 여부를 물음: Trust Selected
     - 이후 Help → Check for Updates로 업데이트
