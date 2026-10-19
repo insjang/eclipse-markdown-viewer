@@ -29,10 +29,10 @@ rm -f "$OUT"/io.github.insjang.mdviewer_*.jar
 (cd "$OUT/classes" && jar cfm "../$JAR" "$OUT/MANIFEST.MF" .)
 echo "built $OUT/$JAR ($(stat -c %s "$OUT/$JAR") bytes)"
 if [ "${1:-}" = site ]; then
-	# feature.xml and category.xml carry 1.0.0.qualifier / 0.0.0: give the feature the bundle's version
+	# feature.xml and category.xml carry <x.y.z>.qualifier / 0.0.0: give the feature the bundle's version
 	S=$OUT/site-src; rm -rf "$S" "$OUT/site" "$OUT/p2cfg" "$OUT/p2.log" && mkdir -p "$S/plugins" "$S/features/f"
 	cp "$OUT/$JAR" "$S/plugins/"
-	sed -E "s/1\.0\.0\.qualifier/$VER/; s/version=\"0\.0\.0\"/version=\"$VER\"/" "$HERE/feature/feature.xml" > "$S/features/f/feature.xml"
+	sed -E "s/[0-9.]+\.qualifier/$VER/; s/version=\"0\.0\.0\"/version=\"$VER\"/" "$HERE/feature/feature.xml" > "$S/features/f/feature.xml"
 	(cd "$S/features/f" && jar cf "../io.github.insjang.mdviewer_$VER.jar" feature.xml) && rm -r "$S/features/f"
 	# run the p2 publisher from $ECLIPSE with a throwaway configuration area, so the install itself is not touched
 	mkdir -p "$OUT/p2cfg" && cp -r "$ECLIPSE/configuration/config.ini" "$ECLIPSE/configuration/org.eclipse.equinox.simpleconfigurator" "$OUT/p2cfg/"

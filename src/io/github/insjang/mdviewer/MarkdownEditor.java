@@ -191,6 +191,13 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		String u = e.location;
 		if (!loaded || u.startsWith(pageUrl) || u.startsWith("about:")) return; // page load, #anchors
 		e.doit = false;
+		// open after this callback returns: a new editor's Edge browser created inside it hangs WebView2 (#1)
+		browser.getDisplay().asyncExec(() -> {
+			if (!browser.isDisposed()) openLink(u);
+		});
+	}
+
+	private void openLink(String u) {
 		try {
 			if (u.matches("(?i)file:.*\\.(md|markdown)(#.*)?")) {
 				URI uri = URI.create(u.replaceFirst("#.*", ""));
