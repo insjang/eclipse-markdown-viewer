@@ -32,7 +32,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
 | PDF export | A4, light colors, diagrams included |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Font size | `A-` / `A+` on the preview toolbar |
-| Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing |
+| Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional double-click to close editor tabs |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |
 | Languages | English, Korean |
 
@@ -94,6 +94,7 @@ Preferences > General > Editors > Markdown Viewer
 | Theme | Dark |
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
 | Open files on the Preview tab | On |
+| Double-click a tab to close the editor | Off (on: applies to every editor tab, instead of maximizing; Ctrl+M still maximizes) |
 | Dark and light colors (13 each) | GitHub colors, `Restore Defaults` brings them back |
 | Mermaid spacing: nodes, ranks, box padding | 25, 30, 6 px (Mermaid's own defaults are 50, 50, 15) |
 
@@ -127,6 +128,7 @@ src/io/github/insjang/mdviewer/
   Colors.java                  colors per theme (GitHub defaults)
   MarkdownPreferencePage.java  preference page
   Contributor.java             undo, find and other editing actions
+  TabClose.java                optional double-click on an editor tab to close it
   Messages.java, messages*.properties   UI text (English, Korean)
 web/
   preview.html / .js / .css    rendering, sanitizing, scrolling, styles

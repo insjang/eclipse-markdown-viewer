@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Markdown Viewer
 Bundle-Vendor: insjang
 Bundle-SymbolicName: io.github.insjang.mdviewer;singleton:=true
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 1.1.0.qualifier
 Bundle-Activator: io.github.insjang.mdviewer.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
@@ -19,4 +19,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.jface.text,
  org.eclipse.text,
- org.eclipse.ui.genericeditor
+ org.eclipse.ui.genericeditor,
+ org.eclipse.e4.ui.model.workbench,
+ org.eclipse.e4.ui.workbench,
+ org.eclipse.e4.core.contexts

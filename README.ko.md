@@ -30,7 +30,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | PDF 내보내기 | A4, 라이트 색, Mermaid 포함 (Edge 헤드리스 인쇄) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
-| 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색) |
+| 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 탭 더블클릭으로 에디터 닫기 (선택) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |
 | 언어 | 영어, 한국어 (Eclipse 언어 설정을 따름) |
 
@@ -90,6 +90,7 @@ Preferences → General → Editors → Markdown Viewer
 | 테마 | 어둡게 |
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
+| 탭 더블클릭으로 에디터 닫기 | 꺼짐 (켜면 최대화 대신 닫기, 모든 에디터 탭에 적용, Ctrl+M은 계속 최대화) |
 | 다크·라이트 색 13종 | GitHub 색 (`Restore Defaults`로 복원) |
 | Mermaid 간격 (노드·단계·상자 안 여백) | 25 · 30 · 6 px |
 
@@ -123,6 +124,7 @@ src/io/github/insjang/mdviewer/
   Colors.java                  테마별 색 (GitHub 기본값)
   MarkdownPreferencePage.java  설정 화면
   Contributor.java             실행 취소·찾기 등 편집 동작 연결
+  TabClose.java                탭 더블클릭으로 에디터 닫기 (선택)
   PlantUml.java                PlantUML 블록을 SVG로 (글꼴·색 주입, 캐시, 샌드박스)
 web/
   preview.html / .js / .css    렌더링, 줄 번호 앵커, 스타일
