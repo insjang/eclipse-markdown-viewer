@@ -2,11 +2,9 @@
 
 [English README](README.md)
 
-| 다크 테마 | 라이트 테마 |
-|---|---|
-| ![Eclipse 안의 Preview 탭, 다크 테마](docs/images/eclipse-preview.png) | ![Eclipse 안의 Preview 탭, 라이트 테마](docs/images/eclipse-light.png) |
-
-![미리보기의 Mermaid와 PlantUML](docs/images/eclipse-diagrams.png)
+| Source 탭 | Preview 탭, 다크 테마 | Preview 탭, 라이트 테마 |
+|---|---|---|
+| ![Eclipse 안의 Source 탭](docs/images/eclipse-source.png) | ![Eclipse 안의 Preview 탭, 다크 테마](docs/images/eclipse-preview.png) | ![Eclipse 안의 Preview 탭, 라이트 테마](docs/images/eclipse-light.png) |
 
 | 다크 테마 | 라이트 테마 (PDF에도 사용) |
 |---|---|
@@ -80,12 +78,12 @@ ECLIPSE=/path/to/eclipse ./build.sh site       # build/site 에 p2 업데이트 
 
 Preferences → General → Editors → Markdown Viewer
 
-![Markdown Viewer 설정 화면 (기본값이 아닌 사용자 설정 상태)](docs/images/preferences.png)
+![Markdown Viewer 설정 화면: 기본값에서 라이트 테마만 선택한 상태](docs/images/preferences.png)
 
 | 항목 | 기본값 |
 |---|---|
-| 본문 글꼴 | 맑은 고딕 11pt |
-| 코드 글꼴 | D2Coding ligature 10pt (Preview에서는 합자 끔) |
+| 본문 글꼴 | Eclipse 대화상자 글꼴 11pt (한국어 Windows: 맑은 고딕, 영문 Windows: Segoe UI) |
+| 코드 글꼴 | Eclipse 텍스트 글꼴 10pt (Windows: Consolas, Preview에서는 합자 끔) |
 | 줄 간격 | 1.6 |
 | 테마 | 어둡게 |
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |

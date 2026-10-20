@@ -3,6 +3,7 @@ package io.github.insjang.mdviewer;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.FontData;
 
@@ -14,8 +15,9 @@ public class PrefInit extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore s = Activator.prefs();
-		PreferenceConverter.setDefault(s, BODY_FONT, new FontData("Malgun Gothic", 11, SWT.NORMAL));
-		PreferenceConverter.setDefault(s, CODE_FONT, new FontData("D2Coding ligature", 10, SWT.NORMAL));
+		// Eclipse's own dialog and text fonts (Segoe UI and Consolas on Windows), so the defaults exist everywhere
+		PreferenceConverter.setDefault(s, BODY_FONT, new FontData(JFaceResources.getFontRegistry().getFontData(JFaceResources.DIALOG_FONT)[0].getName(), 11, SWT.NORMAL));
+		PreferenceConverter.setDefault(s, CODE_FONT, new FontData(JFaceResources.getFontRegistry().getFontData(JFaceResources.TEXT_FONT)[0].getName(), 10, SWT.NORMAL));
 		s.setDefault(LINE_HEIGHT, "1.6");
 		s.setDefault(THEME, "dark");
 		s.setDefault(OPEN_PREVIEW, true);

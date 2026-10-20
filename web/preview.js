@@ -32,16 +32,16 @@ function createMd(markdownit, taskLists, hljs, getBase) {
 }
 if (typeof module !== 'undefined') module.exports = { createMd };
 
-let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'Malgun Gothic', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
+let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'system-ui', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
 const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE) : null;
 
 function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing) {
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
 	const r = document.documentElement, s = r.style;
 	r.dataset.theme = theme;
-	s.setProperty('--font', `'${font}', 'Malgun Gothic', sans-serif`);
+	s.setProperty('--font', `'${font}', system-ui, sans-serif`);
 	s.setProperty('--size', size + 'pt');
-	s.setProperty('--code-font', `'${code}', D2Coding, Consolas, monospace`);
+	s.setProperty('--code-font', `'${code}', Consolas, monospace`);
 	s.setProperty('--code-size', csize + 'pt');
 	s.setProperty('--lh', lh);
 	// indent = width of 4 monospace Latin chars at body size
@@ -59,7 +59,7 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing)
 	for (const [k, v] of Object.entries(COLORS[theme] || {})) s.setProperty(k, v);
 	document.getElementById('hl').href = theme === 'light' ? 'hl-light.css' : 'hl-dark.css';
 	// diagrams use the body font and size too
-	const ff = `'${font}', 'Malgun Gothic', sans-serif`;
+	const ff = `'${font}', system-ui, sans-serif`;
 	MERMAID = { startOnLoad: false, securityLevel: 'strict', theme: theme === 'light' ? 'default' : 'dark',
 		fontFamily: ff, themeVariables: { fontFamily: ff, fontSize: size + 'pt' }, ...mermaidSpacing(SPACING) };
 	mermaid.initialize(MERMAID);

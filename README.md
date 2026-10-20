@@ -6,11 +6,9 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 
 [한국어 README](README.ko.md)
 
-| Dark theme | Light theme |
-|---|---|
-| ![Preview tab in Eclipse, dark theme](docs/images/eclipse-preview.png) | ![Preview tab in Eclipse, light theme](docs/images/eclipse-light.png) |
-
-![Mermaid and PlantUML in the preview](docs/images/eclipse-diagrams.png)
+| Source tab | Preview tab, dark theme | Preview tab, light theme |
+|---|---|---|
+| ![Source tab in Eclipse](docs/images/eclipse-source.png) | ![Preview tab in Eclipse, dark theme](docs/images/eclipse-preview.png) | ![Preview tab in Eclipse, light theme](docs/images/eclipse-light.png) |
 
 | Dark theme | Light theme (also used for PDF) |
 |---|---|
@@ -84,12 +82,12 @@ Every build gets a new version qualifier, so a plain restart picks up a replaced
 
 Preferences > General > Editors > Markdown Viewer
 
-![Markdown Viewer preferences (the values shown are customized, not the defaults)](docs/images/preferences.png)
+![Markdown Viewer preferences: the defaults, with the light theme selected](docs/images/preferences.png)
 
 | Setting | Default |
 |---|---|
-| Body font | Malgun Gothic 11 pt |
-| Code font | D2Coding ligature 10 pt (ligatures are turned off in the preview) |
+| Body font | Eclipse dialog font, 11 pt (Segoe UI on English Windows, Malgun Gothic on Korean Windows) |
+| Code font | Eclipse text font, 10 pt (Consolas on Windows; ligatures are turned off in the preview) |
 | Line height | 1.6 |
 | Theme | Dark |
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
