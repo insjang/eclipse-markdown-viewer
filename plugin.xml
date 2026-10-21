@@ -72,4 +72,14 @@
       <super type="org.eclipse.core.resources.textmarker"/>
       <persistent value="false"/>
    </extension>
+   <!-- links in the Source: Ctrl+click, and content assist for files, anchors, reference labels and fence languages -->
+   <extension point="org.eclipse.ui.workbench.texteditor.hyperlinkDetectors">
+      <hyperlinkDetector id="io.github.insjang.mdviewer.linkDetector" name="Markdown links"
+            class="io.github.insjang.mdviewer.editing.LinkDetector"
+            targetId="org.eclipse.ui.genericeditor.GenericEditor"/>
+   </extension>
+   <extension point="org.eclipse.ui.genericeditor.contentAssistProcessors">
+      <contentAssistProcessor class="io.github.insjang.mdviewer.editing.LinkAssist"
+            contentType="org.eclipse.tm4e.language_pack.markdown"/>
+   </extension>
 </plugin>

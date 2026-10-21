@@ -9,9 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Headings of a Markdown source for the outline and the link check: ATX (#) and setext (=== / ---), not in fenced code or front matter. */
-final class Headings {
+public final class Headings {
 	/** level 1-6, text as written (inline markup kept), line from 0 (= data-line in the preview), id as the preview makes it */
-	record Heading(int level, String text, int line, String id) {
+	public record Heading(int level, String text, int line, String id) {
 	}
 
 	record Node(Heading heading, List<Node> children) {
@@ -21,7 +21,7 @@ final class Headings {
 	/** lines that start something other than a paragraph, so a --- below them is a rule, not a heading */
 	private static final Pattern NOT_TEXT = Pattern.compile("^(?: {4}|\\t| {0,3}(?:[>|<]|[-*+](?:[ \\t]|$)|\\d{1,9}[.)](?:[ \\t]|$)|#{1,6}(?:[ \\t]|$)))");
 
-	static List<Heading> of(String src) {
+	public static List<Heading> of(String src) {
 		String[] lines = lines(src);
 		boolean[] code = code(lines);
 		List<Heading> out = new ArrayList<>();
