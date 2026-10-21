@@ -13,6 +13,10 @@
             category="org.eclipse.ui.preferencePages.Editors"
             class="io.github.insjang.mdviewer.MarkdownPreferencePage"/>
    </extension>
+   <extension point="org.eclipse.ui.genericeditor.autoEditStrategies">
+      <autoEditStrategy class="io.github.insjang.mdviewer.editing.TableAutoEdit"
+            contentType="org.eclipse.tm4e.language_pack.markdown"/>
+   </extension>
    <extension point="org.eclipse.ui.startup">
       <startup class="io.github.insjang.mdviewer.TabClose"/>
    </extension>
