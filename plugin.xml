@@ -8,6 +8,11 @@
             icon="icons/markdown.png"
             extensions="md,markdown,mdown,mkd" default="true"/>
    </extension>
+   <!-- typing aids for the Source, attached to the Generic Editor for Markdown files -->
+   <extension point="org.eclipse.ui.genericeditor.autoEditStrategies">
+      <autoEditStrategy class="io.github.insjang.mdviewer.editing.ListAutoEdit"
+            contentType="org.eclipse.tm4e.language_pack.markdown"/>
+   </extension>
    <extension point="org.eclipse.ui.preferencePages">
       <page id="io.github.insjang.mdviewer.prefs" name="Markdown Viewer"
             category="org.eclipse.ui.preferencePages.Editors"
