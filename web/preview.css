@@ -32,6 +32,7 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 .plantuml svg { max-width:100%; height:auto }
 .plantuml-error { text-align:left; color:#f85149 }
 .katex-display { overflow-x:auto; overflow-y:hidden; padding:.1em 0 } /* long formulas scroll, not the page */
+.katex-error { font-family:KaTeX_Main, "Times New Roman", serif } /* Korean UI fonts draw \ as ₩ */
 @page { size:A4; margin:14mm 12mm }
 @media print {
 	* { -webkit-print-color-adjust:exact; print-color-adjust:exact }
