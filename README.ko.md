@@ -158,6 +158,10 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 ```
 
+## 함께 쓰면 좋은 플러그인
+
+[Modern Terminal](https://github.com/insjang/eclipse-modern-terminal) (같은 작성자): Windows Terminal 같은 색과 한글 폭 처리, TUI 앱 마우스 지원, 세션 저장 SSH와 SFTP Files 뷰를 갖춘 Eclipse 터미널. 터미널의 `.md` 경로를 Ctrl+클릭하면 이 뷰어로 열림. [Eclipse Marketplace](https://marketplace.eclipse.org/content/modern-terminal)
+
 ## 라이선스
 
 - AI 코딩 도구(Anthropic의 Claude 등)의 도움을 받아 개발.

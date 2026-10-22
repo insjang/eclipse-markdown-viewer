@@ -152,6 +152,10 @@ test/
   JsEscape.java, PlantUmlCheck.java
 ```
 
+## See also
+
+[Modern Terminal](https://github.com/insjang/eclipse-modern-terminal) by the same author: a terminal view for Eclipse with Windows Terminal-style colors, wide (CJK) characters, mouse support for TUI apps, SSH with saved sessions and an SFTP Files view. Ctrl+click a `.md` path in it to open this viewer. [Eclipse Marketplace](https://marketplace.eclipse.org/content/modern-terminal)
+
 ## License
 
 Developed with the help of AI coding assistants, including Claude (Anthropic).
