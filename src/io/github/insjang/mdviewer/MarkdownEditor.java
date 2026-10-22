@@ -52,12 +52,14 @@ import org.eclipse.ui.texteditor.ITextEditor;
 @SuppressWarnings("restriction")
 public class MarkdownEditor extends MultiPageEditorPart {
 	private static final int SOURCE = 0, PREVIEW = 1;
-	private static final String EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+	/** Edge for PDF export (headless print), null when not installed: Windows only */
+	private static final String EDGE = java.util.stream.Stream.of("C:\\Program Files (x86)", "C:\\Program Files")
+			.map(p -> p + "\\Microsoft\\Edge\\Application\\msedge.exe").filter(p -> new File(p).isFile()).findFirst().orElse(null);
 
 	private ITextEditor source;
 	private Browser browser;
 	private String pageUrl;
-	private boolean loaded, stale = true;
+	private boolean loaded, stale = true, styling;
 	private final Runnable renderLater = () -> {
 		if (getActivePage() == PREVIEW) render();
 	};
@@ -72,7 +74,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			Display.getCurrent().timerExec(300, renderLater); // external change while Preview is showing
 		}
 	};
-	private final IPropertyChangeListener prefListener = e -> applyStyle();
+	// OK or Restore Defaults changes dozens of keys at once: one restyle per editor afterwards
+	private final IPropertyChangeListener prefListener = e -> {
+		if (styling || browser == null || browser.isDisposed()) return;
+		styling = true;
+		browser.getDisplay().asyncExec(() -> {
+			styling = false;
+			if (!browser.isDisposed()) applyStyle();
+		});
+	};
 
 	@Override
 	protected void createPages() {
@@ -94,7 +104,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
 		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
-		item(bar, Messages.toolbar_pdf, this::exportPdf);
+		if (EDGE != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
 		item(bar, "A-", () -> Activator.zoom(-1));
 		item(bar, "A+", () -> Activator.zoom(1));
 		item(bar, Messages.toolbar_fonts, () -> PreferencesUtil
@@ -189,7 +199,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	private void linkClicked(LocationEvent e) {
 		String u = e.location;
-		if (!loaded || u.startsWith(pageUrl) || u.startsWith("about:")) return; // page load, #anchors
+		// page load, #anchors; Edge percent-encodes non-ASCII (Korean) folder names, File.toURI() does not
+		if (!loaded || decode(u).startsWith(decode(pageUrl)) || u.startsWith("about:")) return;
 		e.doit = false;
 		// open after this callback returns: a new editor's Edge browser created inside it hangs WebView2 (#1)
 		browser.getDisplay().asyncExec(() -> {
@@ -199,8 +210,9 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	private void openLink(String u) {
 		try {
-			if (u.matches("(?i)file:.*\\.(md|markdown)(#.*)?")) {
+			if (u.matches("(?i)file:.*\\.(md|markdown|mdown|mkd)(#.*)?")) { // the extensions in plugin.xml
 				URI uri = URI.create(u.replaceFirst("#.*", ""));
+				if (uri.getAuthority() != null || uri.getPath().matches("(?s)[/\\\\]{2}.*")) return; // network path: no SMB from a link
 				IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
 				if (files.length > 0) IDE.openEditor(getSite().getPage(), files[0]);
 				else IDE.openEditorOnFileStore(getSite().getPage(), EFS.getLocalFileSystem().getStore(uri));
@@ -226,15 +238,16 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		Display display = getSite().getShell().getDisplay();
 		Job.create(Messages.pdf_job, monitor -> {
 			try {
-				File web = Activator.web(), page = new File(web, "export.html");
+				File web = Activator.web(), page = new File(web, "export.html"), pdf = new File(web.getParentFile(), "export.pdf");
 				Files.writeString(page.toPath(), html);
-				new File(out).delete();
+				pdf.delete(); // printed next to the page, then moved: an existing target stays until there is a new PDF
 				Process p = new ProcessBuilder(List.of(EDGE, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
 						"--user-data-dir=" + new File(web.getParentFile(), "edge"), "--virtual-time-budget=15000",
-						"--print-to-pdf=" + out, fileUrl(page.toURI()))).redirectErrorStream(true).start();
+						"--print-to-pdf=" + pdf, fileUrl(page.toURI()))).redirectErrorStream(true).start();
 				p.getInputStream().transferTo(java.io.OutputStream.nullOutputStream());
 				p.waitFor();
-				boolean ok = new File(out).length() > 0;
+				boolean ok = pdf.length() > 0;
+				if (ok) Files.move(pdf.toPath(), new File(out).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 				display.asyncExec(() -> {
 					if (!ok) MessageDialog.openError(display.getActiveShell(), Messages.pdf_title, NLS.bind(Messages.pdf_failed, out));
 					else if (MessageDialog.openQuestion(display.getActiveShell(), Messages.pdf_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
@@ -272,6 +285,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		return uri.toString().replaceFirst("^file:/+", "file:///");
 	}
 
+	/** Percent-decoded URL, to compare Java's and Edge's spelling of the same one. */
+	static String decode(String url) {
+		try {
+			return java.net.URLDecoder.decode(url.replace("+", "%2B"), java.nio.charset.StandardCharsets.UTF_8);
+		} catch (IllegalArgumentException e) {
+			return url;
+		}
+	}
+
 	/** Java string -> JavaScript string literal. */
 	static String js(String s) {
 		StringBuilder b = new StringBuilder(s.length() + 16).append('"');
@@ -299,9 +321,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	@Override
 	public void doSaveAs() {
+		// the new file gets a new document: move the listener there so live preview and reload follow it
+		IDocument old = document();
 		source.doSaveAs();
+		if (old != null) old.removeDocumentListener(docListener);
 		setInput(source.getEditorInput());
 		setPartName(getEditorInput().getName());
+		document().addDocumentListener(docListener);
+		stale = true;
+		renderLater.run(); // base folder for relative images may have changed too
 	}
 
 	@Override

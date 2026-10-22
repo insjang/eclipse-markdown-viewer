@@ -23,11 +23,11 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 기능 | 내용 |
 |---|---|
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
-| 위치 동기화 | Preview → Source 전환 시 보던 위치의 원본 줄로 이동 (표는 행 단위), 반대 방향도 동일 |
+| 위치 동기화 | 탭을 바꿔도 스크롤바 위치 유지: 한쪽 끝이면 다른 쪽도 끝 (스크롤 비율 기준), 양방향 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 수식 | GitHub와 같은 `$인라인$`, `$$블록$$`, ```` ```math ```` 블록, 내장 KaTeX로 오프라인 표시. `\$`와 $5 같은 금액은 글자 그대로, TeX 오류는 빨간색 |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
-| 링크 | `.md` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
+| 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
@@ -125,6 +125,7 @@ Preferences → General → Editors → Markdown Viewer
 - OS로 넘기는 링크: `http`, `https`, `mailto`만 (로컬 실행 파일 실행 차단)
 - Mermaid: `strict` 모드
 - KaTeX: `trust: false` (`\href`, `\url`, `\includegraphics`는 글자로만 표시)
+- 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로가 든 Mermaid 그림은 그리지 않음 (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
 
 ## 구조
 
@@ -186,6 +187,6 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 
 ## 제약
 
-- PDF 내보내기는 Windows 전용: Edge 경로 고정 (`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`), macOS는 미확인
+- PDF 내보내기는 Windows 전용: `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge 사용, 없으면 버튼 숨김, macOS는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선
 - 아웃라인 뷰 미지원

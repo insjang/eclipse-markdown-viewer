@@ -7,5 +7,9 @@ public class JsEscape {
 		String back = new String(p.getInputStream().readAllBytes(), "UTF-8");
 		if (!back.equals(s)) throw new AssertionError(lit + " -> " + back);
 		System.out.println("js() ok");
+		// Edge reports the page URL percent-encoded, File.toURI() keeps Korean as is
+		if (!MarkdownEditor.decode("file:///C:/%ED%95%9C%EA%B8%80%20a/p.html#x").startsWith(MarkdownEditor.decode("file:///C:/한글%20a/p.html")))
+			throw new AssertionError("decode");
+		System.out.println("decode() ok");
 	}
 }

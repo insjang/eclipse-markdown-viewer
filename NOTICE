@@ -11,7 +11,7 @@ Third-party content bundled in the plugin JAR, each under its own license:
   MIT License, Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin
   https://github.com/markdown-it/markdown-it
 
-- markdown-it-task-lists 2.1.1 (web/markdown-it-task-lists.min.js)
+- markdown-it-task-lists 2.1.1 (web/markdown-it-task-lists.min.js, the npm 2.1.1 file; its header still says 2.1.0)
   ISC License, Copyright (c) 2016 Revin Guillen
   https://github.com/revin/markdown-it-task-lists
 

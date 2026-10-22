@@ -29,7 +29,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
-| Links | `.md` links open in Eclipse, web and mail links in the system browser |
+| Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Font size | `A-` / `A+` on the preview toolbar |
@@ -122,10 +122,11 @@ Markdown from elsewhere can be opened safely.
 - Mermaid runs with `securityLevel: 'strict'`.
 - KaTeX runs with `trust: false`: `\href`, `\url` and `\includegraphics` stay text.
 - PlantUML runs with its `SANDBOX` security profile: `!include` cannot read local files or URLs. Its SVG output is sanitized too.
+- Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram naming one is not drawn: on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
 
 ## Limitations
 
-- PDF export is Windows only: the Edge path is fixed and the PDF is printed by headless Edge. macOS is untested.
+- PDF export is Windows only: the PDF is printed by headless Edge from `C:\Program Files (x86)` or `C:\Program Files`, and the button is hidden when it is not there. macOS is untested.
 - No outline view.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 

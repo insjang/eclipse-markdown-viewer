@@ -54,7 +54,7 @@ final class PlantUml {
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			new SourceStringReader(source).outputImage(out, new FileFormatOption(FileFormat.SVG));
 			return out.toString(StandardCharsets.UTF_8);
-		} catch (Exception | LinkageError e) {
+		} catch (Exception | LinkageError | StackOverflowError e) { // a recursive !function overflows: an error, cached like a diagram
 			return "<pre class=\"plantuml-error\">PlantUML: " + e.toString().replace("&", "&amp;").replace("<", "&lt;") + "</pre>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
 		}
 	}

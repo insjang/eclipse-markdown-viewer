@@ -8,6 +8,10 @@ public class PlantUmlCheck {
 		String seq = PlantUml.svg("Alice -> 상담원 : 연결 요청\n상담원 --> Alice : 응답", style);
 		String cls = PlantUml.svg("class 주문 {\n +번호 : int\n}\nclass 고객\n고객 \"1\" -- \"*\" 주문", style);
 		String inc = PlantUml.svg("!include /etc/passwd\nA -> B", style);
+		String rec = PlantUml.svg("!function $f($n)\n!return $f($n + 1)\n!endfunction\nA -> B : $f(1)", style);
+		if (!rec.contains("plantuml-error") || !rec.contains("StackOverflowError") || PlantUml.svg("!function $f($n)\n!return $f($n + 1)\n!endfunction\nA -> B : $f(1)", style) != rec)
+			throw new AssertionError("recursion must end in a cached error: " + rec);
+		System.out.println("recursion: error, cached");
 		for (String[] t : new String[][] { { "sequence", seq }, { "class", cls }, { "include", inc } }) {
 			String s = t[1];
 			System.out.println(t[0] + ": svg=" + s.startsWith("<svg") + " len=" + s.length() + " font=" + s.contains("Malgun Gothic")
