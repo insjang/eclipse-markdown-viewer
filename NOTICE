@@ -20,7 +20,7 @@ Third-party content bundled in the plugin JAR, each under its own license:
   https://github.com/KaTeX/KaTeX
 
 - @vscode/markdown-it-katex 1.1.2 (web/markdown-it-katex.js, wrapped for the browser)
-  MIT License, Copyright (c) Microsoft Corporation
+  MIT License, Copyright (c) Microsoft Corporation, (c) 2018 Takahiro Ethan Ikeuchi, (c) 2016 Waylon Flinn
   https://github.com/microsoft/vscode-markdown-it-katex
 
 - Mermaid 11.17.2 (web/mermaid.min.js)
