@@ -9,7 +9,7 @@ function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex) {
 	if (mathPlugin) md.use(mathPlugin, { katex, enableFencedBlocks: true, throwOnError: false, trust: false, errorColor: '#f85149' });
 	md.linkify.set({ fuzzyLink: false }); // "other.md" is not a Moldovan domain
 	const valid = md.validateLink.bind(md);
-	md.validateLink = u => /^file:/i.test(u) || valid(u); // doc-relative links become file:// URLs
+	md.validateLink = u => /^file:\/\/\/(?![\\/])/i.test(u) || valid(u); // doc-relative links become file:/// URLs (no host, see remote())
 	md.core.ruler.push('src_lines', state => {
 		const seen = {};
 		state.tokens.forEach((t, i) => {
@@ -82,7 +82,8 @@ function render(src, base) {
 // Raw HTML in markdown is allowed (<br>, <details>...) but sanitized by DOMPurify before insertion.
 // Only http(s)/mailto/file (doc-relative links) and #anchors survive as URLs.
 // semantics/annotation: KaTeX's MathML wraps the TeX source in them (text only); without them it leaks into the page text.
-const PURIFY = { RETURN_DOM_FRAGMENT: true, FORBID_TAGS: ['style', 'form'], ADD_TAGS: ['semantics', 'annotation'],
+// SANITIZE_NAMED_PROPS: ids become user-content-<id> as on GitHub, so headings such as "Title" or "Links" keep theirs
+const PURIFY = { RETURN_DOM_FRAGMENT: true, FORBID_TAGS: ['style', 'form'], ADD_TAGS: ['semantics', 'annotation'], SANITIZE_NAMED_PROPS: true,
 	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|file):|#|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i };
 function sanitize(html) {
 	const f = DOMPurify.sanitize(html, PURIFY);
@@ -91,7 +92,44 @@ function sanitize(html) {
 			const v = e.getAttribute(a);
 			if (v && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(v)) e.setAttribute(a, BASE + v);
 		}
+	const ids = new Set([...f.querySelectorAll('[id],[name]')].flatMap(e => [e.id, e.getAttribute('name')]));
+	for (const e of f.querySelectorAll('a[href^="#"]')) { // #links -> the prefixed ids
+		const h = e.getAttribute('href').slice(1);
+		try { if (ids.has('user-content-' + decodeURIComponent(h))) e.setAttribute('href', '#user-content-' + h); } catch (x) {}
+	}
+	for (const e of f.querySelectorAll('.mermaid')) // Mermaid loads images and styles itself: no network paths there either
+		if (MERMAID_NET.test(e.textContent)) e.replaceWith(Object.assign(document.createElement('pre'),
+			{ className: 'plantuml-error', textContent: 'Mermaid: network paths (\\\\host, //host, file:, url()) are not allowed\n' + e.textContent }));
 	return f;
+}
+
+// A file: URL with a host, or one whose path starts with two slashes, is a network (UNC) path: Windows would
+// connect to that host (SMB, then WebDAV) and send the user's NTLM hash just for showing an image.
+// Such URLs are dropped wherever they can load something: src, href, srcset, poster, CSS url() and strings.
+function remote(u) {
+	try {
+		const r = new URL(u.trim(), BASE || document.baseURI);
+		return r.protocol === 'file:' && (r.host !== '' || /^[\\/]{2}/.test(decodeURIComponent(r.pathname)));
+	} catch (e) {
+		return true;
+	}
+}
+function cssUrls(css) {
+	css = css.replace(/\\([0-9a-f]{1,6})\s?|\\(.)/gis, (m, h, c) => h ? String.fromCodePoint(Math.min(parseInt(h, 16), 0xfffd)) : c);
+	return [...css.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)|(["'])(.*?)\3/gis)].map(m => m[2] ?? m[4]);
+}
+const URL_ATTR = /^(?:src|href|xlink:href|poster|background|action|formaction|data|cite)$/;
+const MERMAID_NET = /file:|(?<!https?:)[\\/]{2}|[\\/](?:%5c|%2f)|%5c%5c|\\0*(?:2f|5c)|#(?:47|92|x2f|x5c);|&#(?:0*(?:47|92)|x0*(?:2f|5c))|[&#]b?sol;|url\s*\(|image-set|\bimg\s*:\s*["']?(?!https?:|data:)/i;
+if (typeof DOMPurify !== 'undefined') {
+	DOMPurify.addHook('uponSanitizeAttribute', (n, a) => {
+		const v = a.attrValue || '', urls = cssUrls(v);
+		if (URL_ATTR.test(a.attrName)) urls.push(v);
+		if (a.attrName === 'srcset') urls.push(...v.split(',').map(s => s.trim().split(/\s+/)[0]));
+		if (urls.some(remote)) a.keepAttr = false;
+	});
+	DOMPurify.addHook('uponSanitizeElement', (n, d) => { // <style> inside SVG
+		if (d.tagName === 'style' && cssUrls(n.textContent).some(remote)) n.textContent = '';
+	});
 }
 
 // Spacing from the preferences; Mermaid's defaults are node 50, rank 50, padding 15.
