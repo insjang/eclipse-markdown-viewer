@@ -19,7 +19,7 @@ public class PrefInit extends AbstractPreferenceInitializer {
 		PreferenceConverter.setDefault(s, BODY_FONT, new FontData(JFaceResources.getFontRegistry().getFontData(JFaceResources.DIALOG_FONT)[0].getName(), 11, SWT.NORMAL));
 		PreferenceConverter.setDefault(s, CODE_FONT, new FontData(JFaceResources.getFontRegistry().getFontData(JFaceResources.TEXT_FONT)[0].getName(), 10, SWT.NORMAL));
 		s.setDefault(LINE_HEIGHT, "1.6");
-		s.setDefault(THEME, "dark");
+		s.setDefault(THEME, ThemeMode.AUTO); // as the Eclipse theme
 		s.setDefault(OPEN_PREVIEW, true);
 		s.setDefault(BREAKS, true);
 		s.setDefault(TAB_CLOSE, false);
