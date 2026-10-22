@@ -3,7 +3,7 @@ const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', f
 function setLabels(l) { Object.assign(L, l); }
 
 // Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
-function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex, plugins) {
+function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex, plugins, plantUmlOn = () => true) {
 	const md = markdownit({ html: true, linkify: true, highlight: (s, lang) => {
 		if (hljs && lang && hljs.getLanguage(lang)) try { return hljs.highlight(s, { language: lang, ignoreIllegals: true }).value; } catch (e) {}
 		return '';
@@ -41,7 +41,7 @@ function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex, plugi
 		const t = tokens[i];
 		const lang = t.info.trim().split(/\s+/)[0];
 		if (lang === 'mermaid') return `<div class="mermaid" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
-		if (lang === 'plantuml' || lang === 'puml') return `<div class="plantuml" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
+		if ((lang === 'plantuml' || lang === 'puml') && plantUmlOn()) return `<div class="plantuml" data-line="${t.map[0]}">${md.utils.escapeHtml(t.content)}</div>`;
 		return fence(tokens, i, opt, env, self);
 	};
 	const norm = md.normalizeLink.bind(md);
@@ -107,11 +107,12 @@ function yamlRows(s) {
 }
 if (typeof module !== 'undefined') module.exports = { createMd, yamlRows };
 
-let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'system-ui', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
+let BASE = '', SRC = '', PLANTUML = true, MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'system-ui', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
 const PLUGINS = typeof window !== 'undefined' ? [[window.markdownitFootnote], [window.markdownitEmoji, { shortcuts: {} }]] : []; // no :) -> emoji, as on GitHub
-const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE, window.markdownitKatex, window.katex, PLUGINS) : null;
+const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE, window.markdownitKatex, window.katex, PLUGINS, () => PLANTUML) : null;
 
-function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing) {
+function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing, plantuml) {
+	PLANTUML = plantuml !== false; // off: a plantuml block stays a plain code block
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
 	const r = document.documentElement, s = r.style;
 	r.dataset.theme = theme;

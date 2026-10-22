@@ -237,7 +237,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		new BrowserFunction(browser, "mdPlantUml") { //$NON-NLS-1$
 			@Override
 			public Object function(Object[] args) {
-				return args.length == 2 && args[0] instanceof String src && args[1] instanceof String style
+				return args.length == 2 && args[0] instanceof String src && args[1] instanceof String style && Activator.prefs().getBoolean(PrefInit.PLANTUML)
 						? PlantUml.svg(src, style)
 						: ""; //$NON-NLS-1$
 			}
@@ -405,7 +405,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		FontData c = PreferenceConverter.getFontData(s, PrefInit.CODE_FONT);
 		browser.execute("applyStyle(" + js(b.getName()) + "," + b.getHeight() + "," + js(c.getName()) + ","
 				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(s.getString(PrefInit.THEME)) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ",{\"node\":" + s.getInt(PrefInit.DIAGRAM_NODE_SPACING)
-				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "})");
+				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "}," + s.getBoolean(PrefInit.PLANTUML) + ")");
 		render(); // mermaid picks up the theme only on render
 	}
 

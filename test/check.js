@@ -36,6 +36,10 @@ for (const bad of ['---\na' + ' '.repeat(100000) + '\n---\n', '---\n' + 'a:'.rep
 	gm.render(bad);
 	assert(Date.now() - t < 500, 'slow: ' + (Date.now() - t) + ' ms');
 }
+const uml = '```plantuml\nA -> B\n```\n';
+assert(md.render(uml).includes('<div class="plantuml" data-line="0">'), 'plantuml block');
+const off = createMd(markdownit, tasks, null, () => 'file:///D:/docs/', null, null, [], () => false).render(uml);
+assert(off.includes('<pre') && !off.includes('class="plantuml"'), 'plantuml switched off: a plain code block');
 if (process.argv[2]) {
 	const out = md.render(fs.readFileSync(process.argv[2], 'utf8'));
 	console.log('real doc:', (out.match(/<table/g) || []).length, 'tables,', (out.match(/<tr/g) || []).length, 'rows,', (out.match(/data-line/g) || []).length, 'line anchors, leftover "| --- |":', /\|\s*-{3,}\s*\|/.test(out));
