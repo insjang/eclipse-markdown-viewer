@@ -46,7 +46,9 @@ import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.program.Program;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
@@ -271,7 +273,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		};
 		try {
 			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
-			browser.setUrl(pageUrl);
+			browser.setUrl(pageUrl + firstPaintQuery());
 		} catch (Exception e) {
 			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
 		}
@@ -399,6 +401,18 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (!loaded) return;
 		stale = false;
 		browser.execute("render(" + js(document().get()) + "," + js(baseUrl()) + ")");
+	}
+
+	/**
+	 * Dark or light and the page color for the first paint (see preview.html): the page is dark by default, which showed as a dark flash
+	 * in a light Eclipse before applyStyle had run. The Browser behind the page gets the same color for the moment before the page exists.
+	 */
+	private String firstPaintQuery() {
+		IPreferenceStore s = Activator.prefs();
+		String theme = ThemeMode.resolve(s.getString(PrefInit.THEME), themeReference());
+		RGB c = PreferenceConverter.getColor(s, Colors.key(theme, "bg")); //$NON-NLS-1$
+		browser.setBackground(new Color(c));
+		return String.format("?theme=%s&bg=%%23%02x%02x%02x", theme, c.red, c.green, c.blue); //$NON-NLS-1$
 	}
 
 	/** A widget of the Source: what the Eclipse theme made of it says whether the editors are dark. */
