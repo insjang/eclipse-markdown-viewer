@@ -23,9 +23,10 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
 | 위치 동기화 | Preview → Source 전환 시 보던 위치의 원본 줄로 이동 (표는 행 단위), 반대 방향도 동일 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
+| 수식 | GitHub와 같은 `$인라인$`, `$$블록$$`, ```` ```math ```` 블록, 내장 KaTeX로 오프라인 표시. `\$`와 $5 같은 금액은 글자 그대로, TeX 오류는 빨간색 |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
-| PDF 내보내기 | A4, 라이트 색, Mermaid 포함 (Edge 헤드리스 인쇄) |
+| PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
 | 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 탭 더블클릭으로 에디터 닫기 (선택) |
@@ -97,6 +98,16 @@ Preferences → General → Editors → Markdown Viewer
 - Mermaid 간격: 노드 사이 25, 단계 사이 30, 상자 안 여백 6 (Mermaid 기본 50·50·15보다 촘촘), 설정에서 조정. 블록 첫 줄의 `%%{init: {...}}%%`가 우선
   - 흐름도·시퀀스·ER에 적용 (시퀀스·ER은 각자 기본값에서 같은 비율로 축소)
   - PlantUML 내장 배치 엔진(smetana)은 간격 설정을 무시하므로 적용 안 함 (기본 배치가 이미 촘촘)
+- 수식 예 (GitHub와 같은 문법):
+
+  ````markdown
+  $ax^2 + bx + c = 0$의 근은
+
+  $$
+  x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+  $$
+  ````
+
 - PlantUML: ` ```plantuml ` 또는 ` ```puml ` 블록, 본문 글꼴·크기와 테마 색 적용
   - 플러그인 안의 PlantUML(MIT판)이 로컬에서 그림: 서버 전송 없음, Graphviz 불필요 (내장 smetana 배치)
   - `!include`로 로컬 파일·URL 읽기 차단 (PlantUML SANDBOX 보안 설정)
@@ -111,6 +122,7 @@ Preferences → General → Editors → Markdown Viewer
 - 허용 URL: `http`, `https`, `mailto`, 문서 기준 상대 경로, `#앵커`
 - OS로 넘기는 링크: `http`, `https`, `mailto`만 (로컬 실행 파일 실행 차단)
 - Mermaid: `strict` 모드
+- KaTeX: `trust: false` (`\href`, `\url`, `\includegraphics`는 글자로만 표시)
 
 ## 구조
 
@@ -133,6 +145,7 @@ test/
   check.js                     렌더링 검사 (node)
   sanitize.js                  HTML 정화 검사 (node + jsdom)
   plantuml.js                  PlantUML 블록 연결 검사 (node + jsdom)
+  math.js, math.md             수식 렌더링·정화 검사 (node + jsdom)
   PlantUmlCheck.java           PlantUML 렌더링 검사 (한글, 글꼴, include 차단)
   JsEscape.java                Java → JS 문자열 변환 검사
 ```
@@ -142,6 +155,7 @@ test/
 ```bash
 node test/check.js [검사할.md]
 NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
+NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 ```
 
 ## 라이선스
@@ -157,6 +171,8 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 |---|---|---|
 | markdown-it | 14.3.2 | MIT |
 | markdown-it-task-lists | 2.1.1 | ISC |
+| KaTeX | 0.19.0 | MIT |
+| @vscode/markdown-it-katex | 1.1.2 | MIT |
 | mermaid | 11.17.2 | MIT |
 | highlight.js | 11.12.0 | BSD-3-Clause |
 | DOMPurify | 3.4.16 | Apache-2.0 / MPL-2.0 |

@@ -2,7 +2,7 @@
 
 A Markdown editor for Eclipse with a preview tab.
 Source and Preview are tabs of one editor, not a split screen or a separate view, so the document gets the whole editor area and a terminal or other views keep their room beside it.
-It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams, keeps the source and the preview at the same scroll position, and exports a PDF in one click.
+It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams and math, keeps the source and the preview at the same scroll position, and exports a PDF in one click.
 
 [한국어 README](README.ko.md)
 
@@ -25,9 +25,10 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
+| Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
 | Links | `.md` links open in Eclipse, web and mail links in the system browser |
-| PDF export | A4, light colors, diagrams included |
+| PDF export | A4, light colors, diagrams and math included |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Font size | `A-` / `A+` on the preview toolbar |
 | Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional double-click to close editor tabs |
@@ -100,6 +101,16 @@ Preferences > General > Editors > Markdown Viewer
 - Diagrams use the body font and size; the PDF uses the light colors.
 - A `%%{init: {...}}%%` line in a Mermaid block overrides the spacing for that diagram.
 
+Math, as on GitHub:
+
+````markdown
+The roots of $ax^2 + bx + c = 0$ are
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+````
+
 ## Security
 
 Markdown from elsewhere can be opened safely.
@@ -107,6 +118,7 @@ Markdown from elsewhere can be opened safely.
 - HTML in a document is sanitized with DOMPurify: scripts, event handlers and `javascript:` links are removed.
 - Only `http`, `https`, `mailto`, document-relative paths and `#anchors` survive as URLs, and only `http`, `https` and `mailto` are handed to the operating system.
 - Mermaid runs with `securityLevel: 'strict'`.
+- KaTeX runs with `trust: false`: `\href`, `\url` and `\includegraphics` stay text.
 - PlantUML runs with its `SANDBOX` security profile: `!include` cannot read local files or URLs. Its SVG output is sanitized too.
 
 ## Limitations
@@ -136,6 +148,7 @@ icons/                         editor icon
 test/
   check.js                     rendering (node)
   sanitize.js, plantuml.js     sanitizing and PlantUML wiring (node + jsdom)
+  math.js, math.md             math rendering and sanitizing (node + jsdom)
   JsEscape.java, PlantUmlCheck.java
 ```
 
@@ -145,4 +158,4 @@ Developed with the help of AI coding assistants, including Claude (Anthropic).
 
 
 [Eclipse Public License 2.0](LICENSE).
-Bundled third-party libraries (markdown-it, markdown-it-task-lists, Mermaid, highlight.js, DOMPurify, PlantUML) keep their own licenses, listed in [NOTICE](NOTICE).
+Bundled third-party libraries (markdown-it, markdown-it-task-lists, KaTeX, @vscode/markdown-it-katex, Mermaid, highlight.js, DOMPurify, PlantUML) keep their own licenses, listed in [NOTICE](NOTICE).

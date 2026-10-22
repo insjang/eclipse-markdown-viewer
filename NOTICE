@@ -15,6 +15,14 @@ Third-party content bundled in the plugin JAR, each under its own license:
   ISC License, Copyright (c) 2016 Revin Guillen
   https://github.com/revin/markdown-it-task-lists
 
+- KaTeX 0.19.0 (web/katex.min.js, web/katex.min.css, web/fonts/KaTeX_*.woff2)
+  MIT License, Copyright (c) 2013-2020 Khan Academy and other contributors
+  https://github.com/KaTeX/KaTeX
+
+- @vscode/markdown-it-katex 1.1.2 (web/markdown-it-katex.js, wrapped for the browser)
+  MIT License, Copyright (c) Microsoft Corporation
+  https://github.com/microsoft/vscode-markdown-it-katex
+
 - Mermaid 11.17.2 (web/mermaid.min.js)
   MIT License, Copyright (c) 2014 - 2022 Knut Sveidqvist
   https://github.com/mermaid-js/mermaid

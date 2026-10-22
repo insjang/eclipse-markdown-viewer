@@ -2,8 +2,10 @@ package io.github.insjang.mdviewer;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
@@ -13,8 +15,6 @@ import org.osgi.framework.BundleContext;
 
 public class Activator extends AbstractUIPlugin {
 	static final String ID = "io.github.insjang.mdviewer";
-	static final String[] WEB = { "preview.html", "preview.js", "preview.css", "hl-dark.css", "hl-light.css",
-			"markdown-it.min.js", "markdown-it-task-lists.min.js", "highlight.min.js", "mermaid.min.js", "purify.min.js" };
 	private static Activator plugin;
 
 	@Override
@@ -40,9 +40,14 @@ public class Activator extends AbstractUIPlugin {
 		String version = String.valueOf(plugin.getBundle().getLastModified());
 		if (stamp.isFile() && Files.readString(stamp.toPath()).equals(version)) return dir;
 		dir.mkdirs();
-		for (String name : WEB) {
-			try (InputStream in = plugin.getBundle().getEntry("web/" + name).openStream()) {
-				Files.copy(in, new File(dir, name).toPath(), StandardCopyOption.REPLACE_EXISTING);
+		// everything under web/, subfolders too (KaTeX fonts/)
+		for (URL u : Collections.list(plugin.getBundle().findEntries("web", "*", true))) {
+			String name = u.getPath().substring("/web/".length());
+			if (name.isEmpty() || name.endsWith("/")) continue;
+			File f = new File(dir, name);
+			f.getParentFile().mkdirs();
+			try (InputStream in = u.openStream()) {
+				Files.copy(in, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			}
 		}
 		Files.writeString(stamp.toPath(), version);

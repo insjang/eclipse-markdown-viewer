@@ -1,9 +1,12 @@
-// Markdown -> HTML with source line anchors (data-line), mermaid blocks, heading ids, doc-relative links.
-function createMd(markdownit, taskLists, hljs, getBase) {
+// Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
+function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex) {
 	const md = markdownit({ html: true, linkify: true, highlight: (s, lang) => {
 		if (hljs && lang && hljs.getLanguage(lang)) try { return hljs.highlight(s, { language: lang, ignoreIllegals: true }).value; } catch (e) {}
 		return '';
 	} }).use(taskLists);
+	// $inline$, $$display$$, ```math (as on GitHub); bad TeX shows inline in red (KaTeX's #cc0000 is too dark
+	// on the dark theme), \href, \url, \includegraphics stay text (trust: false)
+	if (mathPlugin) md.use(mathPlugin, { katex, enableFencedBlocks: true, throwOnError: false, trust: false, errorColor: '#f85149' });
 	md.linkify.set({ fuzzyLink: false }); // "other.md" is not a Moldovan domain
 	const valid = md.validateLink.bind(md);
 	md.validateLink = u => /^file:/i.test(u) || valid(u); // doc-relative links become file:// URLs
@@ -33,7 +36,7 @@ function createMd(markdownit, taskLists, hljs, getBase) {
 if (typeof module !== 'undefined') module.exports = { createMd };
 
 let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'system-ui', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
-const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE) : null;
+const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE, window.markdownitKatex, window.katex) : null;
 
 function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing) {
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
@@ -73,11 +76,13 @@ function render(src, base) {
 	window.scrollTo(0, y);
 	// diagrams grow once drawn, which moves everything below them: aim again then
 	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(() => doScroll(), () => doScroll());
+	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
 }
 
 // Raw HTML in markdown is allowed (<br>, <details>...) but sanitized by DOMPurify before insertion.
 // Only http(s)/mailto/file (doc-relative links) and #anchors survive as URLs.
-const PURIFY = { RETURN_DOM_FRAGMENT: true, FORBID_TAGS: ['style', 'form'],
+// semantics/annotation: KaTeX's MathML wraps the TeX source in them (text only); without them it leaks into the page text.
+const PURIFY = { RETURN_DOM_FRAGMENT: true, FORBID_TAGS: ['style', 'form'], ADD_TAGS: ['semantics', 'annotation'],
 	ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|file):|#|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i };
 function sanitize(html) {
 	const f = DOMPurify.sanitize(html, PURIFY);
@@ -150,7 +155,7 @@ if (typeof window !== 'undefined') {
 function exportDoc() {
 	const vars = (FONTVARS + Object.entries(COLORS.light).map(([k, v]) => `${k}:${v};`).join('')).replace(/"/g, '&quot;');
 	return `<!doctype html><html data-theme="light" style="${vars}"><head><meta charset="utf-8">`
-		+ '<link rel="stylesheet" href="preview.css"><link rel="stylesheet" href="hl-light.css">'
+		+ '<link rel="stylesheet" href="preview.css"><link rel="stylesheet" href="hl-light.css"><link rel="stylesheet" href="katex.min.css">'
 		+ '<script src="mermaid.min.js"></script><script>mermaid.initialize(' + JSON.stringify({ ...MERMAID, startOnLoad: true, theme: 'default' }).replace(/</g, '\\u003c') + ')</script>'
 		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC))); drawPlantUml(d, 'light'); return d.innerHTML; })()}</div></body></html>`;
 }
