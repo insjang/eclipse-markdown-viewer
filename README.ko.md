@@ -10,7 +10,9 @@
 |---|---|
 | ![다크 테마 다이어그램](docs/images/diagrams-dark.png) | ![라이트 테마 다이어그램](docs/images/diagrams-light.png) |
 
-스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면.
+![KaTeX 수식, 다크 테마: 인라인·블록 수식, TeX 오류는 빨간색](docs/images/math-dark.png)
+
+스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면, 수식은 [test/math.md](test/math.md).
 
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
 Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 뷰를 띄우지 않음: 문서가 편집 영역 전체를 쓰고, 옆에 터미널 등 다른 뷰를 둘 공간이 남음.

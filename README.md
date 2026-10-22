@@ -14,7 +14,9 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 |---|---|
 | ![Diagrams, dark theme](docs/images/diagrams-dark.png) | ![Diagrams, light theme](docs/images/diagrams-light.png) |
 
-The screenshots show [docs/sample.md](docs/sample.md) with the default settings.
+![Math with KaTeX, dark theme: inline and display formulas, TeX errors in red](docs/images/math-dark.png)
+
+The screenshots show [docs/sample.md](docs/sample.md) with the default settings, the math one [test/math.md](test/math.md).
 
 ## Features
 
