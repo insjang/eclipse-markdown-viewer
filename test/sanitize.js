@@ -43,4 +43,10 @@ t.append(sanitize(md.render('[a](#title) [b](#links) [c](#body) [d](#정책-결�
 for (const id of ['title', 'links', 'body', '정책-결정']) assert(t.querySelector('[id="user-content-' + id + '"]'), 'id kept: ' + id + ' ' + t.innerHTML);
 assert(t.innerHTML.includes('href="#user-content-title"') && t.innerHTML.includes('href="#user-content-links"') && t.innerHTML.includes('href="#user-content-body"')
 	&& t.innerHTML.includes('href="#user-content-%EC%A0%95') && t.innerHTML.includes('href="#user-content-raw"') && t.innerHTML.includes('href="#top"'), 'anchors follow: ' + t.innerHTML);
+// alerts keep their icon and classes, footnote links follow the prefixed ids
+const g = require('../web/preview.js').createMd(markdownit, require('../web/markdown-it-task-lists.min.js'), null, () => '', null, null, [[require('../web/markdown-it-footnote.min.js')]]);
+const a = document.createElement('div');
+a.append(sanitize(g.render('> [!CAUTION]\n> Careful[^x].\n\n[^x]: Why.\n')));
+assert(a.querySelector('div.markdown-alert.markdown-alert-caution > p.markdown-alert-title > svg > path[d]'), 'alert kept: ' + a.innerHTML);
+assert(a.querySelector('a[href="#user-content-fn1"][id="user-content-fnref1"]') && a.querySelector('li[id="user-content-fn1"] a[href="#user-content-fnref1"]'), 'footnote anchors: ' + a.innerHTML);
 console.log('sanitize ok');

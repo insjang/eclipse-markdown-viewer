@@ -20,6 +20,16 @@ assert(fm.includes('<h1 data-line="7" id="head">'), 'line after front matter: ' 
 assert(!md.render('text\n\n---\na: b\n---\n').includes('front-matter'), 'only at line 1');
 assert(!md.render('---\nnot closed\n').includes('front-matter'), 'unclosed is a rule');
 assert(md.render('---\n<script>x</script>: 1\n...\n').includes('<th>&lt;script&gt;x&lt;/script&gt;</th>'), 'escaped, ... closes');
+// GitHub alerts, footnotes, emoji
+const gm = createMd(markdownit, tasks, null, () => '', null, null,
+	[[require('../web/markdown-it-footnote.min.js')], [require('../web/markdown-it-emoji.min.js'), { shortcuts: {} }]]);
+const al = gm.render('> [!NOTE]\n> Read **this**.\n\n> [!warning]\n\n> [!TIP] not alone\n\n> plain\n> > [!NOTE]\n> > nested\n');
+assert(al.includes('<div class="markdown-alert markdown-alert-note" data-line="0">\n<p class="markdown-alert-title"><svg') && al.includes('Note</p>\n<p data-line="0">Read <strong>this</strong>.</p>\n</div>'), 'note: ' + al);
+assert(al.includes('markdown-alert-warning') && al.includes('Warning</p>\n</div>'), 'marker only: ' + al);
+assert(!al.includes('markdown-alert-tip') && (al.match(/markdown-alert-note/g) || []).length === 1 && al.includes('<blockquote data-line="8">'), 'text after marker, nested: not alerts ' + al);
+const fn = gm.render('Text[^1] :smile: :) :nope:\n\n[^1]: The note.\n');
+assert(fn.includes('<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>') && fn.includes('<li id="fn1" class="footnote-item">'), 'footnote: ' + fn);
+assert(fn.includes('\u{1F604} :) :nope:'), 'emoji, no smiley shortcuts: ' + fn);
 if (process.argv[2]) {
 	const out = md.render(fs.readFileSync(process.argv[2], 'utf8'));
 	console.log('real doc:', (out.match(/<table/g) || []).length, 'tables,', (out.match(/<tr/g) || []).length, 'rows,', (out.match(/data-line/g) || []).length, 'line anchors, leftover "| --- |":', /\|\s*-{3,}\s*\|/.test(out));

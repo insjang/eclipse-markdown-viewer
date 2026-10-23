@@ -26,6 +26,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 위치 동기화 | 탭을 바꿔도 스크롤바 위치 유지: 한쪽 끝이면 다른 쪽도 끝 (스크롤 비율 기준), 양방향 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 머리말 (front matter) | 파일 맨 앞 YAML 블록(`---` ~ `---`, SKILL.md·정적 사이트 원고 등)을 가로줄·굵은 글씨 대신 접힌 키·값 표로 표시 |
+| GitHub 문법 | 알림 상자(`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`, GitHub 색), 각주(`[^1]`), 이모지 코드(`:smile:`) |
 | 수식 | GitHub와 같은 `$인라인$`, `$$블록$$`, ```` ```math ```` 블록, 내장 KaTeX로 오프라인 표시. `\$`와 $5 같은 금액은 글자 그대로, TeX 오류는 빨간색 |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
@@ -179,6 +180,9 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 |---|---|---|
 | markdown-it | 14.3.2 | MIT |
 | markdown-it-task-lists | 2.1.1 | ISC |
+| markdown-it-footnote | 4.0.0 | MIT |
+| markdown-it-emoji | 3.1.0 | MIT |
+| GitHub Octicons (알림 아이콘 5개) | - | MIT |
 | KaTeX | 0.19.0 | MIT |
 | @vscode/markdown-it-katex | 1.1.2 | MIT |
 | mermaid | 11.17.2 | MIT |

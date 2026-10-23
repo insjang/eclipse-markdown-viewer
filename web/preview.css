@@ -28,6 +28,14 @@ tr:nth-child(2n) td { background:var(--row-alt) }
 img { max-width:100% }
 hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border) }
 .task-list-item { list-style:none } .task-list-item input { margin:0 .4em 0 -1.4em; vertical-align:middle }
+/* GitHub alerts and footnotes, colors as on GitHub (dark, then light) */
+.markdown-alert { padding:.5em 1em; margin:0 0 1em; border-left:.25em solid var(--alert) } .markdown-alert > :last-child { margin-bottom:0 }
+.markdown-alert-title { display:flex; align-items:center; gap:.5em; font-weight:500; color:var(--alert); line-height:1 } .markdown-alert-title svg { fill:currentColor }
+.markdown-alert-note { --alert:#4493f8 } .markdown-alert-tip { --alert:#3fb950 } .markdown-alert-important { --alert:#ab7df8 }
+.markdown-alert-warning { --alert:#d29922 } .markdown-alert-caution { --alert:#f85149 }
+[data-theme=light] .markdown-alert-note { --alert:#0969da } [data-theme=light] .markdown-alert-tip { --alert:#1a7f37 } [data-theme=light] .markdown-alert-important { --alert:#8250df }
+[data-theme=light] .markdown-alert-warning { --alert:#9a6700 } [data-theme=light] .markdown-alert-caution { --alert:#d1242f }
+.footnotes { font-size:.875em; color:var(--quote) } hr.footnotes-sep { height:1px }
 .front-matter { margin:0 0 1em; color:var(--quote) }
 .front-matter summary { cursor:pointer; font-size:.875em } .front-matter table { margin:.5em 0 0 } .front-matter td { white-space:pre-wrap }
 .mermaid, .plantuml { text-align:center }
@@ -39,5 +47,5 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 @media print {
 	* { -webkit-print-color-adjust:exact; print-color-adjust:exact }
 	table { display:table; width:100%; max-width:none } pre { white-space:pre-wrap }
-	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .mermaid, .plantuml, .katex-display { break-inside:avoid }
+	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .markdown-alert, .mermaid, .plantuml, .katex-display { break-inside:avoid }
 }

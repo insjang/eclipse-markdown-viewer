@@ -60,3 +60,13 @@ public ResponseEntity<Order> place(@RequestBody Cart cart) {
 ```
 
 Retries use `backoff = base * 2^attempt`, capped at 30 seconds.
+
+## 5. Notes
+
+> [!NOTE]
+> Payment retries are logged with the order id[^log].
+
+> [!WARNING]
+> Do not retry a declined card more than three times :warning:
+
+[^log]: Kept for 30 days in the audit table.

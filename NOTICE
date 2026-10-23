@@ -15,6 +15,18 @@ Third-party content bundled in the plugin JAR, each under its own license:
   ISC License, Copyright (c) 2016 Revin Guillen
   https://github.com/revin/markdown-it-task-lists
 
+- markdown-it-footnote 4.0.0 (web/markdown-it-footnote.min.js)
+  MIT License, Copyright (c) 2014-2015 Vitaly Puzrin, Alex Kocharin
+  https://github.com/markdown-it/markdown-it-footnote
+
+- markdown-it-emoji 3.1.0 (web/markdown-it-emoji.min.js)
+  MIT License, Copyright (c) 2014 Vitaly Puzrin
+  https://github.com/markdown-it/markdown-it-emoji
+
+- GitHub Octicons: the five alert icons in web/preview.js (path data taken from markdown-it-github-alerts 1.0.1)
+  MIT License, Copyright (c) GitHub Inc.; markdown-it-github-alerts: MIT License, Copyright (c) 2022 Anthony Fu
+  https://github.com/primer/octicons, https://github.com/antfu/markdown-it-github-alerts
+
 - KaTeX 0.19.0 (web/katex.min.js, web/katex.min.css, web/fonts/KaTeX_*.woff2)
   MIT License, Copyright (c) 2013-2020 Khan Academy and other contributors
   https://github.com/KaTeX/KaTeX

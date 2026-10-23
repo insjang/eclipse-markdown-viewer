@@ -26,6 +26,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
+| GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
@@ -104,6 +105,17 @@ Preferences > General > Editors > Markdown Viewer
 - Diagrams use the body font and size; the PDF uses the light colors.
 - A `%%{init: {...}}%%` line in a Mermaid block overrides the spacing for that diagram.
 
+Alerts and footnotes, as on GitHub:
+
+````markdown
+> [!TIP]
+> Press `A+` for a larger font.
+
+Retries are logged[^1].
+
+[^1]: Kept for 30 days.
+````
+
 Math, as on GitHub:
 
 ````markdown
@@ -166,4 +178,4 @@ Developed with the help of AI coding assistants, including Claude (Anthropic).
 
 
 [Eclipse Public License 2.0](LICENSE).
-Bundled third-party libraries (markdown-it, markdown-it-task-lists, KaTeX, @vscode/markdown-it-katex, Mermaid, highlight.js, DOMPurify, PlantUML) keep their own licenses, listed in [NOTICE](NOTICE).
+Bundled third-party libraries (markdown-it, markdown-it-task-lists, markdown-it-footnote, markdown-it-emoji, KaTeX, @vscode/markdown-it-katex, Mermaid, highlight.js, DOMPurify, PlantUML) keep their own licenses, listed in [NOTICE](NOTICE).
