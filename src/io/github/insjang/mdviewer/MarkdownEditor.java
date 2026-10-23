@@ -54,13 +54,21 @@ import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
-/** Source (generic text editor) + Preview (Edge browser) tabs at the bottom of the same editor area. */
+/** Source (generic text editor) + Preview (Edge or WebKitGTK browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
 public class MarkdownEditor extends MultiPageEditorPart {
 	private static final int SOURCE = 0, PREVIEW = 1;
-	/** Edge for PDF export (headless print), null when not installed: Windows only */
-	private static final String EDGE = java.util.stream.Stream.of("C:\\Program Files (x86)", "C:\\Program Files")
-			.map(p -> p + "\\Microsoft\\Edge\\Application\\msedge.exe").filter(p -> new File(p).isFile()).findFirst().orElse(null);
+	/** Chromium-based browser for the PDF export (headless print): Edge on Windows, Chrome or Chromium elsewhere; null hides the button */
+	private static final String CHROME = printer();
+
+	static String printer() {
+		java.util.stream.Stream<String> candidates = File.separatorChar == '\\'
+				? java.util.stream.Stream.of("C:\\Program Files (x86)", "C:\\Program Files").map(p -> p + "\\Microsoft\\Edge\\Application\\msedge.exe")
+				: java.util.stream.Stream.concat(java.util.stream.Stream.of("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"), // macOS: untested
+						java.util.stream.Stream.of("google-chrome", "google-chrome-stable", "chromium-browser", "chromium", "microsoft-edge")
+								.flatMap(n -> java.util.Arrays.stream(String.valueOf(System.getenv("PATH")).split(File.pathSeparator)).map(d -> d + "/" + n)));
+		return candidates.filter(p -> new File(p).isFile() && new File(p).canExecute()).findFirst().orElse(null);
+	}
 
 	private ITextEditor source;
 	private Browser browser;
@@ -121,7 +129,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
 		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
-		if (EDGE != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
+		if (CHROME != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
 		item(bar, Messages.toolbar_html, this::exportHtml);
 		item(bar, Messages.toolbar_copyHtml, this::copyHtml);
 		item(bar, "A-", () -> Activator.zoom(-1));
@@ -314,7 +322,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				File web = Activator.web(), page = new File(web, "export.html"), pdf = new File(web.getParentFile(), "export.pdf");
 				Files.writeString(page.toPath(), html);
 				pdf.delete(); // printed next to the page, then moved: an existing target stays until there is a new PDF
-				Process p = new ProcessBuilder(List.of(EDGE, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
+				Process p = new ProcessBuilder(List.of(CHROME, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
 						"--user-data-dir=" + new File(web.getParentFile(), "edge"), "--virtual-time-budget=15000",
 						"--print-to-pdf=" + pdf, fileUrl(page.toURI()))).redirectErrorStream(true).start();
 				p.getInputStream().transferTo(java.io.OutputStream.nullOutputStream());

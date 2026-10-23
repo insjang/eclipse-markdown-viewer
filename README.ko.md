@@ -33,7 +33,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 코드 블록 | 마우스를 올리면 나오는 `복사` 버튼으로 코드 원문 복사 |
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
-| PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
+| PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Windows: Edge, Linux: Chrome·Chromium 헤드리스 인쇄) |
 | HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함. `HTML 복사`: 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
@@ -49,7 +49,7 @@ TM4E 구문 강조와 Wild Web Developer의 Markdown 자동완성이 그대로 �
 ## 요구 사항
 
 - Windows 10/11 + Microsoft Edge (WebView2): 모든 기능, PDF 내보내기 포함
-- Linux: WebKitGTK(`libwebkit2gtk-4.1`)가 있으면 미리보기 동작 (WSL의 Ubuntu 24.04에서 확인), PDF 내보내기는 안 됨 (Edge 사용)
+- Linux: WebKitGTK(`libwebkit2gtk-4.1`)가 있으면 미리보기 동작 (WSL의 Ubuntu 24.04에서 확인), PDF 내보내기는 `PATH`의 Google Chrome 또는 Chromium 사용 (`google-chrome`, `google-chrome-stable`, `chromium-browser`, `chromium`, `microsoft-edge`), WSL의 Google Chrome으로 확인
 - Eclipse 2026-09 (4.41) 이상에서 확인
   - 필요 번들: `org.eclipse.ui.genericeditor`, `org.eclipse.ui.editors`, `org.eclipse.jface.text` (Eclipse IDE 패키지에 기본 포함)
 - 빌드: JDK 21 이상, bash (WSL 가능)
@@ -203,5 +203,7 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 
 ## 제약
 
-- PDF 내보내기는 Windows 전용: `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge 사용, 없으면 버튼 숨김, macOS는 미확인
+- PDF 내보내기는 Chromium 계열 브라우저 필요: Windows는 `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge, 그 밖은 `PATH`의 Chrome·Chromium, 없으면 버튼 숨김
+  - snap 패키지 Chromium은 격리 때문에 숨김 폴더 `.metadata`의 페이지를 못 읽을 수 있음: Google Chrome 패키지 권장
+  - macOS(`/Applications/Google Chrome.app`)는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선

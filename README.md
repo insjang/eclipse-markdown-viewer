@@ -35,7 +35,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
-| PDF export | A4, light colors, diagrams and math included |
+| PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
 | HTML | Export HTML saves one self-contained file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts embedded when there is math); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
@@ -51,7 +51,7 @@ The Source tab is Eclipse's Generic Editor, so TM4E syntax highlighting and the 
 
 - Eclipse 2026-09 (4.41) or later with `org.eclipse.ui.genericeditor` (included in the Eclipse IDE packages)
 - Windows 10 or 11 with Microsoft Edge (WebView2): everything, including the PDF export
-- Linux: the preview works with WebKitGTK (`libwebkit2gtk-4.1`), checked on Ubuntu 24.04 under WSL; the PDF export does not (it uses Edge)
+- Linux: the preview works with WebKitGTK (`libwebkit2gtk-4.1`), checked on Ubuntu 24.04 under WSL; the PDF export uses Google Chrome or Chromium found on `PATH` (`google-chrome`, `google-chrome-stable`, `chromium-browser`, `chromium`, `microsoft-edge`), checked with Google Chrome under WSL
 
 ## Install
 
@@ -146,7 +146,7 @@ Markdown from elsewhere can be opened safely.
 
 ## Limitations
 
-- PDF export is Windows only: the PDF is printed by headless Edge from `C:\Program Files (x86)` or `C:\Program Files`, and the button is hidden when it is not there. macOS is untested.
+- PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; the button is hidden when there is none. The snap package of Chromium may not be able to read the page from the hidden `.metadata` folder (snap confinement): use the Google Chrome package then. macOS (`/Applications/Google Chrome.app`) is untested.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 
 ## Source layout
