@@ -29,6 +29,8 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
 | GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |
+| Diagram zoom | Ctrl+wheel over a Mermaid diagram zooms around the pointer, dragging moves it, Original size goes back |
+| Code blocks | A Copy button (shown on hover) copies the code as written |
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |

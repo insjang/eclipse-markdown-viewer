@@ -1,5 +1,5 @@
 // UI text inside the page, replaced from messages*.properties by the plugin (setLabels)
-const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', findPrev: 'Previous (Shift+Enter)', findNext: 'Next (Enter)', findClose: 'Close (Esc)' };
+const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', findPrev: 'Previous (Shift+Enter)', findNext: 'Next (Enter)', findClose: 'Close (Esc)', copy: 'Copy', copied: 'Copied', zoomReset: 'Original size' };
 function setLabels(l) { Object.assign(L, l); }
 
 // Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
@@ -147,9 +147,10 @@ function render(src, base) {
 	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
 	drawPlantUml(document.getElementById('c'), THEME);
 	window.scrollTo(0, y);
+	copyButtons(document.getElementById('c'));
 	findRun(false);
 	// diagrams grow once drawn, which moves everything below them: aim again then
-	const drawn = () => { doScroll(); findRun(false); };
+	const drawn = () => { doScroll(); findRun(false); document.querySelectorAll('#c .mermaid').forEach(panZoom); };
 	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(drawn, drawn);
 	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
 }
@@ -264,6 +265,66 @@ function scrollToLine(n) {
 	for (const e of document.querySelectorAll('#c [data-line]')) if (+e.dataset.line <= n && (!best || +e.dataset.line > +best.dataset.line)) best = e;
 	PENDING = -1;
 	if (best) best.scrollIntoView({ block: 'start' });
+}
+
+// Copy button on code blocks: the code as written, through the plugin's clipboard (mdCopy) when there is one,
+// as navigator.clipboard needs a secure context and permission that a file: page in WebView2 or WebKitGTK may not get
+function copyButtons(root) {
+	for (const code of root.querySelectorAll('pre > code')) {
+		const pre = code.parentElement, box = document.createElement('div'), b = document.createElement('button');
+		box.className = 'code-box';
+		b.className = 'copy';
+		b.textContent = L.copy;
+		b.onclick = () => {
+			const text = code.textContent.replace(/\n$/, '');
+			if (typeof window.mdCopy === 'function') window.mdCopy(text);
+			else navigator.clipboard.writeText(text);
+			b.textContent = L.copied;
+			setTimeout(() => { b.textContent = L.copy; }, 1500);
+		};
+		pre.replaceWith(box);
+		box.append(pre, b);
+	}
+}
+
+// Mermaid diagrams: Ctrl+wheel zooms around the pointer, dragging moves, the button brings back the original size
+function panZoom(box) {
+	const svg = box.querySelector(':scope > svg');
+	if (!svg || box.querySelector('.zoom-reset')) return;
+	let s = 1, x = 0, y = 0, drag = null;
+	const reset = Object.assign(document.createElement('button'), { className: 'zoom-reset', textContent: L.zoomReset, hidden: true });
+	const apply = () => {
+		svg.style.transform = s === 1 && !x && !y ? '' : `translate(${x}px, ${y}px) scale(${s})`;
+		reset.hidden = !svg.style.transform;
+	};
+	reset.onclick = () => { s = 1; x = y = 0; apply(); };
+	svg.style.transformOrigin = '0 0';
+	box.append(reset);
+	box.addEventListener('wheel', e => {
+		if (!e.ctrlKey) return; // plain wheel scrolls the page
+		e.preventDefault(); // not the browser's page zoom
+		const r = svg.getBoundingClientRect(), ox = r.left - x, oy = r.top - y;
+		const px = (e.clientX - r.left) / s, py = (e.clientY - r.top) / s;
+		s = Math.min(10, Math.max(0.2, s * Math.exp(-e.deltaY * 0.002)));
+		x = e.clientX - px * s - ox;
+		y = e.clientY - py * s - oy;
+		apply();
+	}, { passive: false });
+	box.addEventListener('pointerdown', e => {
+		if (e.button !== 0 || e.target === reset) return;
+		drag = { cx: e.clientX, cy: e.clientY, x, y };
+		box.setPointerCapture(e.pointerId);
+		e.preventDefault();
+	});
+	box.addEventListener('pointermove', e => {
+		if (!drag) return;
+		x = drag.x + e.clientX - drag.cx;
+		y = drag.y + e.clientY - drag.cy;
+		apply();
+	});
+	const end = () => { drag = null; };
+	box.addEventListener('pointerup', end);
+	box.addEventListener('pointercancel', end);
 }
 
 // Find in the preview (Ctrl+F on the Preview tab). All matches are highlighted with the CSS Custom Highlight API

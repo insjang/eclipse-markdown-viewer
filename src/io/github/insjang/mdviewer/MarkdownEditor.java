@@ -32,6 +32,9 @@ import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.program.Program;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -128,6 +131,22 @@ public class MarkdownEditor extends MultiPageEditorPart {
 						: ""; //$NON-NLS-1$
 			}
 		};
+		new BrowserFunction(browser, "mdCopy") { //$NON-NLS-1$
+			@Override
+			public Object function(Object[] args) {
+				// after the callback, as with links (#1): nothing that pumps events inside a WebView2 callback
+				if (args.length == 1 && args[0] instanceof String text && !text.isEmpty()) browser.getDisplay().asyncExec(() -> {
+					if (browser.isDisposed()) return;
+					Clipboard c = new Clipboard(browser.getDisplay());
+					try {
+						c.setContents(new Object[] { text }, new Transfer[] { TextTransfer.getInstance() });
+					} finally {
+						c.dispose();
+					}
+				});
+				return null;
+			}
+		};
 		try {
 			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
 			browser.setUrl(pageUrl);
@@ -173,7 +192,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	/** Text shown inside the page, from messages*.properties. */
 	private static String labels() {
 		return "{\"frontMatter\":" + js(Messages.preview_frontMatter) + ",\"find\":" + js(Messages.find_find) + ",\"findNone\":" + js(Messages.find_none)
-				+ ",\"findPrev\":" + js(Messages.find_previous) + ",\"findNext\":" + js(Messages.find_next) + ",\"findClose\":" + js(Messages.find_close) + "}";
+				+ ",\"findPrev\":" + js(Messages.find_previous) + ",\"findNext\":" + js(Messages.find_next) + ",\"findClose\":" + js(Messages.find_close) + ",\"copy\":" + js(Messages.preview_copy) + ",\"copied\":" + js(Messages.preview_copied)
+				+ ",\"zoomReset\":" + js(Messages.preview_zoomReset) + "}";
 	}
 
 	private void render() {
