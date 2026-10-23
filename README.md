@@ -35,6 +35,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
+| Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Font size | `A-` / `A+` on the preview toolbar |
 | Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional double-click to close editor tabs |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |

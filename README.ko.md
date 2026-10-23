@@ -33,6 +33,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
+| 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
 | 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 탭 더블클릭으로 에디터 닫기 (선택) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |

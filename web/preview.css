@@ -43,8 +43,18 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 .plantuml-error { text-align:left; color:#f85149 }
 .katex-display { overflow-x:auto; overflow-y:hidden; padding:.1em 0 } /* long formulas scroll, not the page */
 .katex-error { font-family:KaTeX_Main, "Times New Roman", serif } /* Korean UI fonts draw \ as ₩ */
+/* find bar (Ctrl+F on the Preview tab) */
+#find { position:fixed; top:6px; right:16px; z-index:10; display:flex; gap:2px; align-items:center; padding:4px 6px; font-size:.875em;
+	background:var(--pre-bg); border:1px solid var(--border); border-radius:6px; box-shadow:0 2px 8px #0006 }
+#find[hidden] { display:none }
+#find input { width:14em; font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:2px 6px }
+#find span { min-width:5em; padding:0 4px; text-align:center; color:var(--quote); white-space:nowrap }
+#find button { font:inherit; color:var(--fg); background:none; border:0; border-radius:4px; cursor:pointer; padding:0 6px } #find button:hover { background:var(--code-bg) }
+::highlight(find) { background-color:#d2992266 }
+::highlight(find-current) { background-color:#f2cc60; color:#1f2328 }
 @page { size:A4; margin:14mm 12mm }
 @media print {
+	#find { display:none }
 	* { -webkit-print-color-adjust:exact; print-color-adjust:exact }
 	table { display:table; width:100%; max-width:none } pre { white-space:pre-wrap }
 	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .markdown-alert, .mermaid, .plantuml, .katex-display { break-inside:avoid }

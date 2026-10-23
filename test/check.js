@@ -30,6 +30,12 @@ assert(!al.includes('markdown-alert-tip') && (al.match(/markdown-alert-note/g) |
 const fn = gm.render('Text[^1] :smile: :) :nope:\n\n[^1]: The note.\n');
 assert(fn.includes('<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>') && fn.includes('<li id="fn1" class="footnote-item">'), 'footnote: ' + fn);
 assert(fn.includes('\u{1F604} :) :nope:'), 'emoji, no smiley shortcuts: ' + fn);
+// crafted input must not backtrack in our rules (front matter rows, alerts)
+for (const bad of ['---\na' + ' '.repeat(100000) + '\n---\n', '---\n' + 'a:'.repeat(50000) + ' x\n---\n', '> [!NOTE]' + ' '.repeat(100000) + 'x\n']) {
+	const t = Date.now();
+	gm.render(bad);
+	assert(Date.now() - t < 500, 'slow: ' + (Date.now() - t) + ' ms');
+}
 if (process.argv[2]) {
 	const out = md.render(fs.readFileSync(process.argv[2], 'utf8'));
 	console.log('real doc:', (out.match(/<table/g) || []).length, 'tables,', (out.match(/<tr/g) || []).length, 'rows,', (out.match(/data-line/g) || []).length, 'line anchors, leftover "| --- |":', /\|\s*-{3,}\s*\|/.test(out));

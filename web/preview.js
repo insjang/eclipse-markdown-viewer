@@ -1,5 +1,5 @@
 // UI text inside the page, replaced from messages*.properties by the plugin (setLabels)
-const L = { frontMatter: 'Front matter' };
+const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', findPrev: 'Previous (Shift+Enter)', findNext: 'Next (Enter)', findClose: 'Close (Esc)' };
 function setLabels(l) { Object.assign(L, l); }
 
 // Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
@@ -147,8 +147,10 @@ function render(src, base) {
 	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
 	drawPlantUml(document.getElementById('c'), THEME);
 	window.scrollTo(0, y);
+	findRun(false);
 	// diagrams grow once drawn, which moves everything below them: aim again then
-	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(() => doScroll(), () => doScroll());
+	const drawn = () => { doScroll(); findRun(false); };
+	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(drawn, drawn);
 	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
 }
 
@@ -263,6 +265,91 @@ function scrollToLine(n) {
 	PENDING = -1;
 	if (best) best.scrollIntoView({ block: 'start' });
 }
+
+// Find in the preview (Ctrl+F on the Preview tab). All matches are highlighted with the CSS Custom Highlight API
+// (no change to the page, works in diagram text too); without it only the count and moving to a match work.
+let FIND = null, HITS = [], HIT = -1;
+function findOpen() {
+	if (!FIND) {
+		FIND = document.createElement('div');
+		FIND.id = 'find';
+		const input = Object.assign(document.createElement('input'), { type: 'text', placeholder: L.find, spellcheck: false });
+		const button = (text, title, d) => Object.assign(document.createElement('button'), { textContent: text, title, onclick: () => d ? findStep(d) : findClose() });
+		FIND.append(input, document.createElement('span'), button('\u2191', L.findPrev, -1), button('\u2193', L.findNext, 1), button('\u00d7', L.findClose, 0));
+		input.addEventListener('input', () => findRun(true));
+		input.addEventListener('keydown', e => {
+			if (e.key === 'Enter') { e.preventDefault(); findStep(e.shiftKey ? -1 : 1); }
+		});
+		document.body.append(FIND);
+	}
+	FIND.hidden = false;
+	const input = FIND.querySelector('input');
+	input.focus();
+	input.select();
+	findRun(true);
+}
+
+function findClose() {
+	if (!FIND) return;
+	FIND.hidden = true;
+	HITS = [];
+	if (window.CSS && CSS.highlights) CSS.highlights.clear();
+}
+
+// all matches, ignoring case; from the first one (typing) or near the current one (the page was drawn again)
+function findRun(fromStart) {
+	if (!FIND || FIND.hidden) return;
+	const q = FIND.querySelector('input').value.toLowerCase();
+	HITS = [];
+	if (q) {
+		// not the MathML copy of formulas (the visible KaTeX HTML is searched) or the inside of a closed <details>
+		const w = document.createTreeWalker(document.getElementById('c'), NodeFilter.SHOW_TEXT, { acceptNode: n =>
+			n.parentElement.closest('.katex-mathml, style, button, details:not([open]) > :not(summary)') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+		for (let n; (n = w.nextNode());) {
+			const t = n.data.toLowerCase();
+			for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + q.length)) {
+				const r = document.createRange();
+				r.setStart(n, i);
+				r.setEnd(n, i + q.length);
+				HITS.push(r);
+			}
+		}
+	}
+	HIT = HITS.length ? (fromStart ? 0 : Math.min(Math.max(HIT, 0), HITS.length - 1)) : -1;
+	if (window.CSS && CSS.highlights) CSS.highlights.set('find', new Highlight(...HITS));
+	findShow(fromStart);
+}
+
+function findStep(d) {
+	if (!HITS.length) return;
+	HIT = (HIT + d + HITS.length) % HITS.length;
+	findShow(true);
+}
+
+function findShow(scroll) {
+	FIND.querySelector('span').textContent = HITS.length ? `${HIT + 1}/${HITS.length}` : FIND.querySelector('input').value ? L.findNone : '';
+	if (window.CSS && CSS.highlights) {
+		if (HIT >= 0) CSS.highlights.set('find-current', new Highlight(HITS[HIT]));
+		else CSS.highlights.delete('find-current');
+	}
+	if (scroll && HIT >= 0) {
+		PENDING = -1;
+		HITS[HIT].startContainer.parentElement.scrollIntoView({ block: 'center', inline: 'nearest' });
+	}
+}
+
+if (typeof window !== 'undefined') window.addEventListener('keydown', e => {
+	if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
+		e.preventDefault(); // instead of the browser's own find bar
+		findOpen();
+	} else if (e.key === 'F3') {
+		e.preventDefault();
+		if (FIND && !FIND.hidden) findStep(e.shiftKey ? -1 : 1);
+		else findOpen();
+	} else if (e.key === 'Escape' && FIND && !FIND.hidden) {
+		findClose();
+	}
+});
 
 // the user scrolling takes over from a pending jump
 if (typeof window !== 'undefined') {

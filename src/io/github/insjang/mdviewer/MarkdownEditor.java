@@ -172,7 +172,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	/** Text shown inside the page, from messages*.properties. */
 	private static String labels() {
-		return "{\"frontMatter\":" + js(Messages.preview_frontMatter) + "}";
+		return "{\"frontMatter\":" + js(Messages.preview_frontMatter) + ",\"find\":" + js(Messages.find_find) + ",\"findNone\":" + js(Messages.find_none)
+				+ ",\"findPrev\":" + js(Messages.find_previous) + ",\"findNext\":" + js(Messages.find_next) + ",\"findClose\":" + js(Messages.find_close) + "}";
 	}
 
 	private void render() {
@@ -204,6 +205,13 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		} catch (BadLocationException e) {
 			// keep the caret where it was
 		}
+	}
+
+	/** Ctrl+F (Find/Replace) while the Preview tab shows: the page's find bar. */
+	void findInPreview() {
+		if (!loaded) return;
+		browser.setFocus();
+		browser.execute("findOpen()");
 	}
 
 	@Override
