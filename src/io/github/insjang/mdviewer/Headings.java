@@ -17,7 +17,8 @@ final class Headings {
 	record Node(Heading heading, List<Node> children) {
 	}
 
-	private static final Pattern ATX = Pattern.compile("^ {0,3}(#{1,6})(?:[ \\t]+(.*?))?(?:[ \\t]+#+)?[ \\t]*$");
+	// no overlapping quantifiers (a crafted line must not backtrack): the closing #s are cut in code, see atxText()
+	private static final Pattern ATX = Pattern.compile("^ {0,3}(#{1,6})(?:[ \\t]+(.*))?$");
 	private static final Pattern FENCE = Pattern.compile("^ {0,3}(`{3,}|~{3,})");
 	private static final Pattern SETEXT = Pattern.compile("^ {0,3}(=+|-+)[ \\t]*$");
 	/** lines that start something other than a paragraph, so a --- below them is a rule, not a heading */
@@ -56,7 +57,7 @@ final class Headings {
 			}
 			m = ATX.matcher(l);
 			if (m.matches()) {
-				out.add(heading(m.group(1).length(), m.group(2) == null ? "" : m.group(2), i, seen));
+				out.add(heading(m.group(1).length(), atxText(m.group(2)), i, seen));
 				para = -1;
 			} else if (para < 0) {
 				para = NOT_TEXT.matcher(l).find() ? -1 : i;
@@ -76,6 +77,17 @@ final class Headings {
 			stack.add(n);
 		}
 		return roots;
+	}
+
+	/** Text after "# ": without trailing blanks and a closing # sequence that follows a blank or is all there is (CommonMark). */
+	static String atxText(String t) {
+		if (t == null) return "";
+		int end = t.length();
+		while (end > 0 && (t.charAt(end - 1) == ' ' || t.charAt(end - 1) == '\t')) end--;
+		int h = end;
+		while (h > 0 && t.charAt(h - 1) == '#') h--;
+		if (h < end && (h == 0 || t.charAt(h - 1) == ' ' || t.charAt(h - 1) == '\t')) end = h;
+		return t.substring(0, end);
 	}
 
 	/** First line after the front matter, as preview.js finds it: --- on line 1 up to the next --- or ... line. */
@@ -99,7 +111,7 @@ final class Headings {
 
 	/** Heading text without the commonest inline markup, for labels. */
 	static String label(String text) {
-		return text.replaceAll("!?\\[([^\\]]*)\\]\\([^)]*\\)", "$1").replaceAll("\\*\\*|__|`", "");
+		return text.replaceAll("!?\\[([^\\[\\]]*)\\]\\([^()]*\\)", "$1").replaceAll("\\*\\*|__|`", "");
 	}
 
 	private Headings() {

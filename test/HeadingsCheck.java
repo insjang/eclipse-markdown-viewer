@@ -11,6 +11,17 @@ public class HeadingsCheck {
 		if (Headings.tree(Headings.of("## a\n# b\n### c\n## d\n")).toString().replaceAll("Heading\\[level=(\\d), text=(\\w).*?\\]", "$2")
 				.equals("[Node[heading=a, children=[]], Node[heading=b, children=[Node[heading=c, children=[]], Node[heading=d, children=[]]]]]") == false)
 			throw new AssertionError("tree");
+		for (String[] c : new String[][] { { "# foo ##", "foo" }, { "# foo#", "foo#" }, { "# ###", "" }, { "### b \\##", "b \\##" }, { "# a #  ", "a" } })
+			if (!Headings.of(c[0]).get(0).text().equals(c[1])) throw new AssertionError(c[0] + " -> " + Headings.of(c[0]));
+		// crafted lines must not backtrack: a downloaded .md would hang the UI thread
+		String sp = " ".repeat(100_000);
+		for (String bad : new String[] { "# a" + sp + "x", "#" + sp + "#".repeat(50_000) + "x", "# " + "[".repeat(100_000), "# " + "[a](".repeat(30_000),
+				"x\n" + "=".repeat(100_000) + " x", "---\n" + "a:" + sp, "``" + "`".repeat(100_000) + "x\n# h" }) {
+			long t = System.nanoTime();
+			for (Headings.Heading h : Headings.of(bad)) Headings.label(h.text());
+			long ms = (System.nanoTime() - t) / 1_000_000;
+			if (ms > 100) throw new AssertionError("slow: " + ms + " ms on " + bad.substring(0, 12));
+		}
 		System.out.println("headings ok");
 	}
 }
