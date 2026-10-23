@@ -58,8 +58,12 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.ScrollBar;
-import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IURIEditorInput;
@@ -206,7 +210,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	private Control createPreview(Composite parent) {
 		Composite c = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
-		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
+		Composite bar = new Composite(c, SWT.NONE);
+		RowLayout row = new RowLayout();
+		row.marginTop = row.marginBottom = 3;
+		row.spacing = 4;
+		bar.setLayout(row);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
 		item(bar, Messages.toolbar_showIn, this::showInExplorer);
 		if (CHROME != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
@@ -310,10 +318,37 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		}
 	}
 
-	private static void item(ToolBar bar, String text, Runnable action) {
-		ToolItem i = new ToolItem(bar, SWT.PUSH);
-		i.setText(text);
-		i.addListener(SWT.Selection, e -> action.run());
+	/** A button drawn as a rounded chip, its colors mixed from the bar's (theme) colors whenever it paints. */
+	private static void item(Composite bar, String text, Runnable action) {
+		Canvas b = new Canvas(bar, SWT.DOUBLE_BUFFERED);
+		b.setFont(bar.getFont());
+		b.setCursor(bar.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		GC measure = new GC(b);
+		Point size = measure.textExtent(text);
+		measure.dispose();
+		b.setLayoutData(new RowData(size.x + 16, size.y + 6));
+		boolean[] hover = { false };
+		b.addPaintListener(e -> {
+			Color bg = bar.getBackground(), fg = bar.getForeground();
+			Point s = b.getSize();
+			e.gc.setAntialias(SWT.ON);
+			e.gc.setBackground(bg);
+			e.gc.fillRectangle(0, 0, s.x, s.y);
+			e.gc.setBackground(mix(bg, fg, hover[0] ? 0.22 : 0.10));
+			e.gc.fillRoundRectangle(0, 0, s.x, s.y, 8, 8);
+			e.gc.setForeground(fg);
+			e.gc.drawText(text, (s.x - size.x) / 2, (s.y - size.y) / 2, true);
+		});
+		b.addListener(SWT.MouseEnter, e -> { hover[0] = true; b.redraw(); });
+		b.addListener(SWT.MouseExit, e -> { hover[0] = false; b.redraw(); });
+		b.addListener(SWT.MouseUp, e -> {
+			if (e.button == 1 && b.getClientArea().contains(e.x, e.y)) action.run();
+		});
+	}
+
+	private static Color mix(Color a, Color b, double t) {
+		return new Color((int) (a.getRed() * (1 - t) + b.getRed() * t), (int) (a.getGreen() * (1 - t) + b.getGreen() * t),
+				(int) (a.getBlue() * (1 - t) + b.getBlue() * t));
 	}
 
 	@Override
