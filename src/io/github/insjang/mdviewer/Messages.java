@@ -5,7 +5,7 @@ import org.eclipse.osgi.util.NLS;
 /** UI text; English in messages.properties, translations in messages_<lang>.properties. */
 final class Messages extends NLS {
 	public static String toolbar_pdf, toolbar_html, toolbar_copyHtml, toolbar_fonts, toolbar_showIn;
-	public static String menu_copy, menu_selectAll, menu_showIn, showIn_notWorkspace;
+	public static String menu_copy, menu_copySource, menu_selectAll, menu_showIn, showIn_notWorkspace;
 	public static String html_title, html_failed;
 	public static String preview_frontMatter, preview_copy, preview_copied, preview_zoomReset, find_find, find_none, find_previous, find_next, find_close;
 	public static String paste_failed;
