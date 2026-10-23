@@ -17,9 +17,6 @@ final class Headings {
 	record Node(Heading heading, List<Node> children) {
 	}
 
-	// no overlapping quantifiers (a crafted line must not backtrack): the closing #s are cut in code, see atxText()
-	private static final Pattern ATX = Pattern.compile("^ {0,3}(#{1,6})(?:[ \\t]+(.*))?$");
-	private static final Pattern FENCE = Pattern.compile("^ {0,3}(`{3,}|~{3,})");
 	private static final Pattern SETEXT = Pattern.compile("^ {0,3}(=+|-+)[ \\t]*$");
 	/** lines that start something other than a paragraph, so a --- below them is a rule, not a heading */
 	private static final Pattern NOT_TEXT = Pattern.compile("^(?: {4}|\\t| {0,3}(?:[>|<]|[-*+](?:[ \\t]|$)|\\d{1,9}[.)](?:[ \\t]|$)|#{1,6}(?:[ \\t]|$)))");
@@ -49,10 +46,12 @@ final class Headings {
 				para = -1;
 				continue;
 			}
-			m = ATX.matcher(l);
-			if (m.matches()) {
-				out.add(heading(m.group(1).length(), atxText(m.group(2)), i, seen));
+			int level = atxLevel(l);
+			if (level > 0) {
+				out.add(heading(level, atxText(l.substring(indent(l) + level)), i, seen));
 				para = -1;
+			} else if (rule(l)) {
+				para = -1; // ---, ***, ___: a rule, also ends a paragraph (--- under text was taken as setext above)
 			} else if (para < 0) {
 				para = NOT_TEXT.matcher(l).find() ? -1 : i;
 			}
@@ -64,23 +63,78 @@ final class Headings {
 		return src.split("\r?\n|\r", -1);
 	}
 
-	/** Lines that are front matter or fenced code (fences included): no headings or links there. */
+	// headings, rules and fences are read by hand, not with regexes: a crafted line (spaces, then U+2028 or U+0085,
+	// which Java's . and $ do not take) made the pattern backtrack quadratically on the UI thread
+
+	/** spaces in front, up to 4 (4 = indented code) */
+	private static int indent(String l) {
+		int n = 0;
+		while (n < l.length() && n < 4 && l.charAt(n) == ' ') n++;
+		return n;
+	}
+
+	/** 1 to 6 for "# ..." to "###### ..." (up to 3 spaces before, a blank or the end after the #s), else 0 */
+	static int atxLevel(String l) {
+		int i = indent(l), n = 0;
+		if (i > 3) return 0;
+		while (i + n < l.length() && l.charAt(i + n) == '#') n++;
+		if (n < 1 || n > 6) return 0;
+		int after = i + n;
+		return after == l.length() || l.charAt(after) == ' ' || l.charAt(after) == '\t' ? n : 0;
+	}
+
+	/** thematic break: three or more of the same -, * or _, blanks between allowed, up to 3 spaces before */
+	static boolean rule(String l) {
+		int i = indent(l), count = 0;
+		if (i > 3) return false;
+		char c = 0;
+		for (; i < l.length(); i++) {
+			char ch = l.charAt(i);
+			if (ch == ' ' || ch == '\t') continue;
+			if (ch != '-' && ch != '*' && ch != '_' || c != 0 && ch != c) return false;
+			c = ch;
+			count++;
+		}
+		return count >= 3;
+	}
+
+	/** ``` or ~~~ (3 or more) after up to 3 spaces: the fence string, or null */
+	private static String fence(String l) {
+		int i = indent(l);
+		if (i > 3 || i >= l.length() || l.charAt(i) != '`' && l.charAt(i) != '~') return null;
+		int n = i;
+		while (n < l.length() && l.charAt(n) == l.charAt(i)) n++;
+		return n - i >= 3 ? l.substring(i, n) : null;
+	}
+
+	/** Lines that are front matter, fenced code (fences included) or an HTML comment block: no headings or links there. */
 	static boolean[] code(String[] lines) {
 		boolean[] code = new boolean[lines.length];
 		int start = frontMatterEnd(lines);
 		java.util.Arrays.fill(code, 0, start, true);
 		String fence = null;
+		boolean comment = false;
 		for (int i = start; i < lines.length; i++) {
 			String l = lines[i];
-			if (fence != null) { // inside ``` or ~~~ until a fence of the same kind, at least as long
-				String t = l.strip();
-				if (t.startsWith(fence) && t.replace(t.substring(0, 1), "").isEmpty()) fence = null;
+			if (fence != null) { // inside ``` or ~~~ until a fence of the same kind, at least as long, nothing after it
+				String f = fence(l);
+				if (f != null && f.charAt(0) == fence.charAt(0) && f.length() >= fence.length() && l.substring(indent(l) + f.length()).isBlank()) fence = null;
 				code[i] = true;
 				continue;
 			}
-			Matcher m = FENCE.matcher(l);
-			if (m.find() && !(m.group(1).charAt(0) == '`' && l.substring(m.end()).contains("`"))) {
-				fence = m.group(1);
+			if (comment) { // HTML comment block (as markdown-it): up to the line with -->
+				code[i] = true;
+				comment = !l.contains("-->");
+				continue;
+			}
+			if (indent(l) <= 3 && l.startsWith("<!--", indent(l))) {
+				code[i] = true;
+				comment = !l.substring(indent(l) + 4).contains("-->");
+				continue;
+			}
+			String f = fence(l);
+			if (f != null && !(f.charAt(0) == '`' && l.substring(indent(l) + f.length()).contains("`"))) {
+				fence = f;
 				code[i] = true;
 			}
 		}

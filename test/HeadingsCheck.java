@@ -13,10 +13,18 @@ public class HeadingsCheck {
 			throw new AssertionError("tree");
 		for (String[] c : new String[][] { { "# foo ##", "foo" }, { "# foo#", "foo#" }, { "# ###", "" }, { "### b \\##", "b \\##" }, { "# a #  ", "a" } })
 			if (!Headings.of(c[0]).get(0).text().equals(c[1])) throw new AssertionError(c[0] + " -> " + Headings.of(c[0]));
+		// QA D2: a rule (---, ***, ___) is not the start of a setext paragraph; D7: no headings in HTML comments or after a
+		// fence "closed" by a line indented four spaces (it is not a closing fence)
+		for (String[] c : new String[][] { { "text\n\n---\nIntro\n---\n", "[2 Intro 3]" }, { "***\nA\n===\n", "[1 A 1]" }, { "- - -\nB\n---\n", "[2 B 1]" },
+				{ "<!--\n# commented out\n-->\n# real\n", "[1 real 3]" }, { "  <!-- x -->\n# one\n", "[1 one 1]" },
+				{ "```\ncode\n    ```\n# after\n```\n# out\n", "[1 out 5]" }, { "~~~~\n~~~\n# in\n~~~~~ \n# out\n", "[1 out 4]" } }) {
+			String got2 = Headings.of(c[0]).stream().map(h -> h.level() + " " + h.text() + " " + h.line()).toList().toString();
+			if (!got2.equals(c[1])) throw new AssertionError(c[0].replace("\n", "|") + " -> " + got2);
+		}
 		// crafted lines must not backtrack: a downloaded .md would hang the UI thread
 		String sp = " ".repeat(100_000);
 		for (String bad : new String[] { "# a" + sp + "x", "#" + sp + "#".repeat(50_000) + "x", "# " + "[".repeat(100_000), "# " + "[a](".repeat(30_000),
-				"x\n" + "=".repeat(100_000) + " x", "---\n" + "a:" + sp, "``" + "`".repeat(100_000) + "x\n# h" }) {
+				"x\n" + "=".repeat(100_000) + " x", "# " + sp + "\u2028x", "# " + sp + "\u0085x", "#\t" + sp + "\u2029 #", "---\n" + "a:" + sp, "``" + "`".repeat(100_000) + "x\n# h" }) {
 			long t = System.nanoTime();
 			for (Headings.Heading h : Headings.of(bad)) Headings.label(h.text());
 			long ms = (System.nanoTime() - t) / 1_000_000;
