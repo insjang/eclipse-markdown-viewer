@@ -143,6 +143,9 @@ Markdown from elsewhere can be opened safely.
 - KaTeX runs with `trust: false`: `\href`, `\url` and `\includegraphics` stay text.
 - PlantUML runs with its `SANDBOX` security profile: `!include` cannot read local files or URLs. Its SVG output is sanitized too.
 - Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram naming one is not drawn: on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
+- The link check looks only at document-relative paths; web, absolute and network paths are never asked of the file system.
+- Front matter, headings and links are read with non-backtracking patterns and plain parsing, so a crafted long line cannot hang Eclipse.
+- Export HTML and Copy HTML use the sanitized preview only, with no scripts.
 
 ## Limitations
 

@@ -135,6 +135,9 @@ Preferences → General → Editors → Markdown Viewer
 - Mermaid: `strict` 모드
 - KaTeX: `trust: false` (`\href`, `\url`, `\includegraphics`는 글자로만 표시)
 - 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로가 든 Mermaid 그림은 그리지 않음 (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
+- 링크 검사: 문서 기준 상대 경로만 확인, 웹·절대·네트워크 경로는 파일 시스템에 묻지 않음
+- 머리말·제목·링크 분석: 역추적이 없는 정규식과 직접 파싱 (악의적으로 긴 줄도 바로 처리, `HeadingsCheck`·`LinkCheckCheck`·`check.js`로 확인)
+- HTML 내보내기·복사: 정화된 미리보기 내용만 사용, 스크립트 없음
 
 ## 구조
 
@@ -172,6 +175,8 @@ test/
 node test/check.js [검사할.md]
 NODE_PATH=<jsdom 설치 경로>/node_modules node test/sanitize.js
 NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
+javac -cp build/classes -d build/test test/HeadingsCheck.java && java -cp build/classes:build/test io.github.insjang.mdviewer.HeadingsCheck
+# LinkCheckCheck: classpath에 $ECLIPSE/plugins 의 org.eclipse.osgi, org.eclipse.core.*, org.eclipse.equinox.* 추가
 ```
 
 ## 함께 쓰면 좋은 플러그인
