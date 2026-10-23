@@ -18,6 +18,8 @@ public class PrinterCheck {
 			if (MarkdownEditor.printer("." + File.pathSeparator) != null) throw new AssertionError("relative only: " + MarkdownEditor.printer("."));
 		} finally {
 			if (made) fake.delete();
+			chrome.delete(); // no temporary folder left behind
+			dir.delete();
 		}
 		System.out.println("printer ok");
 	}
