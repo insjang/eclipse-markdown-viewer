@@ -5,6 +5,7 @@ import org.eclipse.osgi.util.NLS;
 /** UI text; English in messages.properties, translations in messages_<lang>.properties. */
 final class Messages extends NLS {
 	public static String toolbar_pdf, toolbar_fonts;
+	public static String preview_frontMatter;
 	public static String pdf_title, pdf_job, pdf_failed, pdf_saved, pdf_error;
 	public static String prefs_description, prefs_bodyFont, prefs_codeFont, prefs_fontSample, prefs_codeSample, prefs_lineHeight,
 			prefs_theme, prefs_themeDark, prefs_themeLight, prefs_breaks, prefs_openPreview, prefs_tabClose, prefs_darkColors, prefs_lightColors,

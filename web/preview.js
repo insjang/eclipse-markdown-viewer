@@ -1,3 +1,7 @@
+// UI text inside the page, replaced from messages*.properties by the plugin (setLabels)
+const L = { frontMatter: 'Front matter' };
+function setLabels(l) { Object.assign(L, l); }
+
 // Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
 function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex) {
 	const md = markdownit({ html: true, linkify: true, highlight: (s, lang) => {
@@ -7,6 +11,13 @@ function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex) {
 	// $inline$, $$display$$, ```math (as on GitHub); bad TeX shows inline in red (KaTeX's #cc0000 is too dark
 	// on the dark theme), \href, \url, \includegraphics stay text (trust: false)
 	if (mathPlugin) md.use(mathPlugin, { katex, enableFencedBlocks: true, throwOnError: false, trust: false, errorColor: '#f85149' });
+	md.block.ruler.before('table', 'front_matter', frontMatter);
+	md.renderer.rules.front_matter = (tokens, i, opt, env, self) => {
+		const rows = yamlRows(tokens[i].content), e = md.utils.escapeHtml;
+		const body = rows.length ? '<table><tbody>' + rows.map(([k, v]) => `<tr><th>${e(k)}</th><td>${e(v)}</td></tr>`).join('') + '</tbody></table>'
+			: `<pre>${e(tokens[i].content)}</pre>`;
+		return `<details class="front-matter"${self.renderAttrs(tokens[i])}><summary>${e(L.frontMatter)}</summary>${body}</details>\n`;
+	};
 	md.linkify.set({ fuzzyLink: false }); // "other.md" is not a Moldovan domain
 	const valid = md.validateLink.bind(md);
 	md.validateLink = u => /^file:\/\/\/(?![\\/])/i.test(u) || valid(u); // doc-relative links become file:/// URLs (no host, see remote())
@@ -33,7 +44,37 @@ function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex) {
 	md.normalizeLink = u => norm(/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(u) ? u : getBase() + u);
 	return md;
 }
-if (typeof module !== 'undefined') module.exports = { createMd };
+
+// YAML front matter: a --- line at the very top up to the next --- or ... line. The source keeps its lines,
+// so data-line of everything below stays the line in the editor.
+function frontMatter(state, start, end, silent) {
+	if (start !== 0 || state.bMarks[0] !== 0 || state.src.slice(0, state.eMarks[0]).trimEnd() !== '---') return false;
+	let l = 1;
+	while (l < end && !/^(---|\.\.\.)\s*$/.test(state.src.slice(state.bMarks[l], state.eMarks[l]))) l++;
+	if (l >= end) return false; // not closed: an ordinary rule
+	if (silent) return true;
+	const t = state.push('front_matter', '', 0);
+	t.block = true;
+	t.map = [0, l + 1];
+	t.content = state.getLines(1, l, 0, false);
+	state.line = l + 1;
+	return true;
+}
+
+// top-level "key: value" lines; indented lines and list items belong to the key above
+function yamlRows(s) {
+	const rows = [];
+	for (const line of s.split('\n')) {
+		const m = /^([^\s#-][^:]*):(?:\s+(.*))?$/.exec(line);
+		if (m) rows.push([m[1], (m[2] || '').trim()]);
+		else if (rows.length && line.trim() && !/^\s*#/.test(line)) {
+			const r = rows[rows.length - 1];
+			r[1] += (r[1] ? '\n' : '') + line.trim();
+		}
+	}
+	return rows;
+}
+if (typeof module !== 'undefined') module.exports = { createMd, yamlRows };
 
 let BASE = '', SRC = '', MERMAID = {}, FONTVARS = '', COLORS = { dark: {}, light: {} }, FONT = { name: 'system-ui', size: 11 }, THEME = 'dark', SPACING = { node: 25, rank: 30, pad: 6 };
 const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE, window.markdownitKatex, window.katex) : null;

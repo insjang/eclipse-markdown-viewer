@@ -25,6 +25,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
+| Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |

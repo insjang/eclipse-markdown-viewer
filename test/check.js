@@ -12,6 +12,14 @@ assert(h.includes('<div class="mermaid" data-line="6">graph TD; A--&gt;B'), 'mer
 assert(h.includes('id="정책-결정-안건"'), 'heading id');
 assert(h.includes('src="file:///D:/docs/img/a.png"') && h.includes('href="file:///D:/docs/other.md#s"') && h.includes('href="https://e.com"'), 'links');
 assert(h.includes('type="checkbox"'), 'task list');
+// front matter: a collapsed key/value table, the lines below keep their data-line
+const fm = md.render('---\ntitle: Notes\ntags:\n  - a\n  - b\nurl: https://e.com/x\n---\n# Head\n\n<b>x</b>\n');
+assert(fm.startsWith('<details class="front-matter" data-line="0"><summary>Front matter</summary><table>'), 'front matter: ' + fm);
+assert(fm.includes('<th>title</th><td>Notes</td>') && fm.includes('<th>tags</th><td>- a\n- b</td>') && fm.includes('<th>url</th><td>https://e.com/x</td>'), 'rows: ' + fm);
+assert(fm.includes('<h1 data-line="7" id="head">'), 'line after front matter: ' + fm);
+assert(!md.render('text\n\n---\na: b\n---\n').includes('front-matter'), 'only at line 1');
+assert(!md.render('---\nnot closed\n').includes('front-matter'), 'unclosed is a rule');
+assert(md.render('---\n<script>x</script>: 1\n...\n').includes('<th>&lt;script&gt;x&lt;/script&gt;</th>'), 'escaped, ... closes');
 if (process.argv[2]) {
 	const out = md.render(fs.readFileSync(process.argv[2], 'utf8'));
 	console.log('real doc:', (out.match(/<table/g) || []).length, 'tables,', (out.match(/<tr/g) || []).length, 'rows,', (out.match(/data-line/g) || []).length, 'line anchors, leftover "| --- |":', /\|\s*-{3,}\s*\|/.test(out));

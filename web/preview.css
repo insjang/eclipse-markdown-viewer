@@ -28,6 +28,8 @@ tr:nth-child(2n) td { background:var(--row-alt) }
 img { max-width:100% }
 hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border) }
 .task-list-item { list-style:none } .task-list-item input { margin:0 .4em 0 -1.4em; vertical-align:middle }
+.front-matter { margin:0 0 1em; color:var(--quote) }
+.front-matter summary { cursor:pointer; font-size:.875em } .front-matter table { margin:.5em 0 0 } .front-matter td { white-space:pre-wrap }
 .mermaid, .plantuml { text-align:center }
 .plantuml svg { max-width:100%; height:auto }
 .plantuml-error { text-align:left; color:#f85149 }

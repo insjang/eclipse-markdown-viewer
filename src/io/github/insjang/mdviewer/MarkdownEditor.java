@@ -113,6 +113,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(browser);
 		browser.addProgressListener(ProgressListener.completedAdapter(e -> {
 			loaded = true;
+			browser.execute("setLabels(" + labels() + ")");
 			applyStyle();
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
@@ -164,6 +165,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		int range = bar == null ? 0 : bar.getMaximum() - bar.getThumb();
 		double f = range <= 0 ? 0 : Math.min(1, (double) bar.getSelection() / range);
 		return String.format(java.util.Locale.ROOT, "%.4f", f); //$NON-NLS-1$
+	}
+
+	/** Text shown inside the page, from messages*.properties. */
+	private static String labels() {
+		return "{\"frontMatter\":" + js(Messages.preview_frontMatter) + "}";
 	}
 
 	private void render() {
