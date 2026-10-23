@@ -23,6 +23,12 @@ import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.ui.IPageLayout;
+import org.eclipse.ui.actions.ContributionItemFactory;
+import org.eclipse.ui.part.ISetSelectionTarget;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -202,6 +208,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
 		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
+		item(bar, Messages.toolbar_showIn, this::showInExplorer);
 		if (CHROME != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
 		item(bar, Messages.toolbar_html, this::exportHtml);
 		item(bar, Messages.toolbar_copyHtml, this::copyHtml);
@@ -217,6 +224,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			applyStyle();
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
+		browser.setMenu(previewMenu().createContextMenu(browser));
 		new BrowserFunction(browser, "mdPlantUml") { //$NON-NLS-1$
 			@Override
 			public Object function(Object[] args) {
@@ -244,13 +252,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			public Object function(Object[] args) {
 				// after the callback, as with links (#1): nothing that pumps events inside a WebView2 callback
 				if (args.length == 1 && args[0] instanceof String text && !text.isEmpty()) browser.getDisplay().asyncExec(() -> {
-					if (browser.isDisposed()) return;
-					Clipboard c = new Clipboard(browser.getDisplay());
-					try {
-						c.setContents(new Object[] { text }, new Transfer[] { TextTransfer.getInstance() });
-					} finally {
-						c.dispose();
-					}
+					if (!browser.isDisposed()) toClipboard(text);
 				});
 				return null;
 			}
@@ -262,6 +264,50 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
 		}
 		return c;
+	}
+
+	/** Replaces the browser's own menu (Back, Refresh, Inspect...): copy, select all and the workbench Show In. */
+	private MenuManager previewMenu() {
+		MenuManager menu = new MenuManager();
+		menu.add(new Action(Messages.menu_copy) {
+			@Override
+			public void run() {
+				if (browser.evaluate("return getSelection().toString()") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
+			}
+		});
+		menu.add(new Action(Messages.menu_selectAll) {
+			@Override
+			public void run() {
+				browser.execute("getSelection().selectAllChildren(document.getElementById('c'))"); //$NON-NLS-1$
+			}
+		});
+		menu.add(new Separator());
+		MenuManager showIn = new MenuManager(Messages.menu_showIn);
+		showIn.add(ContributionItemFactory.VIEWS_SHOW_IN.create(getSite().getWorkbenchWindow()));
+		menu.add(showIn);
+		return menu;
+	}
+
+	private void showInExplorer() {
+		if (!(getEditorInput() instanceof IFileEditorInput in)) {
+			MessageDialog.openInformation(getSite().getShell(), "Markdown Viewer", Messages.showIn_notWorkspace); //$NON-NLS-1$
+			return;
+		}
+		try {
+			if (getSite().getPage().showView(IPageLayout.ID_PROJECT_EXPLORER) instanceof ISetSelectionTarget t)
+				t.selectReveal(new StructuredSelection(in.getFile()));
+		} catch (PartInitException e) {
+			MessageDialog.openError(getSite().getShell(), "Markdown Viewer", e.getMessage()); //$NON-NLS-1$
+		}
+	}
+
+	private void toClipboard(String text) {
+		Clipboard c = new Clipboard(browser.getDisplay());
+		try {
+			c.setContents(new Object[] { text }, new Transfer[] { TextTransfer.getInstance() });
+		} finally {
+			c.dispose();
+		}
 	}
 
 	private static void item(ToolBar bar, String text, Runnable action) {
