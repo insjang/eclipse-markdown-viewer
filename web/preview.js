@@ -471,6 +471,17 @@ function htmlFragment() {
 	return [`<div style="color:${cs.color};background-color:${cs.backgroundColor};font-family:${cs.fontFamily.replace(/"/g, "'")};font-size:${cs.fontSize};line-height:${cs.lineHeight}">${c.innerHTML}</div>`, plainText(true)];
 }
 
+// Copy and Select All of the Preview tab (Ctrl+C, Ctrl+A, context menu): in the find bar's box its text, else the page
+function copyText() {
+	const a = document.activeElement;
+	return a instanceof HTMLInputElement ? a.value.substring(a.selectionStart, a.selectionEnd) : plainText(false);
+}
+function selectAll() {
+	const a = document.activeElement;
+	if (a instanceof HTMLInputElement) a.select();
+	else getSelection().selectAllChildren(document.getElementById('c'));
+}
+
 // text for the clipboard, of the selection or the whole page: formulas as their TeX ($...$), diagrams as their source, no button labels
 function plainText(whole) {
 	const box = document.createElement('div'), sel = getSelection();

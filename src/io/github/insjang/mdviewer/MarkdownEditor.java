@@ -281,7 +281,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		menu.add(new Action(Messages.menu_copy) {
 			@Override
 			public void run() {
-				if (browser.evaluate("return plainText(false)") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
+				copyInPreview();
 			}
 		});
 		menu.add(new Action(Messages.menu_copySource) {
@@ -293,7 +293,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		menu.add(new Action(Messages.menu_selectAll) {
 			@Override
 			public void run() {
-				browser.execute("getSelection().selectAllChildren(document.getElementById('c'))"); //$NON-NLS-1$
+				selectAllInPreview();
 			}
 		});
 		menu.add(new Separator());
@@ -424,6 +424,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	}
 
 	/** Ctrl+F (Find/Replace) while the Preview tab shows: the page's find bar. */
+	/** Copy (Ctrl+C and the context menu) on the Preview tab: the selection as text, see plainText in preview.js. */
+	void copyInPreview() {
+		if (loaded && browser.evaluate("return copyText()") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
+	}
+
+	void selectAllInPreview() {
+		if (loaded) browser.execute("selectAll()"); //$NON-NLS-1$
+	}
+
 	void findInPreview() {
 		if (!loaded) return;
 		browser.setFocus();
