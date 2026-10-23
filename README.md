@@ -23,6 +23,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Feature | Details |
 |---|---|
 | Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
+| Outline | The Outline view (Window > Show View > Outline) lists the headings as a tree; a click moves the Source caret and the Preview to the heading. Headings in code blocks and front matter are left out |
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
@@ -140,7 +141,6 @@ Markdown from elsewhere can be opened safely.
 ## Limitations
 
 - PDF export is Windows only: the PDF is printed by headless Edge from `C:\Program Files (x86)` or `C:\Program Files`, and the button is hidden when it is not there. macOS is untested.
-- No outline view.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 
 ## Source layout
@@ -148,6 +148,7 @@ Markdown from elsewhere can be opened safely.
 ```
 src/io/github/insjang/mdviewer/
   MarkdownEditor.java          Source/Preview tabs, scroll sync, links, PDF export
+  Headings.java, Outline.java  headings of the source, Outline view page
   PlantUml.java                PlantUML blocks to SVG (font and colors, cache, sandbox)
   Activator.java               web assets, A-/A+
   PrefInit.java                preference defaults
@@ -165,7 +166,7 @@ test/
   check.js                     rendering (node)
   sanitize.js, plantuml.js     sanitizing and PlantUML wiring (node + jsdom)
   math.js, math.md             math rendering and sanitizing (node + jsdom)
-  JsEscape.java, PlantUmlCheck.java
+  JsEscape.java, PlantUmlCheck.java, HeadingsCheck.java
 ```
 
 ## See also

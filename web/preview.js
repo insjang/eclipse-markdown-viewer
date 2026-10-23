@@ -256,6 +256,14 @@ function doScroll() {
 	window.scrollTo(0, PENDING * (document.documentElement.scrollHeight - window.innerHeight));
 }
 
+// Outline click: the block that starts at the source line (0-based), or the last one before it
+function scrollToLine(n) {
+	let best = null;
+	for (const e of document.querySelectorAll('#c [data-line]')) if (+e.dataset.line <= n && (!best || +e.dataset.line > +best.dataset.line)) best = e;
+	PENDING = -1;
+	if (best) best.scrollIntoView({ block: 'start' });
+}
+
 // the user scrolling takes over from a pending jump
 if (typeof window !== 'undefined') {
 	window.addEventListener('wheel', () => { PENDING = -1; }, { passive: true });

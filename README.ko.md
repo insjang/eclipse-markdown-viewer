@@ -23,6 +23,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 기능 | 내용 |
 |---|---|
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
+| 아웃라인 | Outline 뷰(Window → Show View → Outline)에 제목 트리 표시, 클릭하면 Source 커서와 Preview가 그 제목으로 이동. 코드 블록·머리말 안의 `#` 줄은 제외 |
 | 위치 동기화 | 탭을 바꿔도 스크롤바 위치 유지: 한쪽 끝이면 다른 쪽도 끝 (스크롤 비율 기준), 양방향 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 머리말 (front matter) | 파일 맨 앞 YAML 블록(`---` ~ `---`, SKILL.md·정적 사이트 원고 등)을 가로줄·굵은 글씨 대신 접힌 키·값 표로 표시 |
@@ -134,6 +135,7 @@ Preferences → General → Editors → Markdown Viewer
 ```
 src/io/github/insjang/mdviewer/
   MarkdownEditor.java          Source/Preview 탭, 위치 동기화, 링크 처리, PDF 내보내기
+  Headings.java, Outline.java  소스의 제목 추출, Outline 뷰 페이지
   Activator.java               웹 자원 추출, A-/A+
   PrefInit.java                설정 기본값
   Colors.java                  테마별 색 (GitHub 기본값)
@@ -153,6 +155,7 @@ test/
   math.js, math.md             수식 렌더링·정화 검사 (node + jsdom)
   PlantUmlCheck.java           PlantUML 렌더링 검사 (한글, 글꼴, include 차단)
   JsEscape.java                Java → JS 문자열 변환 검사
+  HeadingsCheck.java           아웃라인 제목 추출 검사 (줄 번호·id가 preview.js와 같은지)
 ```
 
 ## 테스트
@@ -194,4 +197,3 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 
 - PDF 내보내기는 Windows 전용: `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge 사용, 없으면 버튼 숨김, macOS는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선
-- 아웃라인 뷰 미지원

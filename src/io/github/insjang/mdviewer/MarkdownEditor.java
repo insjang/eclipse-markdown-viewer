@@ -47,6 +47,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 /** Source (generic text editor) + Preview (Edge browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
@@ -60,8 +61,10 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	private Browser browser;
 	private String pageUrl;
 	private boolean loaded, stale = true, styling;
+	private Outline outline;
 	private final Runnable renderLater = () -> {
 		if (getActivePage() == PREVIEW) render();
+		if (outline != null) outline.update(document().get());
 	};
 	private final IDocumentListener docListener = new IDocumentListener() {
 		@Override
@@ -201,6 +204,29 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		} catch (BadLocationException e) {
 			// keep the caret where it was
 		}
+	}
+
+	@Override
+	public <T> T getAdapter(Class<T> type) {
+		if (type == IContentOutlinePage.class && source != null) {
+			if (outline == null) outline = new Outline(this, document().get());
+			return type.cast(outline);
+		}
+		return super.getAdapter(type);
+	}
+
+	void outlineClosed(Outline o) {
+		if (outline == o) outline = null;
+	}
+
+	/** Caret to the start of the line (from 0) in Source, and the Preview, when showing, to the block from that line. */
+	void reveal(int line) {
+		try {
+			source.selectAndReveal(document().getLineOffset(line), 0);
+		} catch (BadLocationException e) {
+			return;
+		}
+		if (loaded && getActivePage() == PREVIEW) browser.execute("scrollToLine(" + line + ")");
 	}
 
 	private void linkClicked(LocationEvent e) {
