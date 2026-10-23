@@ -70,14 +70,16 @@ import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 public class MarkdownEditor extends MultiPageEditorPart {
 	private static final int SOURCE = 0, PREVIEW = 1;
 	/** Chromium-based browser for the PDF export (headless print): Edge on Windows, Chrome or Chromium elsewhere; null hides the button */
-	private static final String CHROME = printer();
+	private static final String CHROME = printer(System.getenv("PATH"));
 
-	static String printer() {
+	/** path: the PATH variable (may be null); only absolute entries count, so nothing in Eclipse's working folder is run */
+	static String printer(String path) {
 		java.util.stream.Stream<String> candidates = File.separatorChar == '\\'
 				? java.util.stream.Stream.of("C:\\Program Files (x86)", "C:\\Program Files").map(p -> p + "\\Microsoft\\Edge\\Application\\msedge.exe")
 				: java.util.stream.Stream.concat(java.util.stream.Stream.of("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"), // macOS: untested
 						java.util.stream.Stream.of("google-chrome", "google-chrome-stable", "chromium-browser", "chromium", "microsoft-edge")
-								.flatMap(n -> java.util.Arrays.stream(String.valueOf(System.getenv("PATH")).split(File.pathSeparator)).map(d -> d + "/" + n)));
+								.flatMap(n -> java.util.Arrays.stream(path == null ? new String[0] : path.split(File.pathSeparator))
+										.filter(d -> !d.isEmpty() && new File(d).isAbsolute()).map(d -> d + "/" + n)));
 		return candidates.filter(p -> new File(p).isFile() && new File(p).canExecute()).findFirst().orElse(null);
 	}
 
