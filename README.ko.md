@@ -12,6 +12,8 @@
 
 ![KaTeX 수식, 다크 테마: 인라인·블록 수식, TeX 오류는 빨간색](docs/images/math-dark.png)
 
+![머리말, GitHub 알림, 각주와 Outline 뷰, 다크 테마](docs/images/preview-outline.png)
+
 스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면, 수식은 [test/math.md](test/math.md).
 
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
