@@ -14,6 +14,9 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.ui.texteditor.ITextEditorExtension2;
+import org.eclipse.ui.texteditor.IUpdate;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.dnd.ImageTransfer;
@@ -130,7 +133,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	}
 
 	/** Paste in Source: an image alone on the clipboard (a screenshot) goes to images/ next to the document as PNG and gets a link; the rest pastes as before. */
-	private final class ImagePaste extends Action {
+	private final class ImagePaste extends Action implements IUpdate {
 		private final IAction paste;
 
 		ImagePaste(IAction paste) {
@@ -141,6 +144,13 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			paste.addPropertyChangeListener(e -> {
 				if (ENABLED.equals(e.getProperty())) setEnabled(paste.isEnabled());
 			});
+		}
+
+		/** the editor asks its actions to update (read-only, selection): pass it on */
+		@Override
+		public void update() {
+			if (paste instanceof IUpdate u) u.update();
+			setEnabled(paste.isEnabled());
 		}
 
 		@Override
@@ -157,6 +167,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				paste.run();
 				return;
 			}
+			// as the text paste does: read-only or checked-in files are refused (or made writable by the team provider)
+			if (source instanceof ITextEditorExtension2 e && (!e.isEditorInputModifiable() || !e.validateEditorInputState())) return;
 			try {
 				File dir = new File(doc.getParentFile(), "images");
 				dir.mkdirs();
@@ -170,7 +182,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				String link = "![](images/" + f.getName() + ")";
 				document().replace(sel.getOffset(), sel.getLength(), link);
 				source.selectAndReveal(sel.getOffset() + link.length(), 0);
-				if (getEditorInput() instanceof IFileEditorInput in) in.getFile().getParent().refreshLocal(IResource.DEPTH_INFINITE, null);
+				// just images/ (the new file), not the whole folder tree on the UI thread
+				if (getEditorInput() instanceof IFileEditorInput in) in.getFile().getParent().getFolder(IPath.fromPortableString("images")).refreshLocal(IResource.DEPTH_ONE, null);
 			} catch (Exception x) {
 				MessageDialog.openError(getSite().getShell(), "Markdown Viewer", NLS.bind(Messages.paste_failed, x));
 			}
