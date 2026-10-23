@@ -438,7 +438,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		}
 	}
 
-	/** One .html file: the preview as drawn (diagrams as SVG), the page's CSS inline, KaTeX fonts embedded when there is math. */
+	/** One .html file: the preview as drawn (diagrams as SVG), CSS, KaTeX fonts and local images inside (HtmlExport). */
 	private void exportHtml() {
 		if (!loaded) return; // the toolbar shows with the Preview, so the page is up to date
 		String name = getEditorInput().getName().replaceFirst("\\.[^.]+$", "");
@@ -452,20 +452,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (out == null) return;
 		try {
 			String html = (String) browser.evaluate("return htmlDoc(" + js(name) + ");");
-			File web = Activator.web();
-			String theme = Activator.prefs().getString(PrefInit.THEME);
-			StringBuilder css = new StringBuilder(Files.readString(new File(web, "preview.css").toPath()))
-					.append(Files.readString(new File(web, "light".equals(theme) ? "hl-light.css" : "hl-dark.css").toPath()));
-			if (html.contains("class=\"katex")) {
-				String k = Files.readString(new File(web, "katex.min.css").toPath());
-				java.util.regex.Matcher m = java.util.regex.Pattern.compile("url\\(fonts/([\\w-]+\\.woff2)\\)").matcher(k);
-				StringBuilder b = new StringBuilder();
-				while (m.find()) m.appendReplacement(b, "url(data:font/woff2;base64,"
-						+ java.util.Base64.getEncoder().encodeToString(Files.readAllBytes(new File(web, "fonts/" + m.group(1)).toPath())) + ")");
-				css.append(m.appendTail(b));
-			}
-			int at = html.indexOf("/*CSS*/"); // the one in <head>, before any document text
-			Files.writeString(new File(out).toPath(), html.substring(0, at) + css + html.substring(at + 7));
+			Files.writeString(new File(out).toPath(), HtmlExport.page(html, Activator.web(), Activator.prefs().getString(PrefInit.THEME)));
 			if (MessageDialog.openQuestion(getSite().getShell(), Messages.html_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
 		} catch (Exception x) {
 			MessageDialog.openError(getSite().getShell(), Messages.html_title, NLS.bind(Messages.html_failed, out) + "\n" + x);

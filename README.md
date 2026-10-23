@@ -36,7 +36,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>`. Pasting a screenshot (an image alone on the clipboard) in the Source tab saves it as `images/image-<date>-<time>.png` next to the document and inserts the link |
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
-| HTML | Export HTML saves one self-contained file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts embedded when there is math); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
+| HTML | Export HTML saves one file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts and local images up to 10 MB embedded; web images and larger files keep their address); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
@@ -159,6 +159,7 @@ src/io/github/insjang/mdviewer/
   MarkdownEditor.java          Source/Preview tabs, scroll sync, links, PDF export
   Headings.java, Outline.java  headings of the source, Outline view page
   LinkCheck.java               broken relative links as Problems view warnings
+  HtmlExport.java              Export HTML: CSS, fonts and local images in one file
   PlantUml.java                PlantUML blocks to SVG (font and colors, cache, sandbox)
   Activator.java               web assets, A-/A+
   PrefInit.java                preference defaults
@@ -176,7 +177,8 @@ test/
   check.js                     rendering (node)
   sanitize.js, plantuml.js     sanitizing and PlantUML wiring (node + jsdom)
   math.js, math.md             math rendering and sanitizing (node + jsdom)
-  JsEscape.java, PlantUmlCheck.java, HeadingsCheck.java, LinkCheckCheck.java
+  JsEscape.java, PlantUmlCheck.java, HeadingsCheck.java, LinkCheckCheck.java, HtmlExportCheck.java
+  chrome.sh, find-many.js      the real preview page in headless Chrome (find with 130,000 matches)
 ```
 
 ## See also
