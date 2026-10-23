@@ -523,7 +523,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	public void doSaveAs() {
 		// the new file gets a new document: move the listener there so live preview and reload follow it
 		IDocument old = document();
-		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(in.getFile());
+		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile());
 		source.doSaveAs();
 		if (old != null) old.removeDocumentListener(docListener);
 		setInput(source.getEditorInput());
@@ -541,8 +541,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	@Override
 	public void dispose() {
 		Activator.prefs().removePropertyChangeListener(prefListener);
-		if (linkCheck != null) linkCheck.cancel();
-		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(in.getFile()); // only open documents are checked
+		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile()); // only open documents are checked
+		else if (linkCheck != null) linkCheck.cancel();
 		if (source != null && source.getDocumentProvider() != null) {
 			IDocument d = document();
 			if (d != null) d.removeDocumentListener(docListener);

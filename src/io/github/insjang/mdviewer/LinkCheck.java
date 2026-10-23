@@ -61,7 +61,7 @@ final class LinkCheck {
 				String msg;
 				if (u.startsWith("#")) {
 					if (here == null) here = anchors(src);
-					msg = here.contains(anchor(u.substring(1))) || u.length() == 1 || u.matches("#fn(ref)?\\d+") ? null : NLS.bind(Messages.link_noAnchorHere, u);
+					msg = here.contains(anchor(u.substring(1))) || u.length() == 1 || anchor(u.substring(1)).matches("fn(ref)?\\d+(:\\d+)?") ? null : NLS.bind(Messages.link_noAnchorHere, u);
 				} else {
 					msg = file(u, dir);
 				}
@@ -75,8 +75,10 @@ final class LinkCheck {
 	private static String file(String u, File dir) {
 		if (SCHEME.matcher(u).find() || u.startsWith("/") || u.startsWith("\\")) return null; // web, mail, drives, absolute and network paths
 		int hash = u.indexOf('#');
-		String path = decode((hash < 0 ? u : u.substring(0, hash)).replaceFirst("\\?.*", ""));
-		if (path.isEmpty()) return null;
+		String raw = hash < 0 ? u : u.substring(0, hash);
+		String path = decode(raw.indexOf('?') < 0 ? raw : raw.substring(0, raw.indexOf('?')));
+		// again once decoded: %5C%5Chost, %2F%2Fhost and file%3A//host are network paths as well
+		if (path.isEmpty() || SCHEME.matcher(path).find() || path.startsWith("/") || path.startsWith("\\")) return null;
 		File f = new File(dir, path);
 		if (!f.exists()) return NLS.bind(Messages.link_noFile, path);
 		if (hash < 0 || hash == u.length() - 1 || !f.isFile() || !f.getName().matches("(?i).*\\.(md|markdown|mdown|mkd)")) return null;
@@ -140,6 +142,7 @@ final class LinkCheck {
 			List<Problem> problems = dir == null || !Activator.prefs().getBoolean(PrefInit.LINK_CHECK) ? List.of() : check(src, dir);
 			if (monitor.isCanceled() || !file.exists()) return;
 			file.getWorkspace().run(m -> {
+				if (monitor.isCanceled()) return; // the editor closed meanwhile: it has cleared the markers
 				file.deleteMarkers(MARKER, false, IResource.DEPTH_ZERO);
 				for (Problem p : problems) {
 					IMarker k = file.createMarker(MARKER);
@@ -152,6 +155,19 @@ final class LinkCheck {
 		job.setSystem(true);
 		job.schedule(500);
 		return job;
+	}
+
+	/** After the editor closed: stop a check under way first, so it cannot put the markers back. */
+	static void clear(Job job, IFile file) {
+		if (job != null) {
+			job.cancel();
+			try {
+				job.join(1000, null);
+			} catch (Exception e) {
+				// clear anyway
+			}
+		}
+		clear(file);
 	}
 
 	static void clear(IFile file) {

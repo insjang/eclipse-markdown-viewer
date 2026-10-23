@@ -16,6 +16,10 @@ public class LinkCheckCheck {
 		var msgs = got.stream().map(p -> (p.line() + 1) + ":" + src.substring(p.start(), p.end())).toList();
 		if (!msgs.equals(java.util.List.of("6:missing.md", "6:other.md#nope", "6:#nope", "10:missing2.png"))) throw new AssertionError(msgs + " " + got);
 		if (!got.get(0).message().contains("missing.md")) throw new AssertionError(got.get(0).message());
+		// QA D8: network paths written percent-encoded are skipped too (never handed to File); D10: prefixed footnote anchors
+		String more = "[n](%5C%5Chost%5Cs%5Cx.md) [n](%2F%2Fhost/s/x.md) [n](file%3A//host/x.md) [f](#user-content-fn1) [f](#user-content-fnref1:1) [bad](%2E/gone.md)\n";
+		var got2 = LinkCheck.check(more, dir).stream().map(p -> more.substring(p.start(), p.end())).toList();
+		if (!got2.equals(java.util.List.of("%2E/gone.md"))) throw new AssertionError("encoded: " + got2);
 		// a crafted line must not take long
 		String hostile = "[x](<".repeat(30_000) + "](" .repeat(30_000) + "[x]:" + " ".repeat(50_000) + "`".repeat(30_001);
 		long t = System.nanoTime();
