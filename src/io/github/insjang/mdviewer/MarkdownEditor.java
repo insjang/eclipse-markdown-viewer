@@ -70,6 +70,7 @@ import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.ide.IGotoMarker;
 import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -429,6 +430,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			if (outline == null) outline = new Outline(this, document().get());
 			return type.cast(outline);
 		}
+		// Problems view double-click: to Source, where the marker shows, then to the marker
+		if (type == IGotoMarker.class && source != null) return type.cast((IGotoMarker) marker -> {
+			setActivePage(SOURCE);
+			IDE.gotoMarker(source, marker);
+		});
 		return super.getAdapter(type);
 	}
 
