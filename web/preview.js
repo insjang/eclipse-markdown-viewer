@@ -357,28 +357,42 @@ function findClose() {
 	if (window.CSS && CSS.highlights) CSS.highlights.clear();
 }
 
-// all matches, ignoring case; from the first one (typing) or near the current one (the page was drawn again)
+// all matches, ignoring case, at most FIND_MAX; from the first one (typing) or near the current one (the page was drawn again).
+// Never throws: it runs inside render(), before the diagrams are drawn.
+const FIND_MAX = 10000;
+let FIND_MORE = false;
 function findRun(fromStart) {
 	if (!FIND || FIND.hidden) return;
-	const q = FIND.querySelector('input').value.toLowerCase();
-	HITS = [];
-	if (q) {
-		// not the MathML copy of formulas (the visible KaTeX HTML is searched) or the inside of a closed <details>
-		const w = document.createTreeWalker(document.getElementById('c'), NodeFilter.SHOW_TEXT, { acceptNode: n =>
-			n.parentElement.closest('.katex-mathml, style, button, details:not([open]) > :not(summary)') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
-		for (let n; (n = w.nextNode());) {
-			const t = n.data.toLowerCase();
-			for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + q.length)) {
-				const r = document.createRange();
-				r.setStart(n, i);
-				r.setEnd(n, i + q.length);
-				HITS.push(r);
+	try {
+		const q = FIND.querySelector('input').value.toLowerCase();
+		HITS = [];
+		FIND_MORE = false;
+		if (q) {
+			// not the MathML copy of formulas (the visible KaTeX HTML is searched) or the inside of a closed <details>
+			const w = document.createTreeWalker(document.getElementById('c'), NodeFilter.SHOW_TEXT, { acceptNode: n =>
+				n.parentElement.closest('.katex-mathml, style, button, details:not([open]) > :not(summary)') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+			scan: for (let n; (n = w.nextNode());) {
+				const t = n.data.toLowerCase();
+				for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + q.length)) {
+					if (HITS.length === FIND_MAX) { FIND_MORE = true; break scan; }
+					const r = document.createRange();
+					r.setStart(n, i);
+					r.setEnd(n, i + q.length);
+					HITS.push(r);
+				}
 			}
 		}
+		HIT = HITS.length ? (fromStart ? 0 : Math.min(Math.max(HIT, 0), HITS.length - 1)) : -1;
+		if (window.CSS && CSS.highlights) {
+			const h = new Highlight(); // added one by one: new Highlight(...HITS) overflows the stack past ~125,000
+			for (const r of HITS) h.add(r);
+			CSS.highlights.set('find', h);
+		}
+		findShow(fromStart);
+	} catch (e) {
+		HITS = [];
+		HIT = -1;
 	}
-	HIT = HITS.length ? (fromStart ? 0 : Math.min(Math.max(HIT, 0), HITS.length - 1)) : -1;
-	if (window.CSS && CSS.highlights) CSS.highlights.set('find', new Highlight(...HITS));
-	findShow(fromStart);
 }
 
 function findStep(d) {
@@ -388,7 +402,7 @@ function findStep(d) {
 }
 
 function findShow(scroll) {
-	FIND.querySelector('span').textContent = HITS.length ? `${HIT + 1}/${HITS.length}` : FIND.querySelector('input').value ? L.findNone : '';
+	FIND.querySelector('span').textContent = HITS.length ? `${HIT + 1}/${HITS.length}${FIND_MORE ? '+' : ''}` : FIND.querySelector('input').value ? L.findNone : '';
 	if (window.CSS && CSS.highlights) {
 		if (HIT >= 0) CSS.highlights.set('find-current', new Highlight(HITS[HIT]));
 		else CSS.highlights.delete('find-current');
