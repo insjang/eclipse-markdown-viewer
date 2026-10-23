@@ -24,7 +24,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 |---|---|
 | Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
 | Outline | The Outline view (Window > Show View > Outline) lists the headings as a tree; a click moves the Source caret and the Preview to the heading. Headings in code blocks and front matter are left out |
-| Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other |
+| Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other. A double-click in the Preview opens the Source tab at the line of that paragraph, table row, list item or diagram |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
 | GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |

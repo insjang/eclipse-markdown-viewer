@@ -152,6 +152,20 @@ public class MarkdownEditor extends MultiPageEditorPart {
 						: ""; //$NON-NLS-1$
 			}
 		};
+		new BrowserFunction(browser, "mdSource") { //$NON-NLS-1$
+			@Override
+			public Object function(Object[] args) {
+				if (args.length == 1 && args[0] instanceof Number n) browser.getDisplay().asyncExec(() -> {
+					if (browser.isDisposed()) return;
+					setActivePage(SOURCE);
+					// after pageChange's own scroll to the preview's position, which is queued the same way
+					browser.getDisplay().asyncExec(() -> {
+						if (!browser.isDisposed()) reveal(n.intValue());
+					});
+				});
+				return null;
+			}
+		};
 		new BrowserFunction(browser, "mdCopy") { //$NON-NLS-1$
 			@Override
 			public Object function(Object[] args) {

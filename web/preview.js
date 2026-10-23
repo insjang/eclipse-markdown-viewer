@@ -412,6 +412,13 @@ if (typeof window !== 'undefined') window.addEventListener('keydown', e => {
 	}
 });
 
+// double-click: Source tab at the line the block starts on (data-line), through the plugin (mdSource)
+if (typeof window !== 'undefined') window.addEventListener('dblclick', e => {
+	if (typeof window.mdSource !== 'function' || e.target.closest('#find, a, button, input, summary')) return;
+	const b = e.target.closest('#c [data-line]');
+	if (b) window.mdSource(+b.dataset.line);
+});
+
 // the user scrolling takes over from a pending jump
 if (typeof window !== 'undefined') {
 	window.addEventListener('wheel', () => { PENDING = -1; }, { passive: true });
