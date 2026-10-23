@@ -542,7 +542,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		}
 	}
 
-	/** One .html file: the preview as drawn (diagrams as SVG), CSS, KaTeX fonts and local images inside (HtmlExport). */
+	/** One .html file: the preview as drawn (diagrams as SVG), CSS and KaTeX fonts inside, local images linked relative to it (HtmlExport). */
 	private void exportHtml() {
 		if (!loaded) return; // the toolbar shows with the Preview, so the page is up to date
 		String name = getEditorInput().getName().replaceFirst("\\.[^.]+$", "");
@@ -556,7 +556,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (out == null) return;
 		try {
 			String html = (String) browser.evaluate("return htmlDoc(" + js(name) + ");");
-			Files.writeString(new File(out).toPath(), HtmlExport.page(html, Activator.web(), Activator.prefs().getString(PrefInit.THEME)));
+			Files.writeString(new File(out).toPath(), HtmlExport.page(html, Activator.web(), Activator.prefs().getString(PrefInit.THEME), new File(out).getAbsoluteFile().getParentFile()));
 			if (MessageDialog.openQuestion(getSite().getShell(), Messages.html_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
 		} catch (Exception x) {
 			MessageDialog.openError(getSite().getShell(), Messages.html_title, NLS.bind(Messages.html_failed, out) + "\n" + x);

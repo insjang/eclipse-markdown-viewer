@@ -3,23 +3,22 @@ package io.github.insjang.mdviewer;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
-import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Export HTML: the page from preview.js htmlDoc() made into one file (CSS, KaTeX fonts and local images inside). */
+/**
+ * Export HTML: the page from preview.js htmlDoc() made into one file (CSS and KaTeX fonts inside). Local
+ * images become links relative to the saved file; they are never read, so the file holds nothing but
+ * what the document shows (a link could lead anywhere on the disk).
+ */
 final class HtmlExport {
-	/** images larger than this keep their file:/// address (they then show only on this computer) */
-	static final long MAX_IMAGE = 10 << 20;
-	private static final Map<String, String> TYPES = Map.of("png", "image/png", "jpg", "image/jpeg", "jpeg", "image/jpeg", "gif", "image/gif",
-			"svg", "image/svg+xml", "webp", "image/webp", "bmp", "image/bmp", "ico", "image/x-icon");
 	/** src="file:///..." of <img> and href="file:///..." of SVG <image>: quoted value without quotes, nothing that can backtrack */
 	private static final Pattern LOCAL = Pattern.compile("(<(?:img|image)\\b[^>]*?\\s(?:src|href|xlink:href)=\")(file:///[^\"]*)\"");
 
-	/** web: the extracted web/ folder, theme: dark or light */
-	static String page(String html, File web, String theme) throws Exception {
+	/** web: the extracted web/ folder, theme: dark or light, dir: the folder the page is saved in */
+	static String page(String html, File web, String theme, File dir) throws Exception {
 		StringBuilder css = new StringBuilder(Files.readString(new File(web, "preview.css").toPath()))
 				.append(Files.readString(new File(web, "light".equals(theme) ? "hl-light.css" : "hl-dark.css").toPath()));
 		if (html.contains("class=\"katex")) {
@@ -31,32 +30,30 @@ final class HtmlExport {
 			css.append(m.appendTail(b));
 		}
 		int at = html.indexOf("/*CSS*/"); // the one in <head>, before any document text
-		return images(html.substring(0, at) + css + html.substring(at + 7));
+		return images(html.substring(0, at) + css + html.substring(at + 7), dir);
 	}
 
-	/** Local images as data: URIs, so the file can be mailed or moved; network paths are never read. */
-	static String images(String html) {
+	/** Local images as links relative to dir (the page moves with its images); other addresses stay as they are. */
+	static String images(String html, File dir) {
 		Matcher m = LOCAL.matcher(html);
 		StringBuilder b = new StringBuilder();
 		while (m.find()) {
-			String data = data(m.group(2).replace("&amp;", "&"));
-			m.appendReplacement(b, Matcher.quoteReplacement(m.group(1) + (data == null ? m.group(2) : data) + "\""));
+			String rel = relative(m.group(2).replace("&amp;", "&"), dir);
+			m.appendReplacement(b, Matcher.quoteReplacement(m.group(1) + (rel == null ? m.group(2) : rel) + "\""));
 		}
 		return m.appendTail(b).toString();
 	}
 
-	private static String data(String url) {
+	private static String relative(String url, File dir) {
 		try {
 			URI u = URI.create(url);
-			String path = u.getPath();
-			if (u.getAuthority() != null || path == null || path.matches("(?s)[/\\\\]{2}.*")) return null; // \\host: never touched
-			File f = new File(u);
-			if (f.getPath().startsWith("\\\\") || f.getPath().startsWith("//")) return null;
-			String ext = f.getName().replaceFirst(".*\\.", "").toLowerCase(Locale.ROOT);
-			if (!TYPES.containsKey(ext) || !f.isFile() || f.length() > MAX_IMAGE) return null;
-			return "data:" + TYPES.get(ext) + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(f.toPath()));
+			if (u.getAuthority() != null || u.getPath() == null || u.getPath().matches("(?s)[/\\\\]{2}.*")) return null; // \\host: as it is
+			Path image = Path.of(u).normalize(), base = dir.toPath().toAbsolutePath().normalize();
+			if (image.getRoot() == null || !image.getRoot().equals(base.getRoot())) return null; // another drive: no relative path
+			String rel = base.relativize(image).toString().replace(File.separatorChar, '/');
+			return new URI(null, null, rel, null).getRawPath().replace("&", "&amp;");
 		} catch (Exception e) {
-			return null; // unreadable or a bad URL: left as it was
+			return null; // a bad URL: left as it was
 		}
 	}
 
