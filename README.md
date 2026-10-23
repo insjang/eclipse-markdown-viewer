@@ -38,6 +38,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | PDF export | A4, light colors, diagrams and math included |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
+| Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
 | Font size | `A-` / `A+` on the preview toolbar |
 | Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional double-click to close editor tabs |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |
@@ -101,6 +102,7 @@ Preferences > General > Editors > Markdown Viewer
 | Theme | Dark |
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
 | Open files on the Preview tab | On |
+| Show broken relative links and #anchors in the Problems view | On |
 | Double-click a tab to close the editor | Off (on: applies to every editor tab, instead of maximizing; Ctrl+M still maximizes) |
 | Dark and light colors (13 each) | GitHub colors, `Restore Defaults` brings them back |
 | Mermaid spacing: nodes, ranks, box padding | 25, 30, 6 px (Mermaid's own defaults are 50, 50, 15) |
@@ -152,6 +154,7 @@ Markdown from elsewhere can be opened safely.
 src/io/github/insjang/mdviewer/
   MarkdownEditor.java          Source/Preview tabs, scroll sync, links, PDF export
   Headings.java, Outline.java  headings of the source, Outline view page
+  LinkCheck.java               broken relative links as Problems view warnings
   PlantUml.java                PlantUML blocks to SVG (font and colors, cache, sandbox)
   Activator.java               web assets, A-/A+
   PrefInit.java                preference defaults
@@ -169,7 +172,7 @@ test/
   check.js                     rendering (node)
   sanitize.js, plantuml.js     sanitizing and PlantUML wiring (node + jsdom)
   math.js, math.md             math rendering and sanitizing (node + jsdom)
-  JsEscape.java, PlantUmlCheck.java, HeadingsCheck.java
+  JsEscape.java, PlantUmlCheck.java, HeadingsCheck.java, LinkCheckCheck.java
 ```
 
 ## See also

@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -65,9 +66,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	private String pageUrl;
 	private boolean loaded, stale = true, styling;
 	private Outline outline;
+	private Job linkCheck;
 	private final Runnable renderLater = () -> {
 		if (getActivePage() == PREVIEW) render();
 		if (outline != null) outline.update(document().get());
+		checkLinks();
 	};
 	private final IDocumentListener docListener = new IDocumentListener() {
 		@Override
@@ -82,6 +85,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	};
 	// OK or Restore Defaults changes dozens of keys at once: one restyle per editor afterwards
 	private final IPropertyChangeListener prefListener = e -> {
+		if (PrefInit.LINK_CHECK.equals(e.getProperty())) checkLinks();
 		if (styling || browser == null || browser.isDisposed()) return;
 		styling = true;
 		browser.getDisplay().asyncExec(() -> {
@@ -103,6 +107,12 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
 		if (Activator.prefs().getBoolean(PrefInit.OPEN_PREVIEW)) setActivePage(PREVIEW);
+		checkLinks();
+	}
+
+	/** Problems view warnings for broken relative links, workspace files only (markers need a resource). */
+	private void checkLinks() {
+		if (getEditorInput() instanceof IFileEditorInput in) linkCheck = LinkCheck.schedule(linkCheck, in.getFile(), document().get());
 	}
 
 	private Control createPreview(Composite parent) {
@@ -383,6 +393,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	public void doSaveAs() {
 		// the new file gets a new document: move the listener there so live preview and reload follow it
 		IDocument old = document();
+		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(in.getFile());
 		source.doSaveAs();
 		if (old != null) old.removeDocumentListener(docListener);
 		setInput(source.getEditorInput());
@@ -400,6 +411,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	@Override
 	public void dispose() {
 		Activator.prefs().removePropertyChangeListener(prefListener);
+		if (linkCheck != null) linkCheck.cancel();
+		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(in.getFile()); // only open documents are checked
 		if (source != null && source.getDocumentProvider() != null) {
 			IDocument d = document();
 			if (d != null) d.removeDocumentListener(docListener);

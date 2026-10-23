@@ -36,6 +36,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
+| 링크 검사 | 열린 워크스페이스 파일의 깨진 상대 경로 링크·이미지·`#앵커`(제목, HTML `id`/`name`)를 Problems 뷰에 경고로 표시. 웹 링크, 절대·네트워크 경로는 검사 안 함 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
 | 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 탭 더블클릭으로 에디터 닫기 (선택) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |
@@ -97,6 +98,7 @@ Preferences → General → Editors → Markdown Viewer
 | 테마 | 어둡게 |
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
+| 깨진 상대 링크·#앵커를 Problems 뷰에 표시 | 켜짐 |
 | 탭 더블클릭으로 에디터 닫기 | 꺼짐 (켜면 최대화 대신 닫기, 모든 에디터 탭에 적용, Ctrl+M은 계속 최대화) |
 | 다크·라이트 색 13종 | GitHub 색 (`Restore Defaults`로 복원) |
 | Mermaid 간격 (노드·단계·상자 안 여백) | 25 · 30 · 6 px |
@@ -139,6 +141,7 @@ Preferences → General → Editors → Markdown Viewer
 src/io/github/insjang/mdviewer/
   MarkdownEditor.java          Source/Preview 탭, 위치 동기화, 링크 처리, PDF 내보내기
   Headings.java, Outline.java  소스의 제목 추출, Outline 뷰 페이지
+  LinkCheck.java               깨진 상대 링크를 Problems 뷰 경고로
   Activator.java               웹 자원 추출, A-/A+
   PrefInit.java                설정 기본값
   Colors.java                  테마별 색 (GitHub 기본값)
@@ -159,6 +162,7 @@ test/
   PlantUmlCheck.java           PlantUML 렌더링 검사 (한글, 글꼴, include 차단)
   JsEscape.java                Java → JS 문자열 변환 검사
   HeadingsCheck.java           아웃라인 제목 추출 검사 (줄 번호·id가 preview.js와 같은지)
+  LinkCheckCheck.java          링크 검사 (깨진 경로·앵커, 코드·네트워크 경로 제외, 악의적 긴 줄)
 ```
 
 ## 테스트

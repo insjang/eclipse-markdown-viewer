@@ -25,21 +25,15 @@ final class Headings {
 	private static final Pattern NOT_TEXT = Pattern.compile("^(?: {4}|\\t| {0,3}(?:[>|<]|[-*+](?:[ \\t]|$)|\\d{1,9}[.)](?:[ \\t]|$)|#{1,6}(?:[ \\t]|$)))");
 
 	static List<Heading> of(String src) {
-		String[] lines = src.split("\r?\n|\r", -1);
+		String[] lines = lines(src);
+		boolean[] code = code(lines);
 		List<Heading> out = new ArrayList<>();
 		Map<String, Integer> seen = new HashMap<>();
-		int i = frontMatterEnd(lines), para = -1;
-		String fence = null;
-		for (; i < lines.length; i++) {
+		int para = -1;
+		for (int i = 0; i < lines.length; i++) {
 			String l = lines[i];
-			if (fence != null) { // inside ``` or ~~~ until a fence of the same kind, at least as long
-				String t = l.strip();
-				if (t.startsWith(fence) && t.replace(t.substring(0, 1), "").isEmpty()) fence = null;
-				continue;
-			}
-			Matcher m = FENCE.matcher(l);
-			if (m.find() && !(m.group(1).charAt(0) == '`' && l.substring(m.end()).contains("`"))) {
-				fence = m.group(1);
+			Matcher m;
+			if (code[i]) {
 				para = -1;
 				continue;
 			}
@@ -64,6 +58,33 @@ final class Headings {
 			}
 		}
 		return out;
+	}
+
+	static String[] lines(String src) {
+		return src.split("\r?\n|\r", -1);
+	}
+
+	/** Lines that are front matter or fenced code (fences included): no headings or links there. */
+	static boolean[] code(String[] lines) {
+		boolean[] code = new boolean[lines.length];
+		int start = frontMatterEnd(lines);
+		java.util.Arrays.fill(code, 0, start, true);
+		String fence = null;
+		for (int i = start; i < lines.length; i++) {
+			String l = lines[i];
+			if (fence != null) { // inside ``` or ~~~ until a fence of the same kind, at least as long
+				String t = l.strip();
+				if (t.startsWith(fence) && t.replace(t.substring(0, 1), "").isEmpty()) fence = null;
+				code[i] = true;
+				continue;
+			}
+			Matcher m = FENCE.matcher(l);
+			if (m.find() && !(m.group(1).charAt(0) == '`' && l.substring(m.end()).contains("`"))) {
+				fence = m.group(1);
+				code[i] = true;
+			}
+		}
+		return code;
 	}
 
 	/** h2 under the h1 above it, and so on; a deeper level with no parent starts at the top. */
