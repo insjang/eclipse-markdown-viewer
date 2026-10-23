@@ -204,6 +204,6 @@ NODE_PATH=<jsdom 설치 경로>/node_modules node test/math.js
 ## 제약
 
 - PDF 내보내기는 Chromium 계열 브라우저 필요: Windows는 `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge, 그 밖은 `PATH`의 Chrome·Chromium, 없으면 버튼 숨김
-  - snap 패키지 Chromium은 격리 때문에 숨김 폴더 `.metadata`의 페이지를 못 읽을 수 있음: Google Chrome 패키지 권장
+  - snap 패키지 Chromium은 홈 폴더 밖, 홈 바로 아래 숨김 폴더의 파일을 못 읽음: 워크스페이스(`.metadata`에 인쇄용 페이지를 둠)가 그런 위치면 Google Chrome 패키지 사용
   - macOS(`/Applications/Google Chrome.app`)는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선

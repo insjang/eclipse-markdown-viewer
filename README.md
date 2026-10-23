@@ -146,7 +146,7 @@ Markdown from elsewhere can be opened safely.
 
 ## Limitations
 
-- PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; the button is hidden when there is none. The snap package of Chromium may not be able to read the page from the hidden `.metadata` folder (snap confinement): use the Google Chrome package then. macOS (`/Applications/Google Chrome.app`) is untested.
+- PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; the button is hidden when there is none. The snap package of Chromium cannot read files outside the home folder or in a hidden folder directly under it, where it would find the page in the workspace's `.metadata`: with such a workspace, use the Google Chrome package. macOS (`/Applications/Google Chrome.app`) is untested.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 
 ## Source layout
