@@ -281,7 +281,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		menu.add(new Action(Messages.menu_copy) {
 			@Override
 			public void run() {
-				if (browser.evaluate("return getSelection().toString()") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
+				if (browser.evaluate("return plainText(false)") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
 			}
 		});
 		menu.add(new Action(Messages.menu_selectAll) {

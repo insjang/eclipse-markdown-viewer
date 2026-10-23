@@ -151,6 +151,7 @@ function render(src, base) {
 	findRun(false);
 	// diagrams grow once drawn, which moves everything below them: aim again then
 	const drawn = () => { doScroll(); findRun(false); document.querySelectorAll('#c .mermaid').forEach(panZoom); };
+	document.querySelectorAll('#c .mermaid').forEach(e => { e.dataset.src = e.textContent; }); // for plainText: mermaid swaps it for the SVG
 	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(drawn, drawn);
 	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
 }
@@ -467,12 +468,26 @@ function htmlDoc(title) {
 // [html, plain text] for the clipboard
 function htmlFragment() {
 	const c = renderedClone(true), cs = getComputedStyle(document.body);
-	// text as shown: not the MathML copy of formulas or the button labels
-	const hide = [...document.querySelectorAll('#c .katex-mathml, #c .copy, #c .zoom-reset')];
-	hide.forEach(e => { e.style.display = 'none'; });
-	const text = document.getElementById('c').innerText;
-	hide.forEach(e => { e.style.display = ''; });
-	return [`<div style="color:${cs.color};background-color:${cs.backgroundColor};font-family:${cs.fontFamily.replace(/"/g, "'")};font-size:${cs.fontSize};line-height:${cs.lineHeight}">${c.innerHTML}</div>`, text];
+	return [`<div style="color:${cs.color};background-color:${cs.backgroundColor};font-family:${cs.fontFamily.replace(/"/g, "'")};font-size:${cs.fontSize};line-height:${cs.lineHeight}">${c.innerHTML}</div>`, plainText(true)];
+}
+
+// text for the clipboard, of the selection or the whole page: formulas as their TeX ($...$), diagrams as their source, no button labels
+function plainText(whole) {
+	const box = document.createElement('div'), sel = getSelection();
+	if (whole) box.append(...[...document.getElementById('c').childNodes].map(n => n.cloneNode(true)));
+	else for (let i = 0; i < sel.rangeCount; i++) box.append(sel.getRangeAt(i).cloneContents());
+	box.querySelectorAll('.copy, .zoom-reset').forEach(e => e.remove());
+	box.querySelectorAll('.katex').forEach(e => {
+		const tex = e.querySelector('annotation[encoding="application/x-tex"]');
+		if (tex) e.replaceWith(e.parentElement?.classList.contains('katex-display') ? `$$${tex.textContent}$$` : `$${tex.textContent}$`);
+	});
+	box.querySelectorAll('.katex-mathml').forEach(e => e.remove()); // a formula cut by the selection: as shown
+	box.querySelectorAll('.mermaid').forEach(e => { if (e.dataset.src) e.replaceWith(Object.assign(document.createElement('pre'), { textContent: e.dataset.src.trim() })); });
+	box.style.cssText = 'position:absolute;left:-99999px;top:0';
+	document.body.append(box); // innerText needs layout
+	const text = box.innerText;
+	box.remove();
+	return text;
 }
 
 // standalone light-theme page for headless Edge --print-to-pdf (mermaid renders there on load)
