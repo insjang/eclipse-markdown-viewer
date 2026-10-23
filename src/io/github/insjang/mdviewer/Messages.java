@@ -7,6 +7,7 @@ final class Messages extends NLS {
 	public static String toolbar_pdf, toolbar_html, toolbar_copyHtml, toolbar_fonts;
 	public static String html_title, html_failed;
 	public static String preview_frontMatter, preview_copy, preview_copied, preview_zoomReset, find_find, find_none, find_previous, find_next, find_close;
+	public static String paste_failed;
 	public static String link_job, link_noFile, link_noAnchor, link_noAnchorHere;
 	public static String pdf_title, pdf_job, pdf_failed, pdf_saved, pdf_error;
 	public static String prefs_description, prefs_bodyFont, prefs_codeFont, prefs_fontSample, prefs_codeSample, prefs_lineHeight,

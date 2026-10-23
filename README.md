@@ -33,7 +33,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Code blocks | A Copy button (shown on hover) copies the code as written |
 | PlantUML | ```` ```plantuml ```` / ```` ```puml ```` blocks, drawn locally by the bundled PlantUML, no server, no Graphviz |
 | Math | `$inline$`, `$$display$$` and ```` ```math ```` blocks as on GitHub, drawn offline by the bundled KaTeX; `\$` and prices such as $5 stay text, a TeX error shows in red |
-| Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
+| Images | PNG, GIF and SVG relative to the document, inline `<svg>`. Pasting a screenshot (an image alone on the clipboard) in the Source tab saves it as `images/image-<date>-<time>.png` next to the document and inserts the link |
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
 | HTML | Export HTML saves one self-contained file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts embedded when there is math); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |

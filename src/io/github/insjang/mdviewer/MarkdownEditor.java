@@ -12,6 +12,14 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.texteditor.ITextEditorActionConstants;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.dnd.ImageTransfer;
+import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -112,11 +120,61 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			throw new IllegalStateException(e);
 		}
 		setPartName(getEditorInput().getName());
+		IAction paste = source.getAction(ITextEditorActionConstants.PASTE);
+		if (paste != null) source.setAction(ITextEditorActionConstants.PASTE, new ImagePaste(paste));
 		document().addDocumentListener(docListener);
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
 		if (Activator.prefs().getBoolean(PrefInit.OPEN_PREVIEW)) setActivePage(PREVIEW);
 		checkLinks();
+	}
+
+	/** Paste in Source: an image alone on the clipboard (a screenshot) goes to images/ next to the document as PNG and gets a link; the rest pastes as before. */
+	private final class ImagePaste extends Action {
+		private final IAction paste;
+
+		ImagePaste(IAction paste) {
+			super(paste.getText());
+			this.paste = paste;
+			setActionDefinitionId(paste.getActionDefinitionId());
+			setEnabled(paste.isEnabled());
+			paste.addPropertyChangeListener(e -> {
+				if (ENABLED.equals(e.getProperty())) setEnabled(paste.isEnabled());
+			});
+		}
+
+		@Override
+		public void run() {
+			Clipboard c = new Clipboard(getSite().getShell().getDisplay());
+			ImageData image;
+			try { // text too (Excel, Word copy both): paste the text
+				image = c.getContents(TextTransfer.getInstance()) == null ? (ImageData) c.getContents(ImageTransfer.getInstance()) : null;
+			} finally {
+				c.dispose();
+			}
+			File doc = localFile();
+			if (image == null || doc == null) {
+				paste.run();
+				return;
+			}
+			try {
+				File dir = new File(doc.getParentFile(), "images");
+				dir.mkdirs();
+				String name = "image-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new java.util.Date());
+				File f = new File(dir, name + ".png");
+				for (int n = 2; f.exists(); n++) f = new File(dir, name + "-" + n + ".png");
+				ImageLoader l = new ImageLoader();
+				l.data = new ImageData[] { image };
+				l.save(f.getPath(), SWT.IMAGE_PNG);
+				ITextSelection sel = (ITextSelection) source.getSelectionProvider().getSelection();
+				String link = "![](images/" + f.getName() + ")";
+				document().replace(sel.getOffset(), sel.getLength(), link);
+				source.selectAndReveal(sel.getOffset() + link.length(), 0);
+				if (getEditorInput() instanceof IFileEditorInput in) in.getFile().getParent().refreshLocal(IResource.DEPTH_INFINITE, null);
+			} catch (Exception x) {
+				MessageDialog.openError(getSite().getShell(), "Markdown Viewer", NLS.bind(Messages.paste_failed, x));
+			}
+		}
 	}
 
 	/** Problems view warnings for broken relative links, workspace files only (markers need a resource). */
