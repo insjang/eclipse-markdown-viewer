@@ -34,6 +34,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>` |
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Edge 헤드리스 인쇄) |
+| HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함. `HTML 복사`: 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
 | 링크 검사 | 열린 워크스페이스 파일의 깨진 상대 경로 링크·이미지·`#앵커`(제목, HTML `id`/`name`)를 Problems 뷰에 경고로 표시. 웹 링크, 절대·네트워크 경로는 검사 안 함 |
@@ -81,7 +82,7 @@ ECLIPSE=/path/to/eclipse ./build.sh site       # build/site 에 p2 업데이트 
 - `.md` 파일 더블클릭: Markdown Viewer로 열림
   - Mylyn 편집기로 열리면: 우클릭 → Open With → Markdown Viewer
   - 기본 편집기 지정: Preferences → General → Editors → File Associations → `*.md` → Markdown Viewer → Default
-- Preview 상단 버튼: `PDF 내보내기`, `A-`, `A+`, `글꼴 설정...`
+- Preview 상단 버튼: `PDF 내보내기`, `HTML 내보내기`, `HTML 복사`, `A-`, `A+`, `글꼴 설정...`
 - 저장(`Ctrl+S`)과 실행 취소는 Source 탭 편집기 기준으로 동작
 
 ## 설정

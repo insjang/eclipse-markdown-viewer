@@ -418,6 +418,42 @@ if (typeof window !== 'undefined') {
 	window.addEventListener('keydown', () => { PENDING = -1; });
 }
 
+// Export HTML / Copy HTML: the preview as it is drawn (diagrams included), current theme, without the page's buttons
+function renderedClone(styled) {
+	const src = document.getElementById('c'), c = src.cloneNode(true);
+	if (styled) { // every element gets its computed look in style="", for mail and wiki editors that drop <style>
+		const a = [src, ...src.querySelectorAll('*')], b = [c, ...c.querySelectorAll('*')];
+		a.forEach((e, i) => {
+			if (!(e instanceof HTMLElement)) return; // SVG keeps its own styles
+			const cs = getComputedStyle(e);
+			b[i].style.cssText = INLINE.map(p => `${p}:${cs.getPropertyValue(p)}`).join(';');
+		});
+	}
+	c.querySelectorAll('.copy, .zoom-reset').forEach(e => e.remove());
+	c.querySelectorAll('.mermaid > svg').forEach(e => { e.style.transform = ''; });
+	return c;
+}
+const INLINE = ['color', 'background-color', 'font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'text-align', 'text-decoration-line',
+	'white-space', 'margin', 'padding', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-radius', 'border-collapse', 'list-style-type', 'vertical-align', 'display'];
+
+// whole page; the plugin puts the CSS in place of /*CSS*/ (the first one, in <head>)
+function htmlDoc(title) {
+	const vars = (FONTVARS + Object.entries(COLORS[THEME] || {}).map(([k, v]) => `${k}:${v};`).join('')).replace(/"/g, '&quot;');
+	return `<!doctype html><html data-theme="${THEME}" style="${vars}"><head><meta charset="utf-8"><title>${md.utils.escapeHtml(title)}</title><style>/*CSS*/</style></head>`
+		+ `<body><div id="c">${renderedClone(false).innerHTML}</div></body></html>`;
+}
+
+// [html, plain text] for the clipboard
+function htmlFragment() {
+	const c = renderedClone(true), cs = getComputedStyle(document.body);
+	// text as shown: not the MathML copy of formulas or the button labels
+	const hide = [...document.querySelectorAll('#c .katex-mathml, #c .copy, #c .zoom-reset')];
+	hide.forEach(e => { e.style.display = 'none'; });
+	const text = document.getElementById('c').innerText;
+	hide.forEach(e => { e.style.display = ''; });
+	return [`<div style="color:${cs.color};background-color:${cs.backgroundColor};font-family:${cs.fontFamily.replace(/"/g, "'")};font-size:${cs.fontSize};line-height:${cs.lineHeight}">${c.innerHTML}</div>`, text];
+}
+
 // standalone light-theme page for headless Edge --print-to-pdf (mermaid renders there on load)
 function exportDoc() {
 	const vars = (FONTVARS + Object.entries(COLORS.light).map(([k, v]) => `${k}:${v};`).join('')).replace(/"/g, '&quot;');

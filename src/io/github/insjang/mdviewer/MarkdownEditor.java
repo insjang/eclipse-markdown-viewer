@@ -33,6 +33,7 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.program.Program;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.HTMLTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Composite;
@@ -121,6 +122,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		ToolBar bar = new ToolBar(c, SWT.FLAT | SWT.RIGHT);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
 		if (EDGE != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
+		item(bar, Messages.toolbar_html, this::exportHtml);
+		item(bar, Messages.toolbar_copyHtml, this::copyHtml);
 		item(bar, "A-", () -> Activator.zoom(-1));
 		item(bar, "A+", () -> Activator.zoom(1));
 		item(bar, Messages.toolbar_fonts, () -> PreferencesUtil
@@ -327,6 +330,53 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				return new Status(IStatus.ERROR, Activator.ID, Messages.pdf_error, x);
 			}
 		}).schedule();
+	}
+
+	/** The preview as drawn, with computed styles inline, as HTML and plain text on the clipboard. */
+	private void copyHtml() {
+		if (!loaded) return; // the toolbar shows with the Preview, so the page is up to date
+		if (!(browser.evaluate("return htmlFragment();") instanceof Object[] a) || a.length != 2 || !(a[0] instanceof String html)
+				|| !(a[1] instanceof String text) || text.isEmpty()) return;
+		Clipboard c = new Clipboard(browser.getDisplay());
+		try {
+			c.setContents(new Object[] { html, text }, new Transfer[] { HTMLTransfer.getInstance(), TextTransfer.getInstance() });
+		} finally {
+			c.dispose();
+		}
+	}
+
+	/** One .html file: the preview as drawn (diagrams as SVG), the page's CSS inline, KaTeX fonts embedded when there is math. */
+	private void exportHtml() {
+		if (!loaded) return; // the toolbar shows with the Preview, so the page is up to date
+		String name = getEditorInput().getName().replaceFirst("\\.[^.]+$", "");
+		FileDialog fd = new FileDialog(getSite().getShell(), SWT.SAVE);
+		fd.setFilterExtensions(new String[] { "*.html" });
+		fd.setFileName(name + ".html");
+		File doc = localFile();
+		if (doc != null) fd.setFilterPath(doc.getParent());
+		fd.setOverwrite(true);
+		String out = fd.open();
+		if (out == null) return;
+		try {
+			String html = (String) browser.evaluate("return htmlDoc(" + js(name) + ");");
+			File web = Activator.web();
+			String theme = Activator.prefs().getString(PrefInit.THEME);
+			StringBuilder css = new StringBuilder(Files.readString(new File(web, "preview.css").toPath()))
+					.append(Files.readString(new File(web, "light".equals(theme) ? "hl-light.css" : "hl-dark.css").toPath()));
+			if (html.contains("class=\"katex")) {
+				String k = Files.readString(new File(web, "katex.min.css").toPath());
+				java.util.regex.Matcher m = java.util.regex.Pattern.compile("url\\(fonts/([\\w-]+\\.woff2)\\)").matcher(k);
+				StringBuilder b = new StringBuilder();
+				while (m.find()) m.appendReplacement(b, "url(data:font/woff2;base64,"
+						+ java.util.Base64.getEncoder().encodeToString(Files.readAllBytes(new File(web, "fonts/" + m.group(1)).toPath())) + ")");
+				css.append(m.appendTail(b));
+			}
+			int at = html.indexOf("/*CSS*/"); // the one in <head>, before any document text
+			Files.writeString(new File(out).toPath(), html.substring(0, at) + css + html.substring(at + 7));
+			if (MessageDialog.openQuestion(getSite().getShell(), Messages.html_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
+		} catch (Exception x) {
+			MessageDialog.openError(getSite().getShell(), Messages.html_title, NLS.bind(Messages.html_failed, out) + "\n" + x);
+		}
 	}
 
 	private IDocument document() {

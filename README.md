@@ -36,6 +36,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>` |
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included |
+| HTML | Export HTML saves one self-contained file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts embedded when there is math); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
