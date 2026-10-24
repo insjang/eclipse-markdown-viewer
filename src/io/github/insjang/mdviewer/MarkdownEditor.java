@@ -115,7 +115,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		@Override
 		public void documentChanged(DocumentEvent e) {
 			stale = true;
-			Display.getCurrent().timerExec(300, renderLater); // external change while Preview is showing
+			Display.getCurrent().timerExec(renderDelay(e.getDocument().getLength()), renderLater); // external change while Preview is showing
 		}
 	};
 	// OK or Restore Defaults changes dozens of keys at once: one restyle per editor afterwards
@@ -595,6 +595,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	private IDocument document() {
 		return source.getDocumentProvider().getDocument(getEditorInput());
+	}
+
+	/**
+	 * The pause after the last change before the Preview is brought up to date: 300 ms, and for a large document longer, as the page
+	 * needs about 4 ms per KB to render (measured: 2 s for 500 KB) and cannot scroll or answer while it does. A document of
+	 * 100 KB waits 470 ms, one of 500 KB 2.5 s.
+	 */
+	private static int renderDelay(int length) {
+		return 300 + Math.max(0, length - 65536) / 200;
 	}
 
 	private ITextViewer viewer() {
