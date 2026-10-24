@@ -61,6 +61,11 @@
       <autoEditStrategy class="io.github.insjang.mdviewer.editing.LinkPasteAutoEdit"
             contentType="org.eclipse.tm4e.language_pack.markdown"/>
    </extension>
+   <!-- folding of Markdown in the Source: heading sections, code blocks, tables, quotes, lists -->
+   <extension point="org.eclipse.ui.genericeditor.foldingReconcilers">
+      <foldingReconcilingStrategy class="io.github.insjang.mdviewer.FoldingStrategy"
+            contentType="org.eclipse.tm4e.language_pack.markdown"/>
+   </extension>
    <extension point="org.eclipse.ui.startup">
       <startup class="io.github.insjang.mdviewer.TabClose"/>
    </extension>
