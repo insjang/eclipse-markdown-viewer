@@ -113,6 +113,7 @@ const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.ma
 
 function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing, plantuml) {
 	PLANTUML = plantuml !== false; // off: a plantuml block stays a plain code block
+	FULL = true; // fonts, colors and diagram settings changed: everything is drawn again, not patched
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
 	const r = document.documentElement, s = r.style;
 	r.dataset.theme = theme;
@@ -144,17 +145,56 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing,
 
 function render(src, base) {
 	SRC = src; BASE = base;
+	const c = document.getElementById('c');
 	const y = window.scrollY;
-	document.getElementById('c').replaceChildren(sanitize(md.render(src)));
-	drawPlantUml(document.getElementById('c'), THEME);
-	window.scrollTo(0, y);
-	copyButtons(document.getElementById('c'));
+	const all = patch(c, sanitize(md.render(src)));
+	drawPlantUml(c, THEME);
+	if (all) window.scrollTo(0, y); // a patch leaves what is above untouched, and the browser keeps its place on the page
+	copyButtons(c);
 	findRun(false);
-	// diagrams grow once drawn, which moves everything below them: aim again then
-	const drawn = () => { doScroll(); findRun(false); document.querySelectorAll('#c .mermaid').forEach(panZoom); };
-	document.querySelectorAll('#c .mermaid').forEach(e => { e.dataset.src = e.textContent; }); // for plainText: mermaid swaps it for the SVG
-	mermaid.run({ querySelector: '#c .mermaid', suppressErrors: true }).then(drawn, drawn);
+	// diagrams grow once drawn, which moves everything below them: aim again then.
+	// Only the ones not drawn yet: those of blocks that did not change are still there.
+	const drawn = () => { doScroll(); findRun(false); c.querySelectorAll('.mermaid').forEach(panZoom); };
+	c.querySelectorAll('.mermaid:not([data-processed])').forEach(e => { e.dataset.src = e.textContent; }); // for plainText: mermaid swaps it for the SVG
+	mermaid.run({ querySelector: '#c .mermaid:not([data-processed])', suppressErrors: true }).then(drawn, drawn);
 	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
+}
+
+// Typing changes a block or two. Replacing the whole page would draw every diagram again (Mermaid is by far the
+// slowest part) and throw away the scroll anchor, so the page is brought in line with the fresh render instead:
+// the blocks at the start and at the end that did not change stay, only the middle is replaced.
+let FULL = true; // the first render, and after a style change: replace everything
+// What a node looked like when it was inserted, before a diagram was drawn into it: that is what a fresh render of
+// the same block looks like, and it is kept on the node as _k. A block below an inserted line keeps its look, only
+// its data-line moves, so that is left out.
+function keyOf(n) {
+	return n.nodeType !== 1 ? 't' + n.nodeValue : 'e' + n.outerHTML.replace(/ data-line="\d+"/g, '');
+}
+function lineEls(n) { return [n, ...n.querySelectorAll('[data-line]')].filter(e => e.hasAttribute('data-line')); }
+function copyLines(o, n) {
+	if (o.nodeType !== 1) return;
+	const oe = lineEls(o), ne = lineEls(n);
+	if (oe.length === ne.length) oe.forEach((e, i) => e.setAttribute('data-line', ne[i].getAttribute('data-line')));
+}
+/** Returns true when everything was replaced. */
+function patch(c, frag) {
+	if (FULL) {
+		FULL = false;
+		for (const n of frag.childNodes) n._k = keyOf(n);
+		c.replaceChildren(frag);
+		return true;
+	}
+	const oldN = [...c.childNodes], newN = [...frag.childNodes];
+	const ok = oldN.map(n => n._k || (n._k = keyOf(n))), nk = newN.map(keyOf);
+	let a = 0, b = 0;
+	while (a < oldN.length && a < newN.length && ok[a] === nk[a]) a++;
+	while (b < oldN.length - a && b < newN.length - a && ok[oldN.length - 1 - b] === nk[newN.length - 1 - b]) b++;
+	for (let i = 0; i < a; i++) copyLines(oldN[i], newN[i]);
+	for (let i = 0; i < b; i++) copyLines(oldN[oldN.length - 1 - i], newN[newN.length - 1 - i]);
+	const before = b > 0 ? oldN[oldN.length - b] : null;
+	for (let i = a; i < oldN.length - b; i++) oldN[i].remove();
+	for (let i = a; i < newN.length - b; i++) { newN[i]._k = nk[i]; c.insertBefore(newN[i], before); }
+	return false;
 }
 
 // Raw HTML in markdown is allowed (<br>, <details>...) but sanitized by DOMPurify before insertion.
@@ -233,7 +273,8 @@ function plantUmlStyle(theme) {
 
 function drawPlantUml(root, theme) {
 	if (typeof window.mdPlantUml !== 'function') return;
-	for (const e of root.querySelectorAll('.plantuml')) {
+	for (const e of root.querySelectorAll('.plantuml:not([data-drawn])')) { // blocks that did not change are drawn already
+		e.dataset.drawn = '1';
 		const svg = window.mdPlantUml(e.textContent, plantUmlStyle(theme));
 		// the SVG carries the diagram's own text and links: sanitized like any other HTML
 		e.replaceChildren(DOMPurify.sanitize(svg, { RETURN_DOM_FRAGMENT: true, USE_PROFILES: { svg: true, svgFilters: true, html: true } }));
@@ -273,7 +314,10 @@ function scrollToLine(n) {
 // as navigator.clipboard needs a secure context and permission that a file: page in WebView2 or WebKitGTK may not get
 function copyButtons(root) {
 	for (const code of root.querySelectorAll('pre > code')) {
-		const pre = code.parentElement, box = document.createElement('div'), b = document.createElement('button');
+		const pre = code.parentElement;
+		if (pre.parentElement.classList.contains('code-box')) continue; // a block that stayed in a patch has its button already
+		const box = document.createElement('div'), b = document.createElement('button');
+		box._k = pre._k; // the key of the block as the fresh render has it, see patch()
 		box.className = 'code-box';
 		b.className = 'copy';
 		b.textContent = L.copy;
