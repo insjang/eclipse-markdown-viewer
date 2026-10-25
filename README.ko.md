@@ -38,6 +38,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Windows: Edge, Linux: Chrome·Chromium 헤드리스 인쇄) |
 | HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함, 로컬 이미지는 저장한 파일 기준 상대 경로로 연결 (이미지를 함께 옮겨야 함). `HTML 복사`: 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
 | 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
+| 소스 편집 | Enter로 목록·체크박스·인용문 이어 쓰기 (빈 항목에서 Enter면 목록 끝), Tab으로 목록 항목 들여쓰기. 백틱은 짝 자동 입력, ```` ``` ```` 뒤 Enter면 코드 블록 닫기. 표 안 Tab은 다음 칸 이동과 열 맞춤 (한글·한자 등 전각 문자는 2칸으로 계산), Enter는 새 행. TM4E 필요 (Eclipse IDE 패키지에 포함) |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
 | 링크 검사 | 열린 워크스페이스 파일의 깨진 상대 경로 링크·이미지·`#앵커`(제목, HTML `id`/`name`)를 Problems 뷰에 경고로 표시. 웹 링크, 절대·네트워크 경로는 검사 안 함 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
@@ -98,7 +99,8 @@ Preferences → General → Editors → Markdown Viewer
 | 본문 글꼴 | Eclipse 대화상자 글꼴 11pt (한국어 Windows: 맑은 고딕, 영문 Windows: Segoe UI) |
 | 코드 글꼴 | Eclipse 텍스트 글꼴 10pt (Windows: Consolas, Preview에서는 합자 끔) |
 | 줄 간격 | 1.6 |
-| 테마 | 어둡게 |
+| 테마 | Eclipse 테마에 따름 (에디터 배경색으로 어둡게·밝게 결정) |
+| PlantUML 다이어그램 그리기 | 켜짐 (끄면 plantuml 블록을 코드로 표시, PlantUML 로드 안 함) |
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
 | 깨진 상대 링크·#앵커를 Problems 뷰에 표시 | 켜짐 |
@@ -189,6 +191,8 @@ javac -cp build/classes -d build/test test/HeadingsCheck.java && java -cp build/
 [Modern Terminal](https://github.com/insjang/eclipse-modern-terminal) (같은 작성자): Windows Terminal 같은 색과 한글 폭 처리, TUI 앱 마우스 지원, 세션 저장 SSH와 SFTP Files 뷰를 갖춘 Eclipse 터미널. 터미널의 `.md` 경로를 Ctrl+클릭하면 이 뷰어로 열림. [Eclipse Marketplace](https://marketplace.eclipse.org/content/modern-terminal)
 
 ## 라이선스
+
+- 소스 편집, Eclipse 테마 따르기, PlantUML 끄기 설정, NOTICE 보완은 [@m-froehlich](https://github.com/m-froehlich)의 기여.
 
 - AI 코딩 도구(Anthropic의 Claude 등)의 도움을 받아 개발.
 

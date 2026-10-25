@@ -40,6 +40,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
 | HTML | Export HTML saves one file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts inside; local images are linked relative to the saved file, so keep them beside it); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
 | Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
+| Source editing | Enter continues list items, task lists and quotes (an empty item ends the list), Tab nests a list item; a backtick gets its pair, ```` ``` ```` + Enter closes the code fence; Tab in a table moves to the next cell and lines up the columns (wide CJK characters count as two), Enter adds a row. Needs TM4E, as in the Eclipse IDE packages |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
 | Font size | `A-` / `A+` on the preview toolbar |
@@ -102,7 +103,8 @@ Preferences > General > Editors > Markdown Viewer
 | Body font | Eclipse dialog font, 11 pt (Segoe UI on English Windows, Malgun Gothic on Korean Windows) |
 | Code font | Eclipse text font, 10 pt (Consolas on Windows; ligatures are turned off in the preview) |
 | Line height | 1.6 |
-| Theme | Dark |
+| Theme | As the Eclipse theme (dark or light by the editor background) |
+| Draw PlantUML diagrams | On (off: a plantuml block shows as code, PlantUML is not loaded) |
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
 | Open files on the Preview tab | On |
 | Show broken relative links and #anchors in the Problems view | On |
@@ -188,6 +190,8 @@ test/
 [Modern Terminal](https://github.com/insjang/eclipse-modern-terminal) by the same author: a terminal view for Eclipse with Windows Terminal-style colors, wide (CJK) characters, mouse support for TUI apps, SSH with saved sessions and an SFTP Files view. Ctrl+click a `.md` path in it to open this viewer. [Eclipse Marketplace](https://marketplace.eclipse.org/content/modern-terminal)
 
 ## License
+
+Source editing, the Eclipse theme setting, the PlantUML switch and the NOTICE details were contributed by [@m-froehlich](https://github.com/m-froehlich). Thank you.
 
 Developed with the help of AI coding assistants, including Claude (Anthropic).
 
