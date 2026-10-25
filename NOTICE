@@ -38,6 +38,9 @@ Third-party content bundled in the plugin JAR, each under its own license:
 - Mermaid 11.17.2 (web/mermaid.min.js)
   MIT License, Copyright (c) 2014 - 2022 Knut Sveidqvist
   https://github.com/mermaid-js/mermaid
+  The bundle contains further libraries, each with its notice inside the file ("Bundled license information" at the end of
+  web/mermaid.min.js): Lodash (MIT), DOMPurify 3.4.12 (Apache License 2.0 or Mozilla Public License 2.0), and the libraries
+  inside Cytoscape.js (Promises/A+ thenable, jQuery-style events, easing functions; MIT, as their notices state)
 
 - highlight.js 11.12.0 (web/highlight.min.js, web/hl-dark.css, web/hl-light.css)
   BSD 3-Clause License, Copyright (c) 2006, Ivan Sagalaev
@@ -50,6 +53,9 @@ Third-party content bundled in the plugin JAR, each under its own license:
 - PlantUML 1.2026.8, MIT build (lib/plantuml-mit.jar, fetched by build.sh)
   MIT License, Copyright (C) 2009-2024 Arnaud Roques
   https://plantuml.com
+  The jar also contains, as the PlantUML project builds it: the Java port of Graphviz (smetana:
+  gen/, h/, smetana/), the ditaa classes (org/stathissideris), icon sets (openiconic) and the PlantUML Standard Library
+  (stdlib/, sprites/, themes/). Their licenses are those PlantUML distributes them under; see https://plantuml.com/faq
 
 License texts
 =============
