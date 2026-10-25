@@ -35,6 +35,7 @@ public class MarkdownPreferencePage extends FieldEditorPreferencePage implements
 		addField(new BooleanFieldEditor(PrefInit.OPEN_PREVIEW, Messages.prefs_openPreview, getFieldEditorParent()));
 		addField(new BooleanFieldEditor(PrefInit.LINK_CHECK, Messages.prefs_linkCheck, getFieldEditorParent()));
 		addField(new BooleanFieldEditor(PrefInit.TAB_CLOSE, Messages.prefs_tabClose, getFieldEditorParent()));
+		addField(new BooleanFieldEditor(PrefInit.PLANTUML, Messages.prefs_plantuml, getFieldEditorParent()));
 		Composite row = new Composite(getFieldEditorParent(), SWT.NONE);
 		GridDataFactory.fillDefaults().span(2, 1).grab(true, false).applyTo(row);
 		GridLayoutFactory.fillDefaults().numColumns(2).equalWidth(true).applyTo(row);
