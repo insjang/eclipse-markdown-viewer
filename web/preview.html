@@ -1,5 +1,13 @@
 <!doctype html>
 <html data-theme="dark"><head><meta charset="utf-8">
+<script>
+// dark or light and the page color the editor asked for, before the first paint: the page is dark until applyStyle runs
+(function () {
+	const q = new URLSearchParams(location.search), t = q.get('theme'), bg = q.get('bg');
+	if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+	if (/^#[0-9a-fA-F]{6}$/.test(bg || '')) document.documentElement.style.setProperty('--bg', bg);
+})();
+</script>
 <link rel="stylesheet" href="preview.css">
 <link rel="stylesheet" href="katex.min.css">
 <link id="hl" rel="stylesheet" href="hl-dark.css">

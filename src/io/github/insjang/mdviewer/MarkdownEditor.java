@@ -46,7 +46,9 @@ import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.program.Program;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
@@ -126,6 +128,8 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			if (!browser.isDisposed()) applyStyle();
 		});
 	};
+	private Runnable stopThemeWatch;
+	private String appliedTheme;
 
 	@Override
 	protected void createPages() {
@@ -141,6 +145,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		document().addDocumentListener(docListener);
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
+		stopThemeWatch = ThemeMode.watch(this, this::themeMayHaveChanged);
 		if (Activator.prefs().getBoolean(PrefInit.OPEN_PREVIEW)) setActivePage(PREVIEW);
 		checkLinks();
 	}
@@ -268,7 +273,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		};
 		try {
 			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
-			browser.setUrl(pageUrl);
+			browser.setUrl(pageUrl + firstPaintQuery());
 		} catch (Exception e) {
 			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
 		}
@@ -398,13 +403,38 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		browser.execute("render(" + js(document().get()) + "," + js(baseUrl()) + ")");
 	}
 
+	/**
+	 * Dark or light and the page color for the first paint (see preview.html): the page is dark by default, which showed as a dark flash
+	 * in a light Eclipse before applyStyle had run. The Browser behind the page gets the same color for the moment before the page exists.
+	 */
+	private String firstPaintQuery() {
+		IPreferenceStore s = Activator.prefs();
+		String theme = ThemeMode.resolve(s.getString(PrefInit.THEME), themeReference());
+		RGB c = PreferenceConverter.getColor(s, Colors.key(theme, "bg")); //$NON-NLS-1$
+		browser.setBackground(new Color(c));
+		return String.format("?theme=%s&bg=%%23%02x%02x%02x", theme, c.red, c.green, c.blue); //$NON-NLS-1$
+	}
+
+	/** A widget of the Source: what the Eclipse theme made of it says whether the editors are dark. */
+	private Control themeReference() {
+		ITextViewer v = viewer();
+		return v == null ? null : v.getTextWidget();
+	}
+
+	/** The Eclipse theme may have been switched since the Preview was drawn: draw it again if dark or light is not what it was. */
+	private void themeMayHaveChanged() {
+		if (!loaded || browser == null || browser.isDisposed()) return;
+		if (!ThemeMode.resolve(Activator.prefs().getString(PrefInit.THEME), themeReference()).equals(appliedTheme)) applyStyle();
+	}
+
 	private void applyStyle() {
 		if (!loaded) return;
 		IPreferenceStore s = Activator.prefs();
 		FontData b = PreferenceConverter.getFontData(s, PrefInit.BODY_FONT);
 		FontData c = PreferenceConverter.getFontData(s, PrefInit.CODE_FONT);
+		appliedTheme = ThemeMode.resolve(s.getString(PrefInit.THEME), themeReference());
 		browser.execute("applyStyle(" + js(b.getName()) + "," + b.getHeight() + "," + js(c.getName()) + ","
-				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(s.getString(PrefInit.THEME)) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ",{\"node\":" + s.getInt(PrefInit.DIAGRAM_NODE_SPACING)
+				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(appliedTheme) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ",{\"node\":" + s.getInt(PrefInit.DIAGRAM_NODE_SPACING)
 				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "}," + s.getBoolean(PrefInit.PLANTUML) + ")");
 		render(); // mermaid picks up the theme only on render
 	}
@@ -556,7 +586,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (out == null) return;
 		try {
 			String html = (String) browser.evaluate("return htmlDoc(" + js(name) + ");");
-			Files.writeString(new File(out).toPath(), HtmlExport.page(html, Activator.web(), Activator.prefs().getString(PrefInit.THEME), new File(out).getAbsoluteFile().getParentFile()));
+			Files.writeString(new File(out).toPath(), HtmlExport.page(html, Activator.web(), ThemeMode.resolve(Activator.prefs().getString(PrefInit.THEME), themeReference()), new File(out).getAbsoluteFile().getParentFile()));
 			if (MessageDialog.openQuestion(getSite().getShell(), Messages.html_title, NLS.bind(Messages.pdf_saved, out))) Program.launch(out);
 		} catch (Exception x) {
 			MessageDialog.openError(getSite().getShell(), Messages.html_title, NLS.bind(Messages.html_failed, out) + "\n" + x);
@@ -647,6 +677,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		Activator.prefs().removePropertyChangeListener(prefListener);
 		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile()); // only open documents are checked
 		else if (linkCheck != null) linkCheck.cancel();
+		if (stopThemeWatch != null) stopThemeWatch.run();
 		if (source != null && source.getDocumentProvider() != null) {
 			IDocument d = document();
 			if (d != null) d.removeDocumentListener(docListener);

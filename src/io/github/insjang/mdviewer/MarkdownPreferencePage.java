@@ -29,8 +29,8 @@ public class MarkdownPreferencePage extends FieldEditorPreferencePage implements
 		addField(new FontFieldEditor(PrefInit.BODY_FONT, Messages.prefs_bodyFont, Messages.prefs_fontSample, getFieldEditorParent()));
 		addField(new FontFieldEditor(PrefInit.CODE_FONT, Messages.prefs_codeFont, Messages.prefs_codeSample, getFieldEditorParent()));
 		addField(new StringFieldEditor(PrefInit.LINE_HEIGHT, Messages.prefs_lineHeight, getFieldEditorParent()));
-		addField(new RadioGroupFieldEditor(PrefInit.THEME, Messages.prefs_theme, 2,
-				new String[][] { { Messages.prefs_themeDark, "dark" }, { Messages.prefs_themeLight, "light" } }, getFieldEditorParent(), true));
+		addField(new RadioGroupFieldEditor(PrefInit.THEME, Messages.prefs_theme, 3,
+				new String[][] { { Messages.prefs_themeAuto, ThemeMode.AUTO }, { Messages.prefs_themeDark, "dark" }, { Messages.prefs_themeLight, "light" } }, getFieldEditorParent(), true));
 		addField(new BooleanFieldEditor(PrefInit.BREAKS, Messages.prefs_breaks, getFieldEditorParent()));
 		addField(new BooleanFieldEditor(PrefInit.OPEN_PREVIEW, Messages.prefs_openPreview, getFieldEditorParent()));
 		addField(new BooleanFieldEditor(PrefInit.LINK_CHECK, Messages.prefs_linkCheck, getFieldEditorParent()));
