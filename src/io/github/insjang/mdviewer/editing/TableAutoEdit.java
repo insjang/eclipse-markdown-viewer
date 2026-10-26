@@ -10,7 +10,9 @@ import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.swt.graphics.Point;
 
 /**
  * Tables while typing: Tab moves to the next cell (a new row after the last one) and lines up the columns of the whole
@@ -50,6 +52,36 @@ public class TableAutoEdit implements IAutoEditStrategy {
 		if (toRow == 1) toRow = 2; // the delimiter row has no cells to type in
 		if (toRow >= t.rows.size()) t.rows.add(emptyRow(cols));
 		apply(doc, cmd, t, toRow, toCol);
+	}
+
+	/**
+	 * Shift+Tab: the table is lined up and the caret goes to the previous cell (the last one of the row above from the first one, the
+	 * delimiter row has no cells). In the first cell it stays there. False when the caret is not in a table: the key does what it did.
+	 */
+	static boolean previousCell(IDocument doc, ITextViewer viewer) throws BadLocationException {
+		Point selection = viewer.getSelectedRange();
+		if (selection.y != 0) return false;
+		int line = doc.getLineOfOffset(selection.x);
+		Table t = Table.find(doc, line);
+		if (t == null) return false;
+		int row = line - t.first;
+		int col = t.cellAt(row, selection.x - doc.getLineOffset(line));
+		int toRow = row, toCol = col - 1;
+		if (toCol < 0) {
+			toRow = row - 1;
+			toCol = t.columns() - 1;
+		}
+		if (toRow == 1) toRow = 0; // the delimiter row has no cells to type in
+		if (toRow < 0) {
+			toRow = 0;
+			toCol = 0;
+		}
+		DocumentCommand cmd = new DocumentCommand() {
+		};
+		apply(doc, cmd, t, toRow, toCol);
+		doc.replace(cmd.offset, cmd.length, cmd.text);
+		viewer.setSelectedRange(cmd.caretOffset, 0);
+		return true;
 	}
 
 	private static void enter(IDocument doc, DocumentCommand cmd, Table t) throws BadLocationException {
