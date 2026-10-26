@@ -70,6 +70,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.IGotoMarker;
@@ -77,6 +78,8 @@ import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
+
+import io.github.insjang.mdviewer.editing.FormatHandler;
 
 /** Source (generic text editor) + Preview (Edge or WebKitGTK browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
@@ -133,6 +136,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 
 	@Override
 	protected void createPages() {
+		getSite().getService(IContextService.class).activateContext(FormatHandler.CONTEXT); // Ctrl+B, Ctrl+I, Ctrl+K
 		source = new ExtensionBasedTextEditor();
 		try {
 			setPageText(addPage(source, getEditorInput()), "Source");

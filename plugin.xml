@@ -27,6 +27,40 @@
       <autoEditStrategy class="io.github.insjang.mdviewer.editing.TableAutoEdit"
             contentType="org.eclipse.tm4e.language_pack.markdown"/>
    </extension>
+   <!-- formatting in the Source: Ctrl+B, Ctrl+I, Ctrl+K, and a web address pasted over selected text makes it a link -->
+   <extension point="org.eclipse.ui.contexts">
+      <context id="io.github.insjang.mdviewer.markdownEditing" name="Editing Markdown"
+            parentId="org.eclipse.ui.textEditorScope"/>
+   </extension>
+   <extension point="org.eclipse.ui.commands">
+      <category id="io.github.insjang.mdviewer.category" name="Markdown"/>
+      <command id="io.github.insjang.mdviewer.bold" name="Bold" categoryId="io.github.insjang.mdviewer.category"/>
+      <command id="io.github.insjang.mdviewer.italic" name="Italic" categoryId="io.github.insjang.mdviewer.category"/>
+      <command id="io.github.insjang.mdviewer.link" name="Link" categoryId="io.github.insjang.mdviewer.category"/>
+   </extension>
+   <extension point="org.eclipse.ui.handlers">
+      <handler commandId="io.github.insjang.mdviewer.bold" class="io.github.insjang.mdviewer.editing.FormatHandler">
+         <activeWhen><with variable="activeEditorId"><equals value="io.github.insjang.mdviewer.editor"/></with></activeWhen>
+      </handler>
+      <handler commandId="io.github.insjang.mdviewer.italic" class="io.github.insjang.mdviewer.editing.FormatHandler">
+         <activeWhen><with variable="activeEditorId"><equals value="io.github.insjang.mdviewer.editor"/></with></activeWhen>
+      </handler>
+      <handler commandId="io.github.insjang.mdviewer.link" class="io.github.insjang.mdviewer.editing.FormatHandler">
+         <activeWhen><with variable="activeEditorId"><equals value="io.github.insjang.mdviewer.editor"/></with></activeWhen>
+      </handler>
+   </extension>
+   <extension point="org.eclipse.ui.bindings">
+      <key commandId="io.github.insjang.mdviewer.bold" sequence="M1+B"
+            contextId="io.github.insjang.mdviewer.markdownEditing" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key commandId="io.github.insjang.mdviewer.italic" sequence="M1+I"
+            contextId="io.github.insjang.mdviewer.markdownEditing" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key commandId="io.github.insjang.mdviewer.link" sequence="M1+K"
+            contextId="io.github.insjang.mdviewer.markdownEditing" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+   </extension>
+   <extension point="org.eclipse.ui.genericeditor.autoEditStrategies">
+      <autoEditStrategy class="io.github.insjang.mdviewer.editing.LinkPasteAutoEdit"
+            contentType="org.eclipse.tm4e.language_pack.markdown"/>
+   </extension>
    <extension point="org.eclipse.ui.startup">
       <startup class="io.github.insjang.mdviewer.TabClose"/>
    </extension>
