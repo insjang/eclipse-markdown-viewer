@@ -66,6 +66,26 @@
       <foldingReconcilingStrategy class="io.github.insjang.mdviewer.FoldingStrategy"
             contentType="org.eclipse.tm4e.language_pack.markdown"/>
    </extension>
+   <!-- the button "Side by side" (main toolbar while a Markdown editor is active, and in the Preview): Source and Preview next to each other -->
+   <extension point="org.eclipse.ui.commands">
+      <command id="io.github.insjang.mdviewer.splitSide" name="Show Source and Preview side by side"
+            description="Source and Preview of this document next to each other, kept in step by line"/>
+   </extension>
+   <extension point="org.eclipse.ui.handlers">
+      <handler commandId="io.github.insjang.mdviewer.splitSide" class="io.github.insjang.mdviewer.SplitSideHandler">
+         <activeWhen><with variable="activeEditorId"><equals value="io.github.insjang.mdviewer.editor"/></with></activeWhen>
+      </handler>
+   </extension>
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar">
+         <toolbar id="io.github.insjang.mdviewer.toolbar">
+            <command commandId="io.github.insjang.mdviewer.splitSide" icon="icons/split.png" tooltip="Source and Preview side by side"
+                  style="push">
+               <visibleWhen checkEnabled="false"><with variable="activeEditorId"><equals value="io.github.insjang.mdviewer.editor"/></with></visibleWhen>
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
    <extension point="org.eclipse.ui.startup">
       <startup class="io.github.insjang.mdviewer.TabClose"/>
    </extension>

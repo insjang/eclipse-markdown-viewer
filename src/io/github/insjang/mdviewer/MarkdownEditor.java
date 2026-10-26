@@ -11,6 +11,12 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.core.commands.ParameterizedCommand;
+import org.eclipse.core.commands.Command;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.core.resources.IResource;
@@ -245,6 +251,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		row.spacing = 4;
 		bar.setLayout(row);
 		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
+		item(bar, Messages.toolbar_split, this::toggleSplit);
 		item(bar, Messages.toolbar_showIn, this::showInExplorer);
 		if (CHROME != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
 		item(bar, Messages.toolbar_html, this::exportHtml);
@@ -433,6 +440,46 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		List<MarkdownEditor> list = new java.util.ArrayList<>();
 		for (MarkdownEditor e : OPEN) if (e != this && d != null && e.source != null && e.document() == d) list.add(e);
 		return list;
+	}
+
+	/**
+	 * Source and Preview of this document side by side, the Source on the left: Eclipse's split editor (the same command as Ctrl+{), the
+	 * original editor on its Source tab and the new half on its Preview tab. When it is split already, the second half goes away again,
+	 * and the editor that is left shows the tab of the half the button was pressed in (the buttons of the Preview are on its tab).
+	 */
+	void toggleSplit() {
+		IWorkbenchPage page = getSite().getPage();
+		List<MarkdownEditor> halves = new java.util.ArrayList<>(partners());
+		boolean wasSplit = !halves.isEmpty();
+		halves.add(this);
+		int shown = getActivePage();
+		page.activate(this); // the command splits the active editor
+		try {
+			Command split = PlatformUI.getWorkbench().getService(ICommandService.class).getCommand("org.eclipse.ui.window.splitEditor"); //$NON-NLS-1$
+			// Splitter.isHorizontal=false: the halves next to each other (the command's default is one above the other)
+			ParameterizedCommand side = ParameterizedCommand.generateCommand(split, java.util.Map.of("Splitter.isHorizontal", "false")); //$NON-NLS-1$ //$NON-NLS-2$
+			PlatformUI.getWorkbench().getService(IHandlerService.class).executeCommand(side, null);
+		} catch (Exception e) {
+			org.eclipse.core.runtime.Platform.getLog(MarkdownEditor.class).log(new Status(IStatus.WARNING, Activator.ID, "Split editor: " + e, e)); //$NON-NLS-1$
+			return;
+		}
+		if (wasSplit) {
+			Display.getDefault().asyncExec(() -> {
+				for (MarkdownEditor e : halves) {
+					if (!OPEN.contains(e)) continue; // closed with the second half
+					e.setActivePage(shown);
+					page.activate(e);
+				}
+			});
+			return;
+		}
+		Display.getDefault().asyncExec(() -> {
+			List<MarkdownEditor> others = partners();
+			if (others.isEmpty() || getActivePage() < 0) return;
+			setActivePage(SOURCE);
+			others.get(others.size() - 1).setActivePage(PREVIEW);
+			page.activate(this);
+		});
 	}
 
 	/** An editor of the same document that shows its Source, or null. */
