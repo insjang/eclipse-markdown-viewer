@@ -279,7 +279,11 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		};
 		try {
 			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
-			browser.setUrl(pageUrl + firstPaintQuery());
+			// SWT's Edge browser registers a BrowserFunction created inside another WebView2 callback later, through asyncExec, and the
+			// registration only applies to the next document: the page is loaded after it, the same way
+			browser.getDisplay().asyncExec(() -> {
+				if (!browser.isDisposed()) browser.setUrl(pageUrl + firstPaintQuery());
+			});
 		} catch (Exception e) {
 			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
 		}
