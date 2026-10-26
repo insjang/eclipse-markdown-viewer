@@ -21,7 +21,6 @@ public class ListAutoEdit implements IAutoEditStrategy {
 	// possessive: two neighbouring [ \t]* made a line of 20000 spaces take seconds to fail
 	private static final Pattern ITEM = Pattern.compile("^([ \\t]*+(?:>[ \\t]?+)*+)([ \\t]*+)(?:([-*+])|(\\d{1,9}+)([.)]))([ \\t]++)(\\[[ xX]\\][ \\t]++)?"); //$NON-NLS-1$
 	private static final Pattern QUOTE = Pattern.compile("^[ \\t]*(?:>[ \\t]?)+"); //$NON-NLS-1$
-	private static final Pattern FENCE = Pattern.compile("^[ \\t]{0,3}(`{3,}|~{3,})"); //$NON-NLS-1$
 	private static final String INDENT = "    "; //$NON-NLS-1$
 
 	@Override
@@ -40,7 +39,7 @@ public class ListAutoEdit implements IAutoEditStrategy {
 		IRegion info = doc.getLineInformation(line);
 		String text = doc.get(info.getOffset(), info.getLength());
 		int caret = cmd.offset - info.getOffset();
-		if (insideFence(doc, line)) return;
+		if (DocumentFences.inside(doc, line)) return;
 		Matcher m = ITEM.matcher(text);
 		if (m.find()) {
 			if (caret < m.end()) return; // inside the marker
@@ -143,25 +142,11 @@ public class ListAutoEdit implements IAutoEditStrategy {
 	private void tab(IDocument doc, DocumentCommand cmd) throws BadLocationException {
 		int line = doc.getLineOfOffset(cmd.offset);
 		IRegion info = doc.getLineInformation(line);
-		if (insideFence(doc, line) || !ITEM.matcher(doc.get(info.getOffset(), info.getLength())).find()) return;
+		if (DocumentFences.inside(doc, line) || !ITEM.matcher(doc.get(info.getOffset(), info.getLength())).find()) return;
 		int caret = cmd.offset;
 		cmd.offset = info.getOffset();
 		cmd.text = INDENT;
 		cmd.caretOffset = caret + INDENT.length();
 		cmd.shiftsCaret = false;
-	}
-
-	/** Odd number of fence lines above: the line is inside a fenced code block, where lists are just text. */
-	private static boolean insideFence(IDocument doc, int line) throws BadLocationException {
-		String open = null;
-		for (int l = 0; l < line; l++) {
-			IRegion info = doc.getLineInformation(l);
-			Matcher f = FENCE.matcher(doc.get(info.getOffset(), info.getLength()));
-			if (!f.find()) continue;
-			String ch = f.group(1).substring(0, 1);
-			if (open == null) open = ch;
-			else if (open.equals(ch)) open = null;
-		}
-		return open != null;
 	}
 }
