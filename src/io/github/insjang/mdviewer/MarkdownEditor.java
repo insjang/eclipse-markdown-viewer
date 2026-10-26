@@ -38,6 +38,8 @@ import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.IViewportListener;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
@@ -100,7 +102,15 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		return candidates.filter(p -> new File(p).isFile() && new File(p).canExecute()).findFirst().orElse(null);
 	}
 
+	/**
+	 * The editors that are open at the same time, for example the two halves of Eclipse's split editor: one can show the Source and
+	 * another the Preview of the same document, and then they follow each other by source line.
+	 */
+	private static final List<MarkdownEditor> OPEN = new java.util.ArrayList<>();
 	private ITextEditor source;
+	private SourceScroll scroll;
+	private int lastTop = -1;
+	private final IViewportListener viewportListener = offset -> sourceScrolled();
 	private Browser browser;
 	private String pageUrl;
 	private boolean loaded, stale = true, styling;
@@ -149,6 +159,13 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (paste != null) source.setAction(ITextEditorActionConstants.PASTE, new ImagePaste(paste));
 		document().addDocumentListener(docListener);
 		TableBackTab.install(viewer()); // Shift+Tab in a table cell
+		if (viewer() instanceof ISourceViewer sv) {
+			scroll = new SourceScroll(sv);
+			sv.addViewportListener(viewportListener);
+			// the viewer does not announce every kind of scrolling (wheel, keys): a repaint always follows, and tells it
+			sv.getTextWidget().addListener(SWT.Paint, e -> sourceScrolled());
+		}
+		OPEN.add(this);
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
 		stopThemeWatch = ThemeMode.watch(this, this::themeMayHaveChanged);
@@ -242,6 +259,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			loaded = true;
 			browser.execute("setLabels(" + labels() + ")");
 			applyStyle();
+			updateSync();
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
 		browser.setMenu(previewMenu().createContextMenu(browser));
@@ -253,11 +271,27 @@ public class MarkdownEditor extends MultiPageEditorPart {
 						: ""; //$NON-NLS-1$
 			}
 		};
+		new BrowserFunction(browser, "mdScroll") { //$NON-NLS-1$
+			@Override
+			public Object function(Object[] args) {
+				// the Preview was scrolled by the user (a line, and whether it is at its end): the Source beside it follows
+				if (args.length == 2 && args[0] instanceof Number line) {
+					MarkdownEditor beside = sourceBeside();
+					if (beside != null) beside.scroll.scrollTo(line.doubleValue(), Boolean.TRUE.equals(args[1]));
+				}
+				return null;
+			}
+		};
 		new BrowserFunction(browser, "mdSource") { //$NON-NLS-1$
 			@Override
 			public Object function(Object[] args) {
 				if (args.length == 1 && args[0] instanceof Number n) browser.getDisplay().asyncExec(() -> {
 					if (browser.isDisposed()) return;
+					MarkdownEditor beside = sourceBeside();
+					if (beside != null) { // the Source of this document shows in another half: go there, the Preview stays
+						beside.showLine(n.intValue(), true);
+						return;
+					}
 					setActivePage(SOURCE);
 					// after pageChange's own scroll to the preview's position, which is queued the same way
 					browser.getDisplay().asyncExec(() -> {
@@ -390,6 +424,66 @@ public class MarkdownEditor extends MultiPageEditorPart {
 				if (!browser.isDisposed()) browser.execute("scrollToFraction(" + target + ")");
 			});
 		}
+		Display.getDefault().asyncExec(MarkdownEditor::refreshSync);
+	}
+
+	/** The other editors open on the same document. */
+	private List<MarkdownEditor> partners() {
+		IDocument d = source == null ? null : document();
+		List<MarkdownEditor> list = new java.util.ArrayList<>();
+		for (MarkdownEditor e : OPEN) if (e != this && d != null && e.source != null && e.document() == d) list.add(e);
+		return list;
+	}
+
+	/** An editor of the same document that shows its Source, or null. */
+	private MarkdownEditor sourceBeside() {
+		for (MarkdownEditor e : partners()) if (e.scroll != null && e.getActivePage() == SOURCE) return e;
+		return null;
+	}
+
+	/** Whether this editor shows its Preview (and the page is there to be told something). */
+	private boolean previewShows() {
+		return loaded && browser != null && !browser.isDisposed() && getActivePage() == PREVIEW;
+	}
+
+	/** Every open editor looks again at who shows what: a Preview follows the Source beside it, and only then reports its own scrolling. */
+	private static void refreshSync() {
+		for (MarkdownEditor e : new java.util.ArrayList<>(OPEN)) e.updateSync();
+	}
+
+	/** Tells the page whether it follows a Source beside it, and if so lines it up with that Source right away. */
+	private void updateSync() {
+		if (!previewShows()) return;
+		MarkdownEditor beside = sourceBeside();
+		browser.execute("setSync(" + (beside != null) + ")");
+		if (beside != null) pushToPreview(beside.scroll);
+	}
+
+	/** Called on viewport changes and on every paint of the Source: only a changed top pixel is a scroll. */
+	private void sourceScrolled() {
+		StyledText text = viewer() == null ? null : viewer().getTextWidget();
+		if (text == null || text.isDisposed()) return;
+		int top = text.getTopPixel();
+		if (top == lastTop) return;
+		lastTop = top;
+		if (scroll == null || getActivePage() != SOURCE || scroll.isOwnMove()) return;
+		for (MarkdownEditor e : partners()) if (e.previewShows()) e.pushToPreview(scroll);
+	}
+
+	/** The Preview follows a Source: its top line, and the top line it has at its end, tell the page where to be. */
+	private void pushToPreview(SourceScroll from) {
+		browser.execute(String.format(java.util.Locale.ROOT, "syncTo(%.3f,%.3f,%d,%d)", from.topLine(), from.endLine(), from.visibleLines(), from.lineCount()));
+	}
+
+	/** The caret to the start of the line, and what shows (the Source of this editor, or its Preview) there; the editor gets the focus when asked. */
+	private void showLine(int line, boolean activate) {
+		try {
+			source.selectAndReveal(document().getLineOffset(line), 0);
+		} catch (BadLocationException e) {
+			return;
+		}
+		if (previewShows()) browser.execute("scrollToLine(" + line + ")");
+		if (activate) getSite().getPage().activate(this);
 	}
 
 	/** How far down the editor is, 0 to 1, from its scrollbar in pixels (wrapped and folded lines count as shown). */
@@ -505,6 +599,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			return;
 		}
 		if (loaded && getActivePage() == PREVIEW) browser.execute("scrollToLine(" + line + ")");
+		for (MarkdownEditor e : partners()) e.showLine(line, false); // the other halves of this document show the same line
 	}
 
 	private void linkClicked(LocationEvent e) {
@@ -697,10 +792,13 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile()); // only open documents are checked
 		else if (linkCheck != null) linkCheck.cancel();
 		if (stopThemeWatch != null) stopThemeWatch.run();
+		OPEN.remove(this);
+		if (viewer() instanceof ISourceViewer sv) sv.removeViewportListener(viewportListener);
 		if (source != null && source.getDocumentProvider() != null) {
 			IDocument d = document();
 			if (d != null) d.removeDocumentListener(docListener);
 		}
 		super.dispose();
+		Display.getDefault().asyncExec(MarkdownEditor::refreshSync);
 	}
 }
