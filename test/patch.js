@@ -63,6 +63,13 @@ const m2 = c.querySelector('.mermaid');
 assert(!m2.hasAttribute('data-processed') && !m2.querySelector('svg'), 'the edited diagram is new and not drawn');
 assert.strictEqual(blocks()[0], nodes[0], 'the heading still stays');
 
+// the text data-line="3" in code is text, not a line mark: changing it is a change
+const codeDoc = n => ['intro', '', '```html', '<p data-line="' + n + '">x</p>', '```', '', '`data-line="' + n + '"`', ''].join('\n');
+api.full();
+render(codeDoc(3));
+render(codeDoc(7));
+assert(c.textContent.includes('data-line="7"') && !c.textContent.includes('data-line="3"'), 'code text that looks like a line mark is updated: ' + c.textContent);
+
 // after a style change everything is replaced
 api.full();
 assert.strictEqual(render(redrawn), true, 'full replace after a style change');

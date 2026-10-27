@@ -166,11 +166,14 @@ function render(src, base) {
 let FULL = true; // the first render, and after a style change: replace everything
 // What a node looked like when it was inserted, before a diagram was drawn into it: that is what a fresh render of
 // the same block looks like, and it is kept on the node as _k. A block below an inserted line keeps its look, only
-// its data-line moves, so that is left out.
-function keyOf(n) {
-	return n.nodeType !== 1 ? 't' + n.nodeValue : 'e' + n.outerHTML.replace(/ data-line="\d+"/g, '');
-}
+// its data-line moves, so that is left out (on a copy: a regex over the markup would also eat the text data-line="3" in code).
 function lineEls(n) { return [n, ...n.querySelectorAll('[data-line]')].filter(e => e.hasAttribute('data-line')); }
+function keyOf(n) {
+	if (n.nodeType !== 1) return 't' + n.nodeValue;
+	const k = n.cloneNode(true);
+	for (const e of lineEls(k)) e.removeAttribute('data-line');
+	return 'e' + k.outerHTML;
+}
 function copyLines(o, n) {
 	if (o.nodeType !== 1) return;
 	const oe = lineEls(o), ne = lineEls(n);
