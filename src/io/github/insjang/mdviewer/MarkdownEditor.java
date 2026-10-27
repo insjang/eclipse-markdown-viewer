@@ -80,6 +80,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import io.github.insjang.mdviewer.editing.FormatHandler;
+import io.github.insjang.mdviewer.editing.TableBackTab;
 
 /** Source (generic text editor) + Preview (Edge or WebKitGTK browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
@@ -147,6 +148,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		IAction paste = source.getAction(ITextEditorActionConstants.PASTE);
 		if (paste != null) source.setAction(ITextEditorActionConstants.PASTE, new ImagePaste(paste));
 		document().addDocumentListener(docListener);
+		TableBackTab.install(viewer()); // Shift+Tab in a table cell
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
 		stopThemeWatch = ThemeMode.watch(this, this::themeMayHaveChanged);
