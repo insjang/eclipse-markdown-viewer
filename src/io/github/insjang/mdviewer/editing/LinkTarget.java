@@ -133,7 +133,9 @@ final class LinkTarget {
 			IContentType type = Platform.getContentTypeManager().findContentTypeFor(f.getName());
 			boolean text = type != null && type.isKindOf(Platform.getContentTypeManager().getContentType("org.eclipse.core.runtime.text")); //$NON-NLS-1$
 			if (!text && !isMarkdown(f)) return; // never hand other files to the system (executables, scripts)
-			IEditorPart part = IDE.openEditorOnFileStore(page, EFS.getLocalFileSystem().getStore(f.toURI()));
+			// a file of the workspace opens as the IFile, so that it is the editor (and the buffer) that is already open for it
+			IFile[] inWorkspace = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(f.toPath().normalize().toUri());
+			IEditorPart part = inWorkspace.length > 0 ? IDE.openEditor(page, inWorkspace[0]) : IDE.openEditorOnFileStore(page, EFS.getLocalFileSystem().getStore(f.toURI()));
 			ITextEditor editor = part instanceof ITextEditor te ? te : part == null ? null : part.getAdapter(ITextEditor.class);
 			if (editor == null || fragment == null) return;
 			MarkdownLinks.Heading h = MarkdownLinks.outline(read(f)).heading(fragment);

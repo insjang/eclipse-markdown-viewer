@@ -18,7 +18,7 @@ public class LinkDetector extends AbstractHyperlinkDetector {
 	public IHyperlink[] detectHyperlinks(ITextViewer viewer, IRegion region, boolean canShowMultipleHyperlinks) {
 		IDocument doc = viewer.getDocument();
 		File file = LinkTarget.markdownFile(doc);
-		if (file == null) return null;
+		if (file == null || ServerCheck.documentLinks(doc)) return null; // a language server shows the links itself: not twice
 		try {
 			int line = doc.getLineOfOffset(region.getOffset());
 			MarkdownLinks.Outline outline = MarkdownLinks.outline(doc.get());
