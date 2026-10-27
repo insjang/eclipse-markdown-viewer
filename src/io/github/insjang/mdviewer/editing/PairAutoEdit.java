@@ -1,8 +1,6 @@
 package io.github.insjang.mdviewer.editing;
 
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentCommand;
@@ -16,38 +14,11 @@ import org.eclipse.jface.text.IDocument;
  * names, so a pair that closes itself would be wrong too often (Ctrl+B and Ctrl+I mark a selection or word instead).
  */
 public class PairAutoEdit implements IAutoEditStrategy {
-	private static final Pattern FENCE = Pattern.compile("^([ \\t]*)(`{3,}|~{3,})([^`]*)$");
 	private static final String CLOSERS = ")]}>,.;:!?\"'";
-
-	/** The fence delimiter line {@code line} is, or null. A backtick fence takes no backtick in its info text. */
-	private static Matcher fence(String line) {
-		Matcher m = FENCE.matcher(line);
-		return m.matches() ? m : null;
-	}
 
 	private static String line(IDocument doc, int line) throws BadLocationException {
 		String s = doc.get(doc.getLineOffset(line), doc.getLineLength(line));
 		return s.replaceAll("[\\r\\n]+$", ""); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	/** Is a fenced block open when line {@code from} starts, going through the lines up to {@code to} (exclusive)? */
-	private static boolean insideFence(IDocument doc, int from, int to, boolean inside) throws BadLocationException {
-		char open = 0;
-		int length = 0;
-		boolean in = inside;
-		for (int i = from; i < to; i++) {
-			Matcher m = fence(line(doc, i));
-			if (m == null) continue;
-			char c = m.group(2).charAt(0);
-			if (!in) {
-				in = true;
-				open = c;
-				length = m.group(2).length();
-			} else if (c == open && m.group(2).length() >= length && m.group(3).isBlank()) {
-				in = false;
-			}
-		}
-		return in;
 	}
 
 	/** The characters of the line before {@code offset}. */
@@ -73,7 +44,7 @@ public class PairAutoEdit implements IAutoEditStrategy {
 	/** A backtick typed with nothing selected: step over a closing one, close an open span plainly, or open a pair. */
 	private static void backtick(IDocument doc, DocumentCommand c) throws BadLocationException {
 		int line = doc.getLineOfOffset(c.offset);
-		if (insideFence(doc, 0, line, false)) return; // code is code
+		if (DocumentFences.inside(doc, 0, line, false)) return; // code is code
 		String before = before(doc, c.offset);
 		char prev = before.isEmpty() ? 0 : before.charAt(before.length() - 1), next = charAt(doc, c.offset);
 		boolean open = count(before, '`') % 2 == 1; // inside a span that is not closed yet
@@ -94,7 +65,7 @@ public class PairAutoEdit implements IAutoEditStrategy {
 	private static void backspace(IDocument doc, DocumentCommand c) throws BadLocationException {
 		if (charAt(doc, c.offset) != '`' || charAt(doc, c.offset + 1) != '`') return;
 		if (count(before(doc, c.offset), '`') % 2 != 0) return; // the first one is a closing backtick
-		if (insideFence(doc, 0, doc.getLineOfOffset(c.offset), false)) return;
+		if (DocumentFences.inside(doc, 0, doc.getLineOfOffset(c.offset), false)) return;
 		c.length = 2;
 	}
 
@@ -104,11 +75,11 @@ public class PairAutoEdit implements IAutoEditStrategy {
 		String text = line(doc, line);
 		int start = doc.getLineOffset(line);
 		if (c.offset != start + text.length()) return; // only at the end of the line
-		Matcher m = fence(text);
-		if (m == null || insideFence(doc, 0, line, false)) return; // not a fence, or the closing one of a block
-		if (insideFence(doc, line + 1, doc.getNumberOfLines(), false)) return; // what follows is not balanced: it closes this one
-		String indent = m.group(1), delimiter = c.text;
-		String closing = indent + m.group(2);
+		Fences.Fence m = Fences.parse(text);
+		if (m == null || DocumentFences.inside(doc, 0, line, false)) return; // not a fence, or the closing one of a block
+		if (DocumentFences.inside(doc, line + 1, doc.getNumberOfLines(), false)) return; // what follows is not balanced: it closes this one
+		String indent = m.indent(), delimiter = c.text;
+		String closing = indent + String.valueOf(m.mark()).repeat(m.length());
 		// the whole line is replaced: a command that only appends is overwritten by the editor's own handling of Enter
 		c.offset = start;
 		c.length = text.length();

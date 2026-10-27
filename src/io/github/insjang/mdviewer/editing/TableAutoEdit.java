@@ -2,7 +2,6 @@ package io.github.insjang.mdviewer.editing;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.jface.text.BadLocationException;
@@ -20,7 +19,6 @@ import org.eclipse.jface.text.TextUtilities;
  */
 public class TableAutoEdit implements IAutoEditStrategy {
 	private static final Pattern DELIMITER_CELL = Pattern.compile(":?-+:?"); //$NON-NLS-1$
-	private static final Pattern FENCE = Pattern.compile("^[ \\t]{0,3}(`{3,}|~{3,})"); //$NON-NLS-1$
 
 	@Override
 	public void customizeDocumentCommand(IDocument doc, DocumentCommand cmd) {
@@ -113,7 +111,7 @@ public class TableAutoEdit implements IAutoEditStrategy {
 			int first = line, last = line;
 			while (first > 0 && isRow(text(doc, first - 1))) first--;
 			while (last < n - 1 && isRow(text(doc, last + 1))) last++;
-			if (last - first < 1 || !isDelimiterRow(text(doc, first + 1)) || insideFence(doc, first)) return null;
+			if (last - first < 1 || !isDelimiterRow(text(doc, first + 1)) || DocumentFences.inside(doc, first)) return null;
 			Table t = new Table();
 			t.first = first;
 			t.last = last;
@@ -255,19 +253,6 @@ public class TableAutoEdit implements IAutoEditStrategy {
 			int i = 0;
 			while (i < s.length() && (s.charAt(i) == ' ' || s.charAt(i) == '\t')) i++;
 			return i;
-		}
-
-		/** An odd number of fence lines above: a table-looking block in fenced code is just text. */
-		private static boolean insideFence(IDocument doc, int line) throws BadLocationException {
-			String open = null;
-			for (int l = 0; l < line; l++) {
-				Matcher f = FENCE.matcher(text(doc, l));
-				if (!f.find()) continue;
-				String ch = f.group(1).substring(0, 1);
-				if (open == null) open = ch;
-				else if (open.equals(ch)) open = null;
-			}
-			return open != null;
 		}
 	}
 }
