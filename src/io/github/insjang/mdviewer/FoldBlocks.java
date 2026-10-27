@@ -1,7 +1,9 @@
 package io.github.insjang.mdviewer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /** The blocks of a Markdown text that can be folded, by line: heading sections (the headings come from {@link Headings}), fenced code, front matter, HTML comments, tables, quotes and list items. */
@@ -141,6 +143,8 @@ final class FoldBlocks {
 			int last = lastText(lines, h.line(), end);
 			if (last > heading) s.add(h.line(), last);
 		}
+		List<Fold> items = new ArrayList<>();
+		boolean[] inItem = listItems(lines, literal, firstContent, items);
 		for (int i = firstContent; i < lines.length; i++) {
 			if (literal[i]) continue;
 			if (lines[i].indexOf('|') >= 0 && i + 1 < lines.length && !literal[i + 1] && delimiterRow(lines[i + 1])) {
@@ -148,23 +152,48 @@ final class FoldBlocks {
 				while (end + 1 < lines.length && !literal[end + 1] && !blank(lines[end + 1]) && lines[end + 1].indexOf('|') >= 0) end++;
 				if (end - i >= 2) s.add(i, end); // header, delimiter and at least one row
 				i = end;
-			} else if (lines[i].stripLeading().startsWith(">")) {
+			} else if (lines[i].stripLeading().startsWith(">") && (indent(lines[i]) < 4 || inItem[i])) { // four blanks outside a list: indented code
 				int end = i;
 				while (end + 1 < lines.length && !literal[end + 1] && lines[end + 1].stripLeading().startsWith(">")) end++;
 				if (end - i >= 2) s.add(i, end);
 				i = end;
 			}
 		}
-		for (int i = firstContent; i < lines.length; i++) { // list items with something nested or continued under them
-			if (literal[i] || !LIST_ITEM.matcher(lines[i]).matches()) continue;
+		for (Fold f : items) s.add(f.startLine(), f.endLine());
+		Map<Integer, Fold> widest = new HashMap<>(); // one fold per start line: the one that holds the most
+		for (Fold f : s.folds) widest.merge(f.startLine(), f, (a, b) -> b.endLine() > a.endLine() ? b : a);
+		s.folds.removeIf(f -> widest.get(f.startLine()) != f);
+		return s;
+	}
+
+	/** The list items with something nested or continued under them (into {@code items}), and the lines that belong to an item below its first. */
+	private static boolean[] listItems(String[] lines, boolean[] literal, int firstContent, List<Fold> items) {
+		boolean[] inItem = new boolean[lines.length];
+		for (int i = firstContent; i < lines.length; i++) {
+			if (literal[i] || !LIST_ITEM.matcher(lines[i]).matches() || thematicBreak(lines[i])) continue;
 			int own = indent(lines[i]), end = i;
-			for (int j = i + 1; j < lines.length && !literal[j]; j++) {
+			for (int j = i + 1; j < lines.length; j++) { // fenced code and comments in the item belong to it, when indented
 				if (blank(lines[j])) continue;
 				if (indent(lines[j]) <= own) break;
 				end = j;
 			}
-			s.add(i, end);
+			for (int j = i + 1; j <= end; j++) inItem[j] = true;
+			if (end > i) items.add(new Fold(i, end));
 		}
-		return s;
+		return inItem;
+	}
+
+	/** Three or more of the same mark among -, _ and * with only blanks between: {@code * * *} is a rule, not a list item. */
+	private static boolean thematicBreak(String line) {
+		char mark = 0;
+		int n = 0;
+		for (int i = 0; i < line.length(); i++) {
+			char c = line.charAt(i);
+			if (c == ' ' || c == '\t') continue;
+			if (c != '-' && c != '_' && c != '*' || mark != 0 && c != mark) return false;
+			mark = c;
+			n++;
+		}
+		return n >= 3;
 	}
 }

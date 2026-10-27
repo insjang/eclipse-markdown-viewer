@@ -19,6 +19,10 @@ public class FoldBlocksCheck {
 		eq("[]", "> a\n> b\n"); // two lines are not worth a fold
 		eq("[0-2]", "- a\n  - b\n  - c\n"); // list item with something nested
 		eq("[]", "- a\n- b\n"); // items alone
+		eq("[]", "* * *\n  x\n  y\n"); // a rule is not a list item
+		eq("[]", "    > a\n    > b\n    > c\n"); // four blanks outside a list: indented code, not a quote
+		eq("[1-3, 0-3]", "- a\n    > b\n    > c\n    > d\n"); // a quote inside a list item is one
+		eq("[1-3, 0-4]", "- a\n  ```\n  code\n  ```\n  tail\n"); // a fenced block does not end the item
 		// crafted lines: no backtracking, no hang
 		String[] bad = { " ".repeat(100000) + " x", "|".repeat(100000), "|" + " ".repeat(100000) + "- ", "`".repeat(100000) + " ", "- ".repeat(50000), "#" + " ".repeat(100000) + "\u0085" };
 		for (String b : bad) {

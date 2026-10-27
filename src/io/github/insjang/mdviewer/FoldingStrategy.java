@@ -1,14 +1,18 @@
 package io.github.insjang.mdviewer;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentExtension4;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerLifecycle;
@@ -20,7 +24,10 @@ import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
-import org.eclipse.lsp4e.LanguageServiceAccessor;
+import org.eclipse.lsp4e.ContentTypeToLanguageServerDefinition;
+import org.eclipse.lsp4e.LSPEclipseUtils;
+import org.eclipse.lsp4e.LanguageServersRegistry;
+import org.eclipse.swt.custom.StyledText;
 
 /**
  * Folding for Markdown in the Generic Editor: heading sections, fenced code, front matter, HTML comments, tables, block quotes and
@@ -69,37 +76,55 @@ public class FoldingStrategy implements IReconcilingStrategy, IReconcilingStrate
 		update();
 	}
 
+	/** The reconciler thread works out where the folds are; the UI thread only brings the annotation model in line with that. */
 	private void update() {
 		ProjectionViewer v = viewer;
 		IDocument doc = document;
-		if (v == null || doc == null || v.getTextWidget() == null || v.getTextWidget().isDisposed()) return;
-		// in the UI thread: the text and the annotation model are used there
-		v.getTextWidget().getDisplay().asyncExec(() -> {
-			if (v.getTextWidget().isDisposed() || v.getDocument() != doc) return;
+		StyledText widget = v == null ? null : v.getTextWidget();
+		if (doc == null || widget == null || widget.isDisposed()) return;
+		long stamp = stamp(doc);
+		Map<Integer, Position> wanted;
+		try {
+			wanted = serverFolds(doc) ? new HashMap<>() : positions(doc.get());
+		} catch (RuntimeException e) { // the text changed under us: the next reconcile follows
+			return;
+		}
+		widget.getDisplay().asyncExec(() -> {
+			if (widget.isDisposed() || v.getDocument() != doc || stamp(doc) != stamp) return; // edited meanwhile: the next reconcile follows
 			ProjectionAnnotationModel model = v.getProjectionAnnotationModel();
-			if (model != null) apply(model, doc);
+			if (model != null) apply(model, doc, wanted);
 		});
 	}
 
+	private static long stamp(IDocument doc) {
+		return doc instanceof IDocumentExtension4 d ? d.getModificationStamp() : -1;
+	}
+
 	/** The folds of the text as positions by start line. */
-	private static Map<Integer, Position> positions(IDocument doc) {
+	private static Map<Integer, Position> positions(String text) {
+		List<Integer> starts = new ArrayList<>(); // where each line starts, as FoldBlocks cuts the lines
+		starts.add(0);
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c == '\r' && i + 1 < text.length() && text.charAt(i + 1) == '\n') i++;
+			if (c == '\r' || c == '\n') starts.add(i + 1);
+		}
 		Map<Integer, Position> result = new HashMap<>();
-		try {
-			for (FoldBlocks.Fold f : FoldBlocks.parse(doc.get()).folds) {
-				int start = doc.getLineOffset(f.startLine());
-				int end = doc.getLineOffset(f.endLine()) + doc.getLineLength(f.endLine());
-				result.putIfAbsent(f.startLine(), new Position(start, end - start));
-			}
-		} catch (BadLocationException e) {
-			// text changed meanwhile: the next reconcile follows
+		for (FoldBlocks.Fold f : FoldBlocks.parse(text).folds) {
+			int start = starts.get(f.startLine()), end = f.endLine() + 1 < starts.size() ? starts.get(f.endLine() + 1) : text.length();
+			result.putIfAbsent(f.startLine(), new Position(start, end - start));
 		}
 		return result;
 	}
 
-	/** A language server (LSP4E) that already folds this document: ours would show beside its folds, so ours are taken away. LSP4E is optional. */
+	/**
+	 * A language server (LSP4E) that is set up for this kind of document and so brings its own folds: ours would show beside them, so
+	 * ours are left out. It is decided by what is registered, not by what is running, so it holds while the server is still starting.
+	 * LSP4E is optional.
+	 */
 	private static boolean serverFolds(IDocument doc) {
 		try {
-			return Servers.folds(doc);
+			return Servers.registered(doc);
 		} catch (LinkageError | RuntimeException e) {
 			return false;
 		}
@@ -107,13 +132,19 @@ public class FoldingStrategy implements IReconcilingStrategy, IReconcilingStrate
 
 	/** Every reference to LSP4E is in here, so that a missing bundle fails on this class only. */
 	private static final class Servers {
-		static boolean folds(IDocument doc) {
-			return LanguageServiceAccessor.hasActiveLanguageServers(doc, c -> c.getFoldingRangeProvider() != null);
+		static boolean registered(IDocument doc) {
+			Collection<IContentType> types = LSPEclipseUtils.getDocumentContentTypes(doc);
+			URI uri = LSPEclipseUtils.toUri(doc);
+			for (ContentTypeToLanguageServerDefinition d : LanguageServersRegistry.getInstance().getContentTypeToLSPExtensions()) {
+				for (IContentType type : types) {
+					if (type.isKindOf(d.getKey()) && d.isEnabled(uri)) return true;
+				}
+			}
+			return false;
 		}
 	}
 
-	private static void apply(ProjectionAnnotationModel model, IDocument doc) {
-		Map<Integer, Position> wanted = serverFolds(doc) ? new HashMap<>() : positions(doc);
+	private static void apply(ProjectionAnnotationModel model, IDocument doc, Map<Integer, Position> wanted) {
 		List<Annotation> deletions = new ArrayList<>();
 		Map<Annotation, Position> modifications = new HashMap<>();
 		Map<Integer, Boolean> kept = new HashMap<>();
