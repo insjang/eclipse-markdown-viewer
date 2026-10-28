@@ -152,12 +152,13 @@ function render(src, base) {
 	if (all) window.scrollTo(0, y); // a patch leaves what is above untouched, and the browser keeps its place on the page
 	copyButtons(c);
 	findRun(false);
+	rebuildMap();
 	// diagrams grow once drawn, which moves everything below them: aim again then.
 	// Only the ones not drawn yet: those of blocks that did not change are still there.
-	const drawn = () => { doScroll(); findRun(false); c.querySelectorAll('.mermaid').forEach(panZoom); };
+	const drawn = () => { doScroll(); rebuildMap(); findRun(false); c.querySelectorAll('.mermaid').forEach(panZoom); };
 	c.querySelectorAll('.mermaid:not([data-processed])').forEach(e => { e.dataset.src = e.textContent; }); // for plainText: mermaid swaps it for the SVG
 	mermaid.run({ querySelector: '#c .mermaid:not([data-processed])', suppressErrors: true }).then(drawn, drawn);
-	document.fonts.ready.then(() => doScroll()); // so do formulas once the KaTeX fonts are in
+	document.fonts.ready.then(() => { doScroll(); rebuildMap(); }); // so do formulas once the KaTeX fonts are in
 }
 
 // Typing changes a block or two. Replacing the whole page would draw every diagram again (Mermaid is by far the
