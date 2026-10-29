@@ -488,7 +488,11 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		r.setLayoutData(new RowData(size.x + 24, size.y + 8));
 		boolean[] hover = { false };
 		r.addPaintListener(e -> {
-			Color bg = pop.getBackground(), fg = bar.getForeground();
+			Color bg = pop.getBackground();
+			RGB b = bg.getRGB();
+			// the row's text color is too dim on the darker menu: pull it towards white or black
+			Color fg = mix(bar.getForeground(), bar.getDisplay().getSystemColor(
+					b.red * 299 + b.green * 587 + b.blue * 114 < 128000 ? SWT.COLOR_WHITE : SWT.COLOR_BLACK), 0.6);
 			Point s = r.getSize();
 			e.gc.setAntialias(SWT.ON);
 			e.gc.setBackground(bg);
