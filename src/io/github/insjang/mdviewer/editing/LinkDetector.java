@@ -21,10 +21,12 @@ public class LinkDetector extends AbstractHyperlinkDetector {
 		if (file == null || ServerCheck.documentLinks(doc)) return null; // a language server shows the links itself: not twice
 		try {
 			int line = doc.getLineOfOffset(region.getOffset());
+			int base = doc.getLineOffset(line);
+			String text = doc.get(base, doc.getLineLength(line));
+			if (!MarkdownLinks.mayHaveLink(text)) return null; // this runs on every mouse move: the document is only parsed for a line with a link
 			MarkdownLinks.Outline outline = MarkdownLinks.outline(doc.get());
 			if (outline.isCode(line)) return null;
-			int base = doc.getLineOffset(line);
-			MarkdownLinks.Link link = MarkdownLinks.at(doc.get(base, doc.getLineLength(line)), region.getOffset() - base, outline);
+			MarkdownLinks.Link link = MarkdownLinks.at(text, region.getOffset() - base, outline);
 			if (link == null) return null;
 			String target = link.target();
 			int jumpLine = -1;
