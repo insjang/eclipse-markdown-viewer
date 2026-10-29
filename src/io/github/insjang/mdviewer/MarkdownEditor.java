@@ -58,9 +58,13 @@ import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.jface.resource.ResourceLocator;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.program.Program;
+import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.HTMLTransfer;
@@ -265,20 +269,43 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private Control createPreview(Composite parent) {
 		Composite c = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().spacing(0, 0).applyTo(c);
-		Composite bar = new Composite(c, SWT.NONE);
+		// the buttons sit at the right end of the Source / Preview tab row
+		Composite bar = new Composite(parent, SWT.NONE);
 		RowLayout row = new RowLayout();
-		row.marginTop = row.marginBottom = 3;
+		row.marginTop = row.marginBottom = 1;
 		row.spacing = 4;
 		bar.setLayout(row);
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.CENTER).applyTo(bar);
-		item(bar, Messages.toolbar_split, this::toggleSplit);
-		item(bar, Messages.toolbar_showIn, this::showInExplorer);
-		if (CHROME != null) item(bar, Messages.toolbar_pdf, this::exportPdf);
-		item(bar, Messages.toolbar_html, this::exportHtml);
-		item(bar, Messages.toolbar_copyHtml, this::copyHtml);
-		item(bar, "A-", () -> Activator.zoom(-1));
-		item(bar, "A+", () -> Activator.zoom(1));
-		item(bar, Messages.toolbar_fonts, () -> PreferencesUtil
+		if (parent instanceof CTabFolder tabs) {
+			tabs.setTopRight(bar, SWT.RIGHT | SWT.WRAP); // below the tabs when the row is too narrow for both
+			tabs.setMinimumCharacters(20); // "Source" and "Preview" are never cut short
+			// the theme paints the tab row in a color no API returns: take it from the painted row, just left of the buttons
+			tabs.addListener(SWT.Paint, e -> {
+				Rectangle r = bar.getBounds();
+				int x = r.x - 2, y = r.y + r.height / 2;
+				if (x < e.x || x >= e.x + e.width || y < e.y || y >= e.y + e.height) return;
+				Image px = new Image(e.display, 1, 1);
+				e.gc.copyArea(px, x, y);
+				ImageData d = px.getImageData();
+				px.dispose();
+				RGB rgb = d.palette.getRGB(d.getPixel(0, 0));
+				if (bar.getData() instanceof Color old && old.getRGB().equals(rgb)) return;
+				bar.setData(new Color(rgb));
+				bar.redraw(0, 0, r.width, r.height, true);
+			});
+			bar.addPaintListener(e -> {
+				if (bar.getData() instanceof Color tabRow) {
+					e.gc.setBackground(tabRow);
+					e.gc.fillRectangle(bar.getClientArea());
+				}
+			});
+		}
+		item(bar, "org.eclipse.ui.ide.application/icons/full/elcl16/split_vertical.png", "", Messages.toolbar_split, this::toggleSplit);
+		item(bar, "org.eclipse.ui/icons/full/obj16/fldr_obj.png", "", Messages.toolbar_showIn, this::showInExplorer);
+		if (CHROME != null) item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", "PDF", Messages.toolbar_pdf, this::exportPdf);
+		item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", "HTML", Messages.toolbar_html, this::exportHtml);
+		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomOut.png", "", Messages.toolbar_smaller, () -> Activator.zoom(-1));
+		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomIn.png", "", Messages.toolbar_larger, () -> Activator.zoom(1));
+		item(bar, "org.eclipse.ui.ide/icons/full/elcl16/configs.png", "", Messages.toolbar_fonts, () -> PreferencesUtil
 				.createPreferenceDialogOn(getSite().getShell(), MarkdownPreferencePage.ID, null, null).open());
 		browser = new Browser(c, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(browser);
@@ -383,6 +410,12 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 				if (!document().get().isEmpty()) toClipboard(document().get());
 			}
 		});
+		menu.add(new Action(Messages.toolbar_copyHtml) {
+			@Override
+			public void run() {
+				copyHtml();
+			}
+		});
 		menu.add(new Action(Messages.menu_selectAll) {
 			@Override
 			public void run() {
@@ -419,25 +452,38 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	}
 
 	/** A button drawn as a rounded chip, its colors mixed from the bar's (theme) colors whenever it paints. */
-	private static void item(Composite bar, String text, Runnable action) {
+	/** A toolbar button: a platform icon (bundle/path) and a label, either may be empty; the tip names it. */
+	private static void item(Composite bar, String icon, String label, String tip, Runnable action) {
 		Canvas b = new Canvas(bar, SWT.DOUBLE_BUFFERED);
+		b.setToolTipText(tip);
 		b.setFont(bar.getFont());
 		b.setCursor(bar.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		int slash = icon.indexOf('/');
+		Image img = ResourceLocator.imageDescriptorFromBundle(icon.substring(0, slash), icon.substring(slash + 1))
+				.map(d -> d.createImage(false)).orElse(null);
+		if (img != null) b.addDisposeListener(e -> img.dispose());
+		// without its icon the button shows its name
+		String text = img == null && label.isEmpty() ? tip : label;
 		GC measure = new GC(b);
-		Point size = measure.textExtent(text);
+		Point size = text.isEmpty() ? new Point(0, measure.getFontMetrics().getHeight()) : measure.textExtent(text);
 		measure.dispose();
-		b.setLayoutData(new RowData(size.x + 16, size.y + 6));
+		Rectangle ib = img == null ? new Rectangle(0, 0, 0, 0) : img.getBounds();
+		int iw = img == null ? 0 : ib.width + (text.isEmpty() ? 0 : 4);
+		b.setLayoutData(new RowData(size.x + iw + 16, Math.max(size.y, ib.height) + 6));
 		boolean[] hover = { false };
 		b.addPaintListener(e -> {
-			Color bg = bar.getBackground(), fg = bar.getForeground();
+			Color bg = bar.getData() instanceof Color c ? c : bar.getParent().getBackground(), fg = bar.getForeground();
 			Point s = b.getSize();
 			e.gc.setAntialias(SWT.ON);
 			e.gc.setBackground(bg);
 			e.gc.fillRectangle(0, 0, s.x, s.y);
-			e.gc.setBackground(mix(bg, fg, hover[0] ? 0.22 : 0.10));
+			// a little darker than the row, on dark and light themes alike
+			e.gc.setBackground(mix(bg, bar.getDisplay().getSystemColor(SWT.COLOR_BLACK), hover[0] ? 0.38 : 0.22));
 			e.gc.fillRoundRectangle(0, 0, s.x, s.y, 8, 8);
 			e.gc.setForeground(fg);
-			e.gc.drawText(text, (s.x - size.x) / 2, (s.y - size.y) / 2, true);
+			int x = (s.x - size.x - iw) / 2;
+			if (img != null) e.gc.drawImage(img, x, (s.y - ib.height) / 2);
+			e.gc.drawText(text, x + iw, (s.y - size.y) / 2, true);
 		});
 		b.addListener(SWT.MouseEnter, e -> { hover[0] = true; b.redraw(); });
 		b.addListener(SWT.MouseExit, e -> { hover[0] = false; b.redraw(); });
