@@ -4,7 +4,7 @@ import org.eclipse.osgi.util.NLS;
 
 /** UI text; English in messages.properties, translations in messages_<lang>.properties. */
 public final class Messages extends NLS {
-	public static String toolbar_pdf, toolbar_html, toolbar_copyHtml, toolbar_fonts, toolbar_showIn, toolbar_split, toolbar_smaller, toolbar_larger;
+	public static String toolbar_pdf, toolbar_html, toolbar_copyHtml, toolbar_fonts, toolbar_showIn, toolbar_split, toolbar_smaller, toolbar_larger, toolbar_export;
 	public static String menu_copy, menu_copySource, menu_selectAll, menu_showIn, showIn_notWorkspace;
 	public static String html_title, html_failed;
 	public static String preview_frontMatter, preview_copy, preview_copied, preview_zoomReset, find_find, find_none, find_previous, find_next, find_close;

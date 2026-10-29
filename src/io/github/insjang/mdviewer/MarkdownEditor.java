@@ -74,6 +74,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
@@ -301,8 +303,17 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		}
 		item(bar, "org.eclipse.ui.ide.application/icons/full/elcl16/split_vertical.png", "", Messages.toolbar_split, this::toggleSplit);
 		item(bar, "org.eclipse.ui/icons/full/obj16/fldr_obj.png", "", Messages.toolbar_showIn, this::showInExplorer);
-		if (CHROME != null) item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", "PDF", Messages.toolbar_pdf, this::exportPdf);
-		item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", "HTML", Messages.toolbar_html, this::exportHtml);
+		Canvas export = item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", DROPDOWN, Messages.toolbar_export, null);
+		Menu exports = new Menu(export);
+		if (CHROME != null) menuItem(exports, Messages.toolbar_pdf, this::exportPdf);
+		menuItem(exports, Messages.toolbar_html, this::exportHtml);
+		menuItem(exports, Messages.toolbar_copyHtml, this::copyHtml);
+		export.addListener(SWT.MouseUp, e -> {
+			if (e.button != 1 || !export.getClientArea().contains(e.x, e.y)) return;
+			Point p = export.toDisplay(0, export.getSize().y);
+			exports.setLocation(p.x, p.y); // the system moves it up when there is no room below
+			exports.setVisible(true);
+		});
 		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomOut.png", "", Messages.toolbar_smaller, () -> Activator.zoom(-1));
 		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomIn.png", "", Messages.toolbar_larger, () -> Activator.zoom(1));
 		item(bar, "org.eclipse.ui.ide/icons/full/elcl16/configs.png", "", Messages.toolbar_fonts, () -> PreferencesUtil
@@ -452,8 +463,17 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	}
 
 	/** A button drawn as a rounded chip, its colors mixed from the bar's (theme) colors whenever it paints. */
-	/** A toolbar button: a platform icon (bundle/path) and a label, either may be empty; the tip names it. */
-	private static void item(Composite bar, String icon, String label, String tip, Runnable action) {
+	/** Label of a toolbar button that opens a menu: drawn as a small triangle, which every font can show. */
+	private static final String DROPDOWN = "\u25BE"; //$NON-NLS-1$
+
+	private static void menuItem(Menu menu, String text, Runnable action) {
+		MenuItem item = new MenuItem(menu, SWT.PUSH);
+		item.setText(text);
+		item.addListener(SWT.Selection, e -> action.run());
+	}
+
+	/** A toolbar button: a platform icon (bundle/path) and a label, either may be empty; the tip names it. The action may be null when the caller listens itself. */
+	private static Canvas item(Composite bar, String icon, String label, String tip, Runnable action) {
 		Canvas b = new Canvas(bar, SWT.DOUBLE_BUFFERED);
 		b.setToolTipText(tip);
 		b.setFont(bar.getFont());
@@ -465,7 +485,8 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		// without its icon the button shows its name
 		String text = img == null && label.isEmpty() ? tip : label;
 		GC measure = new GC(b);
-		Point size = text.isEmpty() ? new Point(0, measure.getFontMetrics().getHeight()) : measure.textExtent(text);
+		boolean arrow = text == DROPDOWN;
+		Point size = text.isEmpty() || arrow ? new Point(arrow ? 7 : 0, measure.getFontMetrics().getHeight()) : measure.textExtent(text);
 		measure.dispose();
 		Rectangle ib = img == null ? new Rectangle(0, 0, 0, 0) : img.getBounds();
 		int iw = img == null ? 0 : ib.width + (text.isEmpty() ? 0 : 4);
@@ -483,13 +504,18 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 			e.gc.setForeground(fg);
 			int x = (s.x - size.x - iw) / 2;
 			if (img != null) e.gc.drawImage(img, x, (s.y - ib.height) / 2);
-			e.gc.drawText(text, x + iw, (s.y - size.y) / 2, true);
+			if (arrow) {
+				int ax = x + iw, ay = s.y / 2 - 1;
+				e.gc.setBackground(fg);
+				e.gc.fillPolygon(new int[] { ax, ay - 2, ax + 7, ay - 2, ax + 3, ay + 2 });
+			} else e.gc.drawText(text, x + iw, (s.y - size.y) / 2, true);
 		});
 		b.addListener(SWT.MouseEnter, e -> { hover[0] = true; b.redraw(); });
 		b.addListener(SWT.MouseExit, e -> { hover[0] = false; b.redraw(); });
-		b.addListener(SWT.MouseUp, e -> {
+		if (action != null) b.addListener(SWT.MouseUp, e -> {
 			if (e.button == 1 && b.getClientArea().contains(e.x, e.y)) action.run();
 		});
+		return b;
 	}
 
 	private static Color mix(Color a, Color b, double t) {
