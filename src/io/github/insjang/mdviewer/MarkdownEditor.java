@@ -74,8 +74,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
@@ -304,15 +303,8 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		item(bar, "org.eclipse.ui.ide.application/icons/full/elcl16/split_vertical.png", "", Messages.toolbar_split, this::toggleSplit);
 		item(bar, "org.eclipse.ui/icons/full/obj16/fldr_obj.png", "", Messages.toolbar_showIn, this::showInExplorer);
 		Canvas export = item(bar, "org.eclipse.ui/icons/full/etool16/export_wiz.png", DROPDOWN, Messages.toolbar_export, null);
-		Menu exports = new Menu(export);
-		if (CHROME != null) menuItem(exports, Messages.toolbar_pdf, this::exportPdf);
-		menuItem(exports, Messages.toolbar_html, this::exportHtml);
-		menuItem(exports, Messages.toolbar_copyHtml, this::copyHtml);
 		export.addListener(SWT.MouseUp, e -> {
-			if (e.button != 1 || !export.getClientArea().contains(e.x, e.y)) return;
-			Point p = export.toDisplay(0, export.getSize().y);
-			exports.setLocation(p.x, p.y); // the system moves it up when there is no room below
-			exports.setVisible(true);
+			if (e.button == 1 && export.getClientArea().contains(e.x, e.y)) exportMenu(bar, export);
 		});
 		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomOut.png", "", Messages.toolbar_smaller, () -> Activator.zoom(-1));
 		item(bar, "org.eclipse.ui.workbench.texteditor/icons/full/etool16/zoomIn.png", "", Messages.toolbar_larger, () -> Activator.zoom(1));
@@ -466,10 +458,58 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	/** Label of a toolbar button that opens a menu: drawn as a small triangle, which every font can show. */
 	private static final String DROPDOWN = "\u25BE"; //$NON-NLS-1$
 
-	private static void menuItem(Menu menu, String text, Runnable action) {
-		MenuItem item = new MenuItem(menu, SWT.PUSH);
-		item.setText(text);
-		item.addListener(SWT.Selection, e -> action.run());
+	/** The Export menu, drawn like the buttons in the tab row's colors (a system menu keeps the system's), opening upwards from the button since the row is at the bottom. */
+	private void exportMenu(Composite bar, Control button) {
+		Color row = bar.getData() instanceof Color c ? c : bar.getParent().getBackground();
+		Shell pop = new Shell(button.getShell(), SWT.NO_TRIM | SWT.ON_TOP);
+		pop.setBackground(mix(row, bar.getDisplay().getSystemColor(SWT.COLOR_BLACK), 0.22));
+		RowLayout column = new RowLayout(SWT.VERTICAL);
+		column.fill = true;
+		column.marginWidth = column.marginHeight = 4;
+		column.spacing = 0;
+		pop.setLayout(column);
+		if (CHROME != null) entry(pop, bar, Messages.toolbar_pdf, this::exportPdf);
+		entry(pop, bar, Messages.toolbar_html, this::exportHtml);
+		entry(pop, bar, Messages.toolbar_copyHtml, this::copyHtml);
+		pop.pack();
+		Point p = button.toDisplay(0, 0);
+		pop.setLocation(p.x, p.y - pop.getSize().y - 2);
+		pop.addListener(SWT.Deactivate, e -> pop.getDisplay().asyncExec(pop::dispose)); // a click elsewhere closes it
+		pop.open();
+	}
+
+	private static void entry(Shell pop, Composite bar, String text, Runnable action) {
+		Canvas r = new Canvas(pop, SWT.DOUBLE_BUFFERED);
+		r.setFont(bar.getFont());
+		r.setCursor(bar.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		GC measure = new GC(r);
+		Point size = measure.textExtent(text);
+		measure.dispose();
+		r.setLayoutData(new RowData(size.x + 24, size.y + 8));
+		boolean[] hover = { false };
+		r.addPaintListener(e -> {
+			Color bg = pop.getBackground(), fg = bar.getForeground();
+			Point s = r.getSize();
+			e.gc.setAntialias(SWT.ON);
+			e.gc.setBackground(bg);
+			e.gc.fillRectangle(0, 0, s.x, s.y);
+			if (hover[0]) {
+				e.gc.setBackground(mix(bg, fg, 0.18));
+				e.gc.fillRoundRectangle(0, 0, s.x, s.y, 6, 6);
+			}
+			e.gc.setForeground(fg);
+			e.gc.drawText(text, 12, (s.y - size.y) / 2, true);
+		});
+		r.addListener(SWT.MouseEnter, e -> { hover[0] = true; r.redraw(); });
+		r.addListener(SWT.MouseExit, e -> { hover[0] = false; r.redraw(); });
+		r.addListener(SWT.Traverse, e -> {
+			if (e.detail == SWT.TRAVERSE_ESCAPE) pop.dispose();
+		});
+		r.addListener(SWT.MouseUp, e -> {
+			if (e.button != 1 || !r.getClientArea().contains(e.x, e.y)) return;
+			pop.dispose();
+			action.run();
+		});
 	}
 
 	/** A toolbar button: a platform icon (bundle/path) and a label, either may be empty; the tip names it. The action may be null when the caller listens itself. */
