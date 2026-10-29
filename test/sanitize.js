@@ -44,8 +44,11 @@ labels.append(sanitize('<div class="mermaid">graph TD; D[file:// 제거] --> E[\
 	+ '<div class="mermaid">graph TD; A["&lt;img src=&quot; //h/x.png&quot;&gt;"]</div><div class="mermaid">graph TD; A["&lt;img srcset=&quot;ok.png 1x, //h/y.png 2x&quot;&gt;"]</div>'
 	+ '<div class="mermaid">graph TD; A["&lt;video poster=\\\\h\\p.png&gt;"]</div>'
 	+ '<div class="mermaid">graph TD; A["&lt;img src=\n //h/n.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=&amp;bsol;&amp;bsol;h&amp;bsol;e.png&gt;"]</div>'
-	+ '<div class="mermaid">graph TD; A["&lt;img src=&amp;amp;#x5c;&amp;amp;#x5c;h/d.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=#bsol;#bsol;h#bsol;m.png&gt;"]</div>'));
-assert.equal(labels.querySelectorAll('.mermaid').length, 2, 'the label text and the local image are drawn, the eleven loads refused: ' + labels.innerHTML);
+	+ '<div class="mermaid">graph TD; A["&lt;img src=&amp;amp;#x5c;&amp;amp;#x5c;h/d.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=#bsol;#bsol;h#bsol;m.png&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img srcset=\'x&gt;y 1x, //h/z.png 2x\'&gt;"]</div><div class="mermaid">graph TD; A["&lt;img srcset=\'a}b 1x, //h/w.png 2x\'&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=\'/\t/h/t.png\'&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=\'\\\\\n\\\\h\\l.png\'&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=\'fi\r\nle://h/f.png\'&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=\'/&amp;#9;/h/e.png\'&gt;"]</div>'));
+assert.equal(labels.querySelectorAll('.mermaid').length, 2, 'the label text and the local image are drawn, the seventeen loads refused: ' + labels.innerHTML);
 // a real diagram that names file://, \\wsl.localhost and a UNC path in its labels (mermaid-paths.mmd)
 const r = document.createElement('div');
 const mmd = fs.readFileSync(path.join(__dirname, 'mermaid-paths.mmd'), 'utf8');

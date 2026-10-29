@@ -152,7 +152,7 @@ Markdown from elsewhere can be opened safely.
 - Mermaid runs with `securityLevel: 'strict'`, and the SVG it draws is sanitized with DOMPurify too.
 - KaTeX runs with `trust: false`: `\href`, `\url` and `\includegraphics` stay text.
 - PlantUML runs with its `SANDBOX` security profile: `!include` cannot read local files or URLs. Its SVG output is sanitized too.
-- Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram that would load one (an image, `url()`, `@import`, an `href`) is not drawn, while a label may still name one as text: on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
+- Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram that would load one (an image, `url()`, `@import`, an `href`) is not drawn (a diagram that loads nothing may still name one as label text): on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
 - The link check looks only at document-relative paths; web, absolute and network paths are never asked of the file system.
 - Front matter, headings and links are read with non-backtracking patterns and plain parsing, so a crafted long line cannot hang Eclipse.
 - Export HTML and Copy HTML use the sanitized preview only, with no scripts.

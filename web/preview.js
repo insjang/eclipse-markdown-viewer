@@ -260,10 +260,14 @@ function mermaidRemote(src) {
 	}
 	t = t.replace(/\\([0-9a-f]{1,6})\s?/gi, (m, h) => String.fromCodePoint(Math.min(parseInt(h, 16), 0xfffd)));
 	if (/image-set/i.test(t)) return true;
-	// the rest of the value after anything that loads (over line ends, spaces in quotes, srcset lists): every token in it is
-	// checked, and one that still looks like an entity (&name; or #name;) is refused
-	for (const m of t.matchAll(/(?:\b(?:src|srcset|href|xlink:href|img|poster|background|data|action|formaction|cite|lowsrc|dynsrc|ping)\s*[:=]|url\s*\(|@import)([^>}]*)/gi))
-		if (m[1].split(/[\s,"'()]+/).some(u => u && (/[&#][a-z0-9#]+;/i.test(u) || remote(u)))) return true;
+	// everything after the first thing that loads (src, srcset, url(), @import...) to the end of the diagram: every token in it
+	// is checked, and one that still looks like an entity (&name; or #name;) is refused. Not cut at > or }: a quoted value
+	// (srcset="x>y 1x, //host/a 2x") can hold them. So a diagram that loads something may not name a network path later on
+	const m = /(?:\b(?:src|srcset|href|xlink:href|img|poster|background|data|action|formaction|cite|lowsrc|dynsrc|ping)\s*[:=]|url\s*\(|@import)([\s\S]*)/i.exec(t);
+	// read twice: split at any white space (srcset candidates), and with tabs and line ends taken out first, as the URL parser
+	// does (src="/<tab>/host" is //host to the browser)
+	const bad = u => u && (/[&#][a-z0-9#]+;/i.test(u) || remote(u));
+	if (m && (m[1].split(/[\s,"'()<>{}]+/).some(bad) || m[1].replace(/[\t\n\r]/g, '').split(/[ \f\v,"'()<>{}]+/).some(bad))) return true;
 	return false;
 }
 if (typeof DOMPurify !== 'undefined') {

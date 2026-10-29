@@ -144,7 +144,7 @@ Preferences → General → Editors → Markdown Viewer
 - OS로 넘기는 링크: `http`, `https`, `mailto`만 (로컬 실행 파일 실행 차단)
 - Mermaid: `strict` 모드, 그려진 SVG도 DOMPurify로 한 번 더 정화
 - KaTeX: `trust: false` (`\href`, `\url`, `\includegraphics`는 글자로만 표시)
-- 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로를 불러오는(이미지, `url()`, `@import`, `href`) Mermaid 그림은 그리지 않음, 라벨 글자로 쓰는 것은 허용 (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
+- 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로를 불러오는(이미지, `url()`, `@import`, `href`) Mermaid 그림은 그리지 않음 (아무것도 불러오지 않는 그림은 라벨 글자로 써도 됨) (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
 - 링크 검사: 문서 기준 상대 경로만 확인, 웹·절대·네트워크 경로는 파일 시스템에 묻지 않음
 - 머리말·제목·링크 분석: 역추적이 없는 정규식과 직접 파싱 (악의적으로 긴 줄도 바로 처리, `HeadingsCheck`·`LinkCheckCheck`·`check.js`로 확인)
 - HTML 내보내기·복사: 정화된 미리보기 내용만 사용, 스크립트 없음
