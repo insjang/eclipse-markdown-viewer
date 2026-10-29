@@ -61,6 +61,63 @@
       <autoEditStrategy class="io.github.insjang.mdviewer.editing.LinkPasteAutoEdit"
             contentType="org.eclipse.tm4e.language_pack.markdown"/>
    </extension>
+   <!-- bookmarks in text editors (optional, off by default). Their keys sit in a context active only while the feature is on
+        and a text editor is: two levels below the text editor scope, so F2 and Shift+F2 win over Show Tooltip Description and
+        the Java editor's Open External Javadoc then, and are theirs again when the feature is off. Go to Quick Bookmark is
+        in the window context too (from any view), and in this one as well to win over other bookmark plugins in a text editor -->
+   <extension point="org.eclipse.ui.contexts">
+      <context id="io.github.insjang.mdviewer.bookmarksBase" name="Bookmarks (base)" parentId="org.eclipse.ui.textEditorScope"/>
+      <context id="io.github.insjang.mdviewer.bookmarks" name="Bookmarks in Text Editors" parentId="io.github.insjang.mdviewer.bookmarksBase"/>
+   </extension>
+   <extension point="org.eclipse.ui.commands">
+      <command id="io.github.insjang.mdviewer.bookmark.toggle" name="Toggle Bookmark" categoryId="org.eclipse.ui.category.edit"></command>
+      <command id="io.github.insjang.mdviewer.bookmark.next" name="Next Bookmark" categoryId="org.eclipse.ui.category.edit"></command>
+      <command id="io.github.insjang.mdviewer.bookmark.previous" name="Previous Bookmark" categoryId="org.eclipse.ui.category.edit"></command>
+      <command id="io.github.insjang.mdviewer.bookmark.set" name="Set Quick Bookmark" categoryId="org.eclipse.ui.category.edit"><commandParameter id="number" name="Number" optional="false"/></command>
+      <command id="io.github.insjang.mdviewer.bookmark.goto" name="Go to Quick Bookmark" categoryId="org.eclipse.ui.category.edit"><commandParameter id="number" name="Number" optional="false"/></command>
+   </extension>
+   <extension point="org.eclipse.ui.handlers">
+      <handler commandId="io.github.insjang.mdviewer.bookmark.toggle" class="io.github.insjang.mdviewer.Bookmarks"/>
+      <handler commandId="io.github.insjang.mdviewer.bookmark.next" class="io.github.insjang.mdviewer.Bookmarks"/>
+      <handler commandId="io.github.insjang.mdviewer.bookmark.previous" class="io.github.insjang.mdviewer.Bookmarks"/>
+      <handler commandId="io.github.insjang.mdviewer.bookmark.set" class="io.github.insjang.mdviewer.Bookmarks"/>
+      <handler commandId="io.github.insjang.mdviewer.bookmark.goto" class="io.github.insjang.mdviewer.Bookmarks"/>
+   </extension>
+   <extension point="org.eclipse.ui.bindings">
+      <key commandId="io.github.insjang.mdviewer.bookmark.toggle" sequence="M3+F2" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key commandId="io.github.insjang.mdviewer.bookmark.next" sequence="F2" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key commandId="io.github.insjang.mdviewer.bookmark.previous" sequence="M2+F2" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+0" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="0"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+0" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="0"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+0" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="0"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+1" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="1"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+1" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="1"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+1" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="1"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+2" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="2"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+2" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="2"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+2" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="2"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+3" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="3"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+3" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="3"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+3" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="3"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+4" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="4"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+4" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="4"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+4" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="4"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+5" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="5"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+5" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="5"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+5" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="5"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+6" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="6"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+6" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="6"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+6" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="6"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+7" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="7"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+7" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="7"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+7" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="7"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+8" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="8"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+8" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="8"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+8" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="8"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.set" sequence="M3+9" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="9"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+9" contextId="org.eclipse.ui.contexts.window" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="9"/></key>
+      <key commandId="io.github.insjang.mdviewer.bookmark.goto" sequence="M2+M3+9" contextId="io.github.insjang.mdviewer.bookmarks" schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"><parameter id="number" value="9"/></key>
+   </extension>
    <!-- folding of Markdown in the Source: heading sections, code blocks, tables, quotes, lists -->
    <extension point="org.eclipse.ui.genericeditor.foldingReconcilers">
       <foldingReconcilingStrategy class="io.github.insjang.mdviewer.FoldingStrategy"
@@ -88,6 +145,7 @@
    </extension>
    <extension point="org.eclipse.ui.startup">
       <startup class="io.github.insjang.mdviewer.TabClose"/>
+      <startup class="io.github.insjang.mdviewer.Bookmarks"/>
    </extension>
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="io.github.insjang.mdviewer.PrefInit"/>

@@ -20,6 +20,9 @@ import org.eclipse.core.commands.Command;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.ui.texteditor.ITextEditorExtension2;
 import org.eclipse.ui.texteditor.IUpdate;
@@ -74,7 +77,12 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.jface.bindings.Binding;
+import org.eclipse.jface.bindings.keys.KeySequence;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IURIEditorInput;
 import org.eclipse.ui.PartInitException;
@@ -85,6 +93,9 @@ import org.eclipse.ui.ide.IGotoMarker;
 import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import io.github.insjang.mdviewer.editing.FormatHandler;
@@ -92,7 +103,7 @@ import io.github.insjang.mdviewer.editing.TableBackTab;
 
 /** Source (generic text editor) + Preview (Edge or WebKitGTK browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
-public class MarkdownEditor extends MultiPageEditorPart {
+public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private static final int SOURCE = 0, PREVIEW = 1;
 	/** Chromium-based browser for the PDF export (headless print): Edge on Windows, Chrome or Chromium elsewhere; null hides the button */
 	private static final String CHROME = printer(System.getenv("PATH"));
@@ -141,12 +152,20 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	// OK or Restore Defaults changes dozens of keys at once: one restyle per editor afterwards
 	private final IPropertyChangeListener prefListener = e -> {
 		if (PrefInit.LINK_CHECK.equals(e.getProperty())) checkLinks();
+		if (PrefInit.BOOKMARKS.equals(e.getProperty())) Display.getDefault().asyncExec(this::showBookmarks);
 		if (styling || browser == null || browser.isDisposed()) return;
 		styling = true;
 		browser.getDisplay().asyncExec(() -> {
 			styling = false;
 			if (!browser.isDisposed()) applyStyle();
 		});
+	};
+	// bookmarks added or removed in this file, from the keys or the Bookmarks view: the Preview's ribbons follow
+	private final IResourceChangeListener markerListener = e -> {
+		if (getEditorInput() instanceof IFileEditorInput in
+				&& java.util.Arrays.stream(e.findMarkerDeltas(IMarker.BOOKMARK, true)).anyMatch(d -> d.getResource().equals(in.getFile()))) {
+			Display.getDefault().asyncExec(this::showBookmarks);
+		}
 	};
 	private Runnable stopThemeWatch;
 	private String appliedTheme;
@@ -174,6 +193,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		OPEN.add(this);
 		setPageText(addPage(createPreview(getContainer())), "Preview");
 		Activator.prefs().addPropertyChangeListener(prefListener);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(markerListener, IResourceChangeEvent.POST_CHANGE);
 		stopThemeWatch = ThemeMode.watch(this, this::themeMayHaveChanged);
 		if (Activator.prefs().getBoolean(PrefInit.OPEN_PREVIEW)) setActivePage(PREVIEW);
 		checkLinks();
@@ -304,6 +324,23 @@ public class MarkdownEditor extends MultiPageEditorPart {
 					browser.getDisplay().asyncExec(() -> {
 						if (!browser.isDisposed()) reveal(n.intValue());
 					});
+				});
+				return null;
+			}
+		};
+		// keys the browser would keep for itself (Ctrl+_ zooms out): run what Eclipse binds to them. Only these keys:
+		// the page must not be able to run any command it names
+		new BrowserFunction(browser, "mdKey") { //$NON-NLS-1$
+			@Override
+			public Object function(Object[] args) {
+				if (args.length == 1 && "M1+M2+-".equals(args[0]) && args[0] instanceof String key) browser.getDisplay().asyncExec(() -> { //$NON-NLS-1$
+					if (browser.isDisposed()) return;
+					try {
+						Binding b = getSite().getService(IBindingService.class).getPerfectMatch(KeySequence.getInstance(key));
+						if (b != null && b.getParameterizedCommand() != null) getSite().getService(IHandlerService.class).executeCommand(b.getParameterizedCommand(), null);
+					} catch (Exception e) {
+						ILog.of(MarkdownEditor.class).warn("key " + key, e); //$NON-NLS-1$
+					}
 				});
 				return null;
 			}
@@ -552,6 +589,24 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		if (!loaded) return;
 		stale = false;
 		browser.execute("render(" + js(document().get()) + "," + js(baseUrl()) + ")");
+		showBookmarks();
+	}
+
+	private void showBookmarks() {
+		if (loaded && !browser.isDisposed() && source.getDocumentProvider() != null) browser.execute("setBookmarks(" + Bookmarks.json(this) + ")");
+	}
+
+	boolean previewShowing() {
+		return loaded && getActivePage() == PREVIEW;
+	}
+
+	/** The source line (from 0) of the first block that starts in view on the Preview. */
+	int previewTopLine() {
+		return browser.evaluate("return topLine();") instanceof Number n ? n.intValue() : 0;
+	}
+
+	void stepBookmark(boolean next) {
+		browser.execute("markStep(" + (next ? 1 : -1) + ")");
 	}
 
 	/**
@@ -586,7 +641,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		appliedTheme = ThemeMode.resolve(s.getString(PrefInit.THEME), themeReference());
 		browser.execute("applyStyle(" + js(b.getName()) + "," + b.getHeight() + "," + js(c.getName()) + ","
 				+ c.getHeight() + "," + js(s.getString(PrefInit.LINE_HEIGHT)) + "," + js(appliedTheme) + "," + s.getBoolean(PrefInit.BREAKS) + "," + Colors.json(s) + ",{\"node\":" + s.getInt(PrefInit.DIAGRAM_NODE_SPACING)
-				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "}," + s.getBoolean(PrefInit.PLANTUML) + ")");
+				+ ",\"rank\":" + s.getInt(PrefInit.DIAGRAM_RANK_SPACING) + ",\"pad\":" + s.getInt(PrefInit.DIAGRAM_PADDING) + "}," + s.getBoolean(PrefInit.PLANTUML) + "," + js(s.getString(PrefInit.LETTER_SPACING)) + ")");
 		render(); // mermaid picks up the theme only on render
 	}
 
@@ -626,10 +681,18 @@ public class MarkdownEditor extends MultiPageEditorPart {
 			if (outline == null) outline = new Outline(this, document().get());
 			return type.cast(outline);
 		}
-		// Problems view double-click: to Source, where the marker shows, then to the marker
+		// Problems view double-click: to Source, where the marker shows, then to the marker; a bookmark keeps the Preview if it shows
 		if (type == IGotoMarker.class && source != null) return type.cast((IGotoMarker) marker -> {
+			if (previewShowing() && marker.getAttribute(IMarker.LINE_NUMBER, 0) > 0 && Bookmarks.isBookmark(marker)) {
+				reveal(Bookmarks.line(this, document(), marker));
+				return;
+			}
+			if (getActivePage() == SOURCE) {
+				IDE.gotoMarker(source, marker);
+				return;
+			}
 			setActivePage(SOURCE);
-			IDE.gotoMarker(source, marker);
+			Display.getCurrent().asyncExec(() -> IDE.gotoMarker(source, marker)); // after pageChange's scroll to the preview's position
 		});
 		return super.getAdapter(type);
 	}
@@ -809,6 +872,87 @@ public class MarkdownEditor extends MultiPageEditorPart {
 		return b.append('"').toString();
 	}
 
+	// ITextEditor: plugins that cast the active editor to a text editor (bookmarks, Alt+F2 and the like) work on the Source
+	@Override
+	public IDocumentProvider getDocumentProvider() {
+		return source.getDocumentProvider();
+	}
+
+	@Override
+	public void close(boolean save) {
+		getSite().getPage().closeEditor(this, save);
+	}
+
+	@Override
+	public boolean isEditable() {
+		return source.isEditable();
+	}
+
+	@Override
+	public void doRevertToSaved() {
+		source.doRevertToSaved();
+	}
+
+	@Override
+	public void setAction(String actionID, IAction action) {
+		source.setAction(actionID, action);
+	}
+
+	@Override
+	public IAction getAction(String actionId) {
+		return source.getAction(actionId);
+	}
+
+	@Override
+	public void setActionActivationCode(String actionId, char activationCharacter, int activationKeyCode, int activationStateMask) {
+		source.setActionActivationCode(actionId, activationCharacter, activationKeyCode, activationStateMask);
+	}
+
+	@Override
+	public void removeActionActivationCode(String actionId) {
+		source.removeActionActivationCode(actionId);
+	}
+
+	@Override
+	public boolean showsHighlightRangeOnly() {
+		return source.showsHighlightRangeOnly();
+	}
+
+	@Override
+	public void showHighlightRangeOnly(boolean showHighlightRangeOnly) {
+		source.showHighlightRangeOnly(showHighlightRangeOnly);
+	}
+
+	@Override
+	public void setHighlightRange(int offset, int length, boolean moveCursor) {
+		source.setHighlightRange(offset, length, moveCursor);
+	}
+
+	@Override
+	public IRegion getHighlightRange() {
+		return source.getHighlightRange();
+	}
+
+	@Override
+	public void resetHighlightRange() {
+		source.resetHighlightRange();
+	}
+
+	@Override
+	public ISelectionProvider getSelectionProvider() {
+		return source.getSelectionProvider();
+	}
+
+	@Override
+	public void selectAndReveal(int offset, int length) {
+		if (getActivePage() == SOURCE) {
+			source.selectAndReveal(offset, length);
+			return;
+		}
+		setActivePage(SOURCE); // a jump to a place in the text shows the text
+		Display.getCurrent().asyncExec(() -> source.selectAndReveal(offset, length)); // after pageChange's scroll to the preview's position
+	}
+
 	@Override
 	public void doSave(org.eclipse.core.runtime.IProgressMonitor monitor) {
 		source.doSave(monitor);
@@ -836,6 +980,7 @@ public class MarkdownEditor extends MultiPageEditorPart {
 	@Override
 	public void dispose() {
 		Activator.prefs().removePropertyChangeListener(prefListener);
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(markerListener);
 		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile()); // only open documents are checked
 		else if (linkCheck != null) linkCheck.cancel();
 		if (stopThemeWatch != null) stopThemeWatch.run();

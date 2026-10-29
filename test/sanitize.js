@@ -5,7 +5,7 @@ const dom = new JSDOM('<div id="c"></div>');
 global.document = dom.window.document;
 global.DOMPurify = require('../web/purify.min.js')(dom.window);
 const src = fs.readFileSync(path.join(__dirname, '../web/preview.js'), 'utf8');
-const sanitize = new Function(src.replace(/^const md = .*$/m, 'const md = null;') + '; BASE = "file:///D:/docs/"; return sanitize;')();
+const [sanitize, MERMAID_PURIFY] = new Function(src.replace(/^const md = .*$/m, 'const md = null;') + '; BASE = "file:///D:/docs/"; return [sanitize, MERMAID_PURIFY];')();
 const d = document.createElement('div');
 d.append(sanitize('<p data-line="3">ok<br><details><summary>s</summary>x</details></p><img src="x" onerror="location.href=\'file:///C:/x.exe\'">'
 	+ '<a href="javascript:alert(1)">j</a><a href=" JaVaScRiPt:1">k</a><a href="java&#9;script:1">tab</a><a href="&#x6A;avascript:1">ent</a>'
@@ -35,6 +35,22 @@ const m = document.createElement('div');
 m.append(sanitize('<div class="mermaid">graph TD; A["&lt;img src=//h/x.png&gt;"]</div><div class="mermaid">graph TD; B@{ img: "file://h/y.png" }</div>'
 	+ '<div class="mermaid">graph TD; A[/x/]-->B[https://e.com]; click A "https://e.com"</div>'));
 assert.equal(m.querySelectorAll('.mermaid').length, 1, 'only the plain diagram is drawn: ' + m.innerHTML);
+// a network path as plain label text loads nothing: drawn; in the places that load, also when encoded: refused
+const labels = document.createElement('div');
+labels.append(sanitize('<div class="mermaid">graph TD; D[file:// 제거] --> E[\\\\wsl.localhost\\Ubuntu\\x and //host/y]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=&amp;#92;&amp;#92;h\\x.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=#92;#92;h/x&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A; style A fill:url(\\5c\\5ch/x)</div><div class="mermaid">%%{init: {"themeCSS": "@import \'//h/x.css\'"}}%%\ngraph TD; A</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=img/local.png&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=&quot; //h/x.png&quot;&gt;"]</div><div class="mermaid">graph TD; A["&lt;img srcset=&quot;ok.png 1x, //h/y.png 2x&quot;&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;video poster=\\\\h\\p.png&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=\n //h/n.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=&amp;bsol;&amp;bsol;h&amp;bsol;e.png&gt;"]</div>'
+	+ '<div class="mermaid">graph TD; A["&lt;img src=&amp;amp;#x5c;&amp;amp;#x5c;h/d.png&gt;"]</div><div class="mermaid">graph TD; A["&lt;img src=#bsol;#bsol;h#bsol;m.png&gt;"]</div>'));
+assert.equal(labels.querySelectorAll('.mermaid').length, 2, 'the label text and the local image are drawn, the eleven loads refused: ' + labels.innerHTML);
+// a real diagram that names file://, \\wsl.localhost and a UNC path in its labels (mermaid-paths.mmd)
+const r = document.createElement('div');
+const mmd = fs.readFileSync(path.join(__dirname, 'mermaid-paths.mmd'), 'utf8');
+r.append(sanitize('<div class="mermaid">' + mmd.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</div>'));
+assert.equal(r.querySelectorAll('.mermaid').length, 1, 'mermaid-paths.mmd is drawn: ' + r.innerHTML.slice(0, 200));
 // heading ids that DOMPurify would drop as DOM clobbering (title, links, body) get the GitHub user-content- prefix, #links follow
 const markdownit = require('../web/markdown-it.min.js');
 const md = require('../web/preview.js').createMd(markdownit, require('../web/markdown-it-task-lists.min.js'), null, () => 'file:///D:/docs/');
@@ -49,4 +65,13 @@ const a = document.createElement('div');
 a.append(sanitize(g.render('> [!CAUTION]\n> Careful[^x].\n\n[^x]: Why.\n')));
 assert(a.querySelector('div.markdown-alert.markdown-alert-caution > p.markdown-alert-title > svg > path[d]'), 'alert kept: ' + a.innerHTML);
 assert(a.querySelector('a[href="#user-content-fn1"][id="user-content-fnref1"]') && a.querySelector('li[id="user-content-fn1"] a[href="#user-content-fnref1"]'), 'footnote anchors: ' + a.innerHTML);
+// Mermaid's drawn SVG: the labels (HTML in foreignObject) stay, active content and network paths go
+const v = document.createElement('div');
+v.append(DOMPurify.sanitize('<svg xmlns="http://www.w3.org/2000/svg"><g class="node"><rect width="9" height="9"/><foreignObject width="9" height="9">'
+	+ '<div xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Start <b>bold</b></p></span><img src="x" onerror="bad()"><img src="//h/a.png">'
+	+ '<a href="javascript:1">j</a><script>bad()</script></div></foreignObject></g><image href="file://h/b.png"/><use href="//h/s.svg#a"/>'
+	+ '<a href="javascript:1"><text>t</text></a><style>.a{background:url(//h/c.png)}</style></svg>', MERMAID_PURIFY));
+const vh = v.innerHTML;
+assert(v.querySelector('foreignObject div span.nodeLabel p b') && v.textContent.includes('Start bold'), 'mermaid label kept: ' + vh);
+assert(!/onerror|javascript|<script|\/\/h\/|file:\/\/h/i.test(vh), 'mermaid active content and network paths removed: ' + vh);
 console.log('sanitize ok');

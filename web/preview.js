@@ -111,7 +111,7 @@ let BASE = '', SRC = '', PLANTUML = true, MERMAID = {}, FONTVARS = '', COLORS = 
 const PLUGINS = typeof window !== 'undefined' ? [[window.markdownitFootnote], [window.markdownitEmoji, { shortcuts: {} }]] : []; // no :) -> emoji, as on GitHub
 const md = typeof window !== 'undefined' ? createMd(window.markdownit, window.markdownitTaskLists, window.hljs, () => BASE, window.markdownitKatex, window.katex, PLUGINS, () => PLANTUML) : null;
 
-function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing, plantuml) {
+function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing, plantuml, ls) {
 	PLANTUML = plantuml !== false; // off: a plantuml block stays a plain code block
 	FULL = true; // fonts, colors and diagram settings changed: everything is drawn again, not patched
 	md.set({ breaks: !!breaks }); // keep single newlines as <br>
@@ -122,6 +122,9 @@ function applyStyle(font, size, code, csize, lh, theme, breaks, colors, spacing,
 	s.setProperty('--code-font', `'${code}', Consolas, monospace`);
 	s.setProperty('--code-size', csize + 'pt');
 	s.setProperty('--lh', lh);
+	// letter spacing as CSS writes it (normal, -0.02em, 0.5px); a bare number is px, as in letter-spacing:-1px
+	const lsv = /^\s*-?\d*\.?\d+\s*$/.test(ls || '') ? ls.trim() + 'px' : ls;
+	s.setProperty('--ls', lsv && CSS.supports('letter-spacing', lsv) ? lsv : 'normal');
 	// indent = width of 4 monospace Latin chars at body size
 	const m = document.createElement('span');
 	m.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font-size:var(--size);font-family:var(--code-font)';
@@ -155,10 +158,11 @@ function render(src, base) {
 	rebuildMap();
 	// diagrams grow once drawn, which moves everything below them: aim again then.
 	// Only the ones not drawn yet: those of blocks that did not change are still there.
-	const drawn = () => { doScroll(); rebuildMap(); findRun(false); c.querySelectorAll('.mermaid').forEach(panZoom); };
+	const drawn = () => { c.querySelectorAll('.mermaid').forEach(cleanSvg); doScroll(); rebuildMap(); findRun(false); drawMarks(); c.querySelectorAll('.mermaid').forEach(panZoom); };
 	c.querySelectorAll('.mermaid:not([data-processed])').forEach(e => { e.dataset.src = e.textContent; }); // for plainText: mermaid swaps it for the SVG
 	mermaid.run({ querySelector: '#c .mermaid:not([data-processed])', suppressErrors: true }).then(drawn, drawn);
-	document.fonts.ready.then(() => { doScroll(); rebuildMap(); }); // so do formulas once the KaTeX fonts are in
+	document.fonts.ready.then(() => { doScroll(); rebuildMap(); drawMarks(); }); // so do formulas once the KaTeX fonts are in
+	drawMarks();
 }
 
 // Typing changes a block or two. Replacing the whole page would draw every diagram again (Mermaid is by far the
@@ -220,7 +224,7 @@ function sanitize(html) {
 		try { if (ids.has('user-content-' + decodeURIComponent(h))) e.setAttribute('href', '#user-content-' + h); } catch (x) {}
 	}
 	for (const e of f.querySelectorAll('.mermaid')) // Mermaid loads images and styles itself: no network paths there either
-		if (MERMAID_NET.test(e.textContent)) e.replaceWith(Object.assign(document.createElement('pre'),
+		if (mermaidRemote(e.textContent)) e.replaceWith(Object.assign(document.createElement('pre'),
 			{ className: 'plantuml-error', textContent: 'Mermaid: network paths (\\\\host, //host, file:, url()) are not allowed\n' + e.textContent }));
 	return f;
 }
@@ -241,7 +245,27 @@ function cssUrls(css) {
 	return [...css.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)|(["'])(.*?)\3/gis)].map(m => m[2] ?? m[4]);
 }
 const URL_ATTR = /^(?:src|href|xlink:href|poster|background|action|formaction|data|cite)$/;
-const MERMAID_NET = /file:|(?<!https?:)[\\/]{2}|[\\/](?:%5c|%2f)|%5c%5c|\\0*(?:2f|5c)|#(?:47|92|x2f|x5c);|&#(?:0*(?:47|92)|x0*(?:2f|5c))|[&#]b?sol;|url\s*\(|image-set|\bimg\s*:\s*["']?(?!https?:|data:)/i;
+// Mermaid source: only what can load something is checked (url(), src, srcset, href, img:, @import...), so a label may name
+// a network path as plain text.
+function mermaidRemote(src) {
+	// all HTML entities (the browser's own table) and Mermaid's #92; until nothing changes, then CSS escapes
+	const ta = document.createElement('textarea');
+	let t = src;
+	for (let i = 0; i < 4; i++) {
+		// Mermaid's #name; and #92; are its &name; and &#92;; a textarea then parses entities only, no markup
+		ta.innerHTML = t.replace(/(?<!&)#(\w+);/g, (m, n) => /^\+?\d+$/.test(n) ? '&#' + n + ';' : '&' + n + ';').replace(/</g, '&lt;');
+		const d = ta.value.replace(/&?#(x[0-9a-f]+|\d+);/gi, (m, c) => String.fromCodePoint(Math.min(c[0] === 'x' || c[0] === 'X' ? parseInt(c.slice(1), 16) : +c, 0x10ffff)));
+		if (d === t) break;
+		t = d;
+	}
+	t = t.replace(/\\([0-9a-f]{1,6})\s?/gi, (m, h) => String.fromCodePoint(Math.min(parseInt(h, 16), 0xfffd)));
+	if (/image-set/i.test(t)) return true;
+	// the rest of the value after anything that loads (over line ends, spaces in quotes, srcset lists): every token in it is
+	// checked, and one that still looks like an entity (&name; or #name;) is refused
+	for (const m of t.matchAll(/(?:\b(?:src|srcset|href|xlink:href|img|poster|background|data|action|formaction|cite|lowsrc|dynsrc|ping)\s*[:=]|url\s*\(|@import)([^>}]*)/gi))
+		if (m[1].split(/[\s,"'()]+/).some(u => u && (/[&#][a-z0-9#]+;/i.test(u) || remote(u)))) return true;
+	return false;
+}
 if (typeof DOMPurify !== 'undefined') {
 	DOMPurify.addHook('uponSanitizeAttribute', (n, a) => {
 		const v = a.attrValue || '', urls = cssUrls(v);
@@ -252,6 +276,17 @@ if (typeof DOMPurify !== 'undefined') {
 	DOMPurify.addHook('uponSanitizeElement', (n, d) => { // <style> inside SVG
 		if (d.tagName === 'style' && cssUrls(n.textContent).some(remote)) n.textContent = '';
 	});
+}
+
+// Mermaid draws with securityLevel strict, and its SVG goes through DOMPurify too, as PlantUML's does. Its labels are HTML
+// in <foreignObject>, which DOMPurify drops by default: the result comes back as nodes, not as markup parsed again, so
+// letting HTML in there is safe, and scripts, handlers, javascript: links and network paths still go.
+const MERMAID_PURIFY = { RETURN_DOM_FRAGMENT: true, USE_PROFILES: { svg: true, svgFilters: true, html: true },
+	ADD_TAGS: ['foreignObject'], HTML_INTEGRATION_POINTS: { foreignobject: true } };
+function cleanSvg(e) {
+	if (e.dataset.clean || !e.querySelector(':scope > svg')) return;
+	e.dataset.clean = '1';
+	e.replaceChildren(DOMPurify.sanitize(e.innerHTML, MERMAID_PURIFY));
 }
 
 // Spacing from the preferences; Mermaid's defaults are node 50, rank 50, padding 15.
@@ -306,12 +341,59 @@ function doScroll() {
 	window.scrollTo(0, PENDING * (document.documentElement.scrollHeight - window.innerHeight));
 }
 
-// Outline click: the block that starts at the source line (0-based), or the last one before it
-function scrollToLine(n) {
+// the block that starts at the source line (0-based), or the last one before it
+function blockAt(n) {
 	let best = null;
 	for (const e of document.querySelectorAll('#c [data-line]')) if (+e.dataset.line <= n && (!best || +e.dataset.line > +best.dataset.line)) best = e;
+	return best;
+}
+
+// Outline click
+function scrollToLine(n) {
+	const best = blockAt(n);
 	PENDING = -1;
 	if (best) best.scrollIntoView({ block: 'start' });
+}
+
+// Bookmarks of the Source ([{line, quick}], lines from 0): a ribbon in the left margin beside the block of each,
+// outside #c so that copy, export and find never see them
+let MARKS = [], MARK_AT = null;
+function setBookmarks(marks) {
+	MARKS = marks;
+	drawMarks();
+}
+
+function drawMarks() {
+	document.querySelectorAll('body > .bm').forEach(e => e.remove());
+	for (const m of MARKS) {
+		const b = blockAt(m.line);
+		if (!b) continue;
+		const d = document.createElement('div');
+		d.className = 'bm';
+		d.textContent = m.quick ?? '';
+		d.style.top = (b.getBoundingClientRect().top + window.scrollY) + 'px';
+		document.body.append(d);
+	}
+}
+
+// next (1) or previous (-1) bookmark from the last one reached, or from the top of the view; around the document
+function markStep(dir) {
+	const blocks = [...new Set(MARKS.map(m => blockAt(m.line)).filter(Boolean))];
+	if (!blocks.length) return;
+	const tops = blocks.map(b => b.getBoundingClientRect().top).sort((a, b) => a - b);
+	blocks.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+	const from = MARK_AT && MARK_AT.isConnected ? MARK_AT.getBoundingClientRect().top : 0;
+	let i = dir > 0 ? tops.findIndex(t => t > from + 1) : tops.findLastIndex(t => t < from - 1);
+	if (i < 0) i = dir > 0 ? 0 : blocks.length - 1;
+	MARK_AT = blocks[i];
+	PENDING = -1;
+	MARK_AT.scrollIntoView({ block: 'start' });
+}
+
+// the source line of the first block that starts in view: where a bookmark set on the Preview goes
+function topLine() {
+	for (const e of document.querySelectorAll('#c [data-line]')) if (e.getBoundingClientRect().top >= -1) return +e.dataset.line;
+	return 0;
 }
 
 // Copy button on code blocks: the code as written, through the plugin's clipboard (mdCopy) when there is one,
@@ -464,10 +546,13 @@ function findShow(scroll) {
 }
 
 if (typeof window !== 'undefined') window.addEventListener('keydown', e => {
-	if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
+	if (e.ctrlKey && e.shiftKey && !e.altKey && e.code === 'Minus' && typeof window.mdKey === 'function') {
+		e.preventDefault(); // Ctrl+_ splits the editor in Eclipse; the browser would zoom out
+		window.mdKey('M1+M2+-');
+	} else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
 		e.preventDefault(); // instead of the browser's own find bar
 		findOpen();
-	} else if (e.key === 'F3') {
+	} else if (e.key === 'F3' && !e.altKey) { // Alt+F3 is the next bookmark
 		e.preventDefault();
 		if (FIND && !FIND.hidden) findStep(e.shiftKey ? -1 : 1);
 		else findOpen();
@@ -485,7 +570,8 @@ if (typeof window !== 'undefined') window.addEventListener('dblclick', e => {
 
 // the user scrolling takes over from a pending jump
 if (typeof window !== 'undefined') {
-	window.addEventListener('wheel', () => { PENDING = -1; }, { passive: true });
+	window.addEventListener('wheel', () => { PENDING = -1; MARK_AT = null; }, { passive: true });
+	window.addEventListener('resize', () => drawMarks());
 	window.addEventListener('keydown', () => { PENDING = -1; });
 }
 

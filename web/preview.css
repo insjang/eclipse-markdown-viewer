@@ -1,15 +1,18 @@
 /* layout after github-markdown-css; colors come from preferences (GitHub defaults below) */
 :root { --bg:#0d1117; --fg:#f0f6fc; --heading:#f0f6fc; --strong:#f0f6fc; --em:#f0f6fc; --link:#4493f8; --code:#f0f6fc;
 	--code-bg:#1f232a; --pre-bg:#151b23; --quote:#9198a1; --border:#3d444d; --th-bg:#0d1117; --row-alt:#151b23;
-	--font:system-ui,sans-serif; --size:11pt; --code-font:Consolas,monospace; --code-size:10pt; --lh:1.6; --indent:4ch }
+	--font:system-ui,sans-serif; --size:11pt; --code-font:Consolas,monospace; --code-size:10pt; --lh:1.6; --ls:normal; --indent:4ch }
 html { background:var(--bg) }
-body { margin:0; padding:16px 32px 32px; color:var(--fg); background:var(--bg); font-family:var(--font); font-size:var(--size); line-height:var(--lh); overflow-wrap:break-word }
+body { margin:0; padding:16px 32px 32px; color:var(--fg); background:var(--bg); font-family:var(--font); font-size:var(--size); line-height:var(--lh); letter-spacing:var(--ls); overflow-wrap:break-word }
 body.export { padding:0 }
 h1, h2, h3, h4, h5, h6 { margin:1.5em 0 1em; line-height:1.25; font-weight:600; color:var(--heading) }
 h1, h2 { padding-bottom:.3em; border-bottom:1px solid var(--border) }
 h1 { font-size:2em } h2 { font-size:1.5em } h3 { font-size:1.25em } h4 { font-size:1em } h5 { font-size:.875em } h6 { font-size:.85em; color:var(--quote) }
 #c > :first-child { margin-top:0 }
 .code-box { position:relative }
+body { position:relative }
+.bm { position:absolute; left:12px; width:12px; height:17px; background:#3b82f6; color:#fff; font:bold 9px/12px sans-serif; text-align:center;
+	clip-path:polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); pointer-events:none }
 .copy, .zoom-reset { position:absolute; top:8px; right:8px; font:inherit; font-size:.8em; color:var(--fg); background:var(--code-bg);
 	border:1px solid var(--border); border-radius:6px; padding:2px 8px; cursor:pointer }
 .code-box .copy { opacity:0 } .code-box:hover .copy, .copy:focus { opacity:1 }
@@ -44,8 +47,9 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 .front-matter { margin:0 0 1em; color:var(--quote) }
 .front-matter summary { cursor:pointer; font-size:.875em } .front-matter table { margin:.5em 0 0 } .front-matter td { white-space:pre-wrap }
 .mermaid, .plantuml { text-align:center }
+code, .mermaid, .plantuml, .katex { letter-spacing:normal } /* code columns, diagram boxes and formulas keep their own spacing */
 .plantuml svg { max-width:100%; height:auto }
-.plantuml-error { text-align:left; color:#f85149 }
+.plantuml-error { text-align:left; color:#f85149; font-family:var(--code-font); font-size:var(--code-size) }
 .katex-display { overflow-x:auto; overflow-y:hidden; padding:.1em 0 } /* long formulas scroll, not the page */
 .katex-error { font-family:KaTeX_Main, "Times New Roman", serif } /* Korean UI fonts draw \ as ₩ */
 /* find bar (Ctrl+F on the Preview tab) */

@@ -27,6 +27,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
 | 아웃라인 | Outline 뷰(Window → Show View → Outline)에 제목 트리 표시, 클릭하면 Source 커서와 Preview가 그 제목으로 이동. 코드 블록·머리말 안의 `#` 줄은 제외 |
 | 위치 동기화 | 탭을 바꿔도 스크롤바 위치 유지: 한쪽 끝이면 다른 쪽도 끝 (스크롤 비율 기준), 양방향. Preview에서 더블클릭하면 그 문단·표 행·목록 항목·다이어그램의 줄로 Source 탭 이동 |
+| 나란히 보기 | `나란히 보기` 버튼(Preview 상단, 메인 툴바): Eclipse 편집기 분할로 왼쪽 Source, 오른쪽 Preview. 두 쪽이 줄 단위로 서로 따라가고, Preview 더블클릭은 Source 커서를 그 줄로 옮김. 다시 누르면 하나로 합침. Eclipse 분할 키(Ctrl+_, Ctrl+{)도 Preview 탭에서 동작 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 머리말 (front matter) | 파일 맨 앞 YAML 블록(`---` ~ `---`, SKILL.md·정적 사이트 원고 등)을 가로줄·굵은 글씨 대신 접힌 키·값 표로 표시 |
 | GitHub 문법 | 알림 상자(`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`, GitHub 색), 각주(`[^1]`), 이모지 코드(`:smile:`) |
@@ -37,12 +38,15 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Windows: Edge, Linux: Chrome·Chromium 헤드리스 인쇄) |
 | HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함, 로컬 이미지는 저장한 파일 기준 상대 경로로 연결 (이미지를 함께 옮겨야 함). `HTML 복사`: 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
-| 실시간 반영 | Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
-| 소스 편집 | Enter로 목록·체크박스·인용문 이어 쓰기 (빈 항목에서 Enter면 목록 끝), Tab으로 목록 항목 들여쓰기. 백틱은 짝 자동 입력, ```` ``` ```` 뒤 Enter면 코드 블록 닫기. 표 안 Tab은 다음 칸 이동과 열 맞춤 (한글·한자 등 전각 문자는 2칸으로 계산), Enter는 새 행. TM4E 필요 (Eclipse IDE 패키지에 포함) |
+| 실시간 반영 | 입력하면 바뀐 블록만 다시 그림 (다른 다이어그램은 그대로, 보던 위치 유지). Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
+| 소스 편집 | Enter로 목록·체크박스·인용문 이어 쓰기 (빈 항목에서 Enter면 목록 끝), Tab으로 목록 항목 들여쓰기. 백틱은 짝 자동 입력, ```` ``` ```` 뒤 Enter면 코드 블록 닫기. 표 안 Tab은 다음 칸 이동과 열 맞춤 (한글·한자 등 전각 문자는 2칸으로 계산), Enter는 새 행, Shift+Tab은 이전 칸. Ctrl+B·Ctrl+I로 선택 영역이나 단어를 굵게·기울임 (다시 누르면 해제), Ctrl+K로 링크 만들기, 선택한 글자 위에 웹 주소를 붙여넣으면 `[글자](주소)`. TM4E 필요 (Eclipse IDE 패키지에 포함) |
+| 접기 | Source에서 제목 구역, 코드 블록, 머리말, HTML 주석, 표, 긴 인용문, 하위 항목이 있는 목록 접기. Markdown 언어 서버(Wild Web Developer 등)가 접기를 제공하면 서버 것만 사용 (겹치지 않음) |
+| Source 링크 | Ctrl+클릭으로 링크·이미지·참조 링크·`#앵커`(그 제목으로)·`파일.md#앵커` 이동. `](`, `[이름]:`, `#` 뒤 자동 완성으로 파일·폴더·제목, `][` 뒤 정의된 이름, 코드 블록 시작 뒤 언어 이름 |
+| 북마크 | 선택 기능 (기본 꺼짐), 모든 텍스트 편집기에서 동작: Alt+F2 북마크 켜기·끄기, F2·Shift+F2 다음·이전 북마크, Alt+0~9 빠른 북마크 지정, Alt+Shift+0~9 이동. Eclipse 기본 북마크(Bookmarks 뷰)를 쓰고, Preview에도 리본으로 표시되며 같은 키로 이동. 끄면 F2·Shift+F2는 원래 기능 |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
 | 링크 검사 | 열린 워크스페이스 파일의 깨진 상대 경로 링크·이미지·`#앵커`(제목, HTML `id`/`name`)를 Problems 뷰에 경고로 표시. 웹 링크, 절대·네트워크 경로는 검사 안 함 |
 | 글자 크기 | Preview 상단 `A-` / `A+` |
-| 설정 | 글꼴, 줄 간격, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 탭 더블클릭으로 에디터 닫기 (선택) |
+| 설정 | 글꼴, 줄 간격, 자간, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 북마크 키와 탭 더블클릭으로 에디터 닫기 (선택) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |
 | 언어 | 영어, 한국어 (Eclipse 언어 설정을 따름) |
 
@@ -99,11 +103,13 @@ Preferences → General → Editors → Markdown Viewer
 | 본문 글꼴 | Eclipse 대화상자 글꼴 11pt (한국어 Windows: 맑은 고딕, 영문 Windows: Segoe UI) |
 | 코드 글꼴 | Eclipse 텍스트 글꼴 10pt (Windows: Consolas, Preview에서는 합자 끔) |
 | 줄 간격 | 1.6 |
+| 자간 | normal (숫자만 쓰면 px, 예: `-1`. `-0.02em` 같은 CSS 값도 가능. 코드와 다이어그램에는 적용 안 함) |
 | 테마 | Eclipse 테마에 따름 (에디터 배경색으로 어둡게·밝게 결정) |
 | PlantUML 다이어그램 그리기 | 켜짐 (끄면 plantuml 블록을 코드로 표시, PlantUML 로드 안 함) |
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
 | 깨진 상대 링크·#앵커를 Problems 뷰에 표시 | 켜짐 |
+| 북마크 키 사용 | 꺼짐 (켜면 위 북마크 키 사용, 북마크는 워크스페이스 안의 파일에만) |
 | 탭 더블클릭으로 에디터 닫기 | 꺼짐 (켜면 최대화 대신 닫기, 모든 에디터 탭에 적용, Ctrl+M은 계속 최대화) |
 | 다크·라이트 색 13종 | GitHub 색 (`Restore Defaults`로 복원) |
 | Mermaid 간격 (노드·단계·상자 안 여백) | 25 · 30 · 6 px |
@@ -136,9 +142,9 @@ Preferences → General → Editors → Markdown Viewer
 - 문서 안 HTML: DOMPurify로 정화 후 표시 (스크립트·이벤트 속성·`javascript:` 링크 제거)
 - 허용 URL: `http`, `https`, `mailto`, 문서 기준 상대 경로, `#앵커`
 - OS로 넘기는 링크: `http`, `https`, `mailto`만 (로컬 실행 파일 실행 차단)
-- Mermaid: `strict` 모드
+- Mermaid: `strict` 모드, 그려진 SVG도 DOMPurify로 한 번 더 정화
 - KaTeX: `trust: false` (`\href`, `\url`, `\includegraphics`는 글자로만 표시)
-- 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로가 든 Mermaid 그림은 그리지 않음 (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
+- 네트워크 경로(`\\호스트\공유`, `//호스트/...`, `file://호스트/...`): 이미지·링크·스타일에서 제거, 이런 경로를 불러오는(이미지, `url()`, `@import`, `href`) Mermaid 그림은 그리지 않음, 라벨 글자로 쓰는 것은 허용 (Windows는 읽기만 해도 그 호스트에 접속해 사용자 NTLM 해시를 넘김)
 - 링크 검사: 문서 기준 상대 경로만 확인, 웹·절대·네트워크 경로는 파일 시스템에 묻지 않음
 - 머리말·제목·링크 분석: 역추적이 없는 정규식과 직접 파싱 (악의적으로 긴 줄도 바로 처리, `HeadingsCheck`·`LinkCheckCheck`·`check.js`로 확인)
 - HTML 내보내기·복사: 정화된 미리보기 내용만 사용, 스크립트 없음
@@ -147,7 +153,11 @@ Preferences → General → Editors → Markdown Viewer
 
 ```
 src/io/github/insjang/mdviewer/
-  MarkdownEditor.java          Source/Preview 탭, 위치 동기화, 링크 처리, PDF 내보내기
+  MarkdownEditor.java          Source/Preview 탭, 위치 동기화, 나란히 보기, 링크 처리, PDF 내보내기
+  SourceScroll.java            Source 스크롤 위치를 줄 번호로 (나란히 보기)
+  SplitSideHandler.java        나란히 보기 버튼
+  FoldingStrategy.java, FoldBlocks.java   Source 접기
+  Bookmarks.java               텍스트 편집기 북마크 키 (선택), Preview 리본
   Headings.java, Outline.java  소스의 제목 추출, Outline 뷰 페이지
   LinkCheck.java               깨진 상대 링크를 Problems 뷰 경고로
   HtmlExport.java              HTML 내보내기: CSS·글꼴은 파일 안에, 로컬 이미지는 상대 경로
@@ -157,9 +167,11 @@ src/io/github/insjang/mdviewer/
   MarkdownPreferencePage.java  설정 화면
   Contributor.java             실행 취소·찾기 등 편집 동작 연결
   TabClose.java                탭 더블클릭으로 에디터 닫기 (선택)
+  editing/                     입력 보조, 서식 키, Source 링크와 자동 완성
   PlantUml.java                PlantUML 블록을 SVG로 (글꼴·색 주입, 캐시, 샌드박스)
 web/
   preview.html / .js / .css    렌더링, 줄 번호 앵커, 스타일
+  scrollsync.js                Preview와 Source 줄 위치 대응 (나란히 보기)
   *.min.js, hl-*.css           외부 라이브러리
 feature/                       업데이트 사이트용 feature.xml, category.xml
 icons/                         편집기 아이콘
@@ -192,7 +204,7 @@ javac -cp build/classes -d build/test test/HeadingsCheck.java && java -cp build/
 
 ## 라이선스
 
-- 소스 편집, Eclipse 테마 따르기, PlantUML 끄기 설정, NOTICE 보완은 [@m-froehlich](https://github.com/m-froehlich)의 기여.
+- 소스 편집, 서식 키, 접기, Source 링크, Preview 부분 갱신, 나란히 보기, Eclipse 테마 따르기, PlantUML 끄기 설정, NOTICE 보완은 [@m-froehlich](https://github.com/m-froehlich)의 기여.
 
 - AI 코딩 도구(Anthropic의 Claude 등)의 도움을 받아 개발.
 

@@ -27,6 +27,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
 | Outline | The Outline view (Window > Show View > Outline) lists the headings as a tree; a click moves the Source caret and the Preview to the heading. Headings in code blocks and front matter are left out |
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other. A double-click in the Preview opens the Source tab at the line of that paragraph, table row, list item or diagram |
+| Side by side | The `Side by side` button (Preview toolbar and main toolbar) puts the Source on the left and the Preview on the right with Eclipse's split editor; the two follow each other by line, a double-click in the Preview moves the Source caret there, and a second press joins them again. Ctrl+_ / Ctrl+{ (Eclipse's split keys) work on the Preview tab too |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
 | GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |
@@ -39,12 +40,15 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
 | HTML | Export HTML saves one file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts inside; local images are linked relative to the saved file, so keep them beside it); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
-| Live reload | When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
-| Source editing | Enter continues list items, task lists and quotes (an empty item ends the list), Tab nests a list item; a backtick gets its pair, ```` ``` ```` + Enter closes the code fence; Tab in a table moves to the next cell and lines up the columns (wide CJK characters count as two), Enter adds a row. Needs TM4E, as in the Eclipse IDE packages |
+| Live reload | Typing updates the Preview in place: only the blocks that changed are drawn again, so diagrams elsewhere stay and the page keeps its place. When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
+| Source editing | Enter continues list items, task lists and quotes (an empty item ends the list), Tab nests a list item; a backtick gets its pair, ```` ``` ```` + Enter closes the code fence; Tab in a table moves to the next cell and lines up the columns (wide CJK characters count as two), Enter adds a row, Shift+Tab goes back a cell. Ctrl+B / Ctrl+I mark the selection or word bold / italic (again to remove), Ctrl+K makes it a link, and a web address pasted over selected text becomes `[text](address)`. Needs TM4E, as in the Eclipse IDE packages |
+| Folding | Heading sections, fenced code, front matter, HTML comments, tables, longer quotes and list items with nested items fold in the Source. When a Markdown language server (such as Wild Web Developer's) folds the document, its folds are used instead, never both |
+| Source links | Ctrl+click follows links, images, reference links, `#anchors` (to the heading) and `file.md#anchor`; content assist after `](`, `[label]:` and `#` offers files, folders and headings, after `][` the defined labels, and after a code fence the languages |
+| Bookmarks | Optional (off by default), in every text editor: Alt+F2 toggles a bookmark, F2 / Shift+F2 go to the next / previous one, Alt+0-9 set a quick bookmark and Alt+Shift+0-9 go to it. They are Eclipse's own bookmarks (Bookmarks view), shown as ribbons on the Preview too, where the same keys work. Off, F2 and Shift+F2 do what they did before |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
 | Font size | `A-` / `A+` on the preview toolbar |
-| Preferences | Fonts, line height, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional double-click to close editor tabs |
+| Preferences | Fonts, line height, letter spacing, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional bookmark keys and double-click to close editor tabs |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |
 | Languages | English, Korean |
 
@@ -103,11 +107,13 @@ Preferences > General > Editors > Markdown Viewer
 | Body font | Eclipse dialog font, 11 pt (Segoe UI on English Windows, Malgun Gothic on Korean Windows) |
 | Code font | Eclipse text font, 10 pt (Consolas on Windows; ligatures are turned off in the preview) |
 | Line height | 1.6 |
+| Letter spacing | normal (a number is px, as in `-1`; or a CSS value such as `-0.02em`; code and diagrams keep theirs) |
 | Theme | As the Eclipse theme (dark or light by the editor background) |
 | Draw PlantUML diagrams | On (off: a plantuml block shows as code, PlantUML is not loaded) |
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
 | Open files on the Preview tab | On |
 | Show broken relative links and #anchors in the Problems view | On |
+| Bookmark keys in text editors | Off (on: Alt+F2, F2 / Shift+F2, Alt+0-9, Alt+Shift+0-9 as above; bookmarks need a file in the workspace) |
 | Double-click a tab to close the editor | Off (on: applies to every editor tab, instead of maximizing; Ctrl+M still maximizes) |
 | Dark and light colors (13 each) | GitHub colors, `Restore Defaults` brings them back |
 | Mermaid spacing: nodes, ranks, box padding | 25, 30, 6 px (Mermaid's own defaults are 50, 50, 15) |
@@ -143,10 +149,10 @@ Markdown from elsewhere can be opened safely.
 
 - HTML in a document is sanitized with DOMPurify: scripts, event handlers and `javascript:` links are removed.
 - Only `http`, `https`, `mailto`, document-relative paths and `#anchors` survive as URLs, and only `http`, `https` and `mailto` are handed to the operating system.
-- Mermaid runs with `securityLevel: 'strict'`.
+- Mermaid runs with `securityLevel: 'strict'`, and the SVG it draws is sanitized with DOMPurify too.
 - KaTeX runs with `trust: false`: `\href`, `\url` and `\includegraphics` stay text.
 - PlantUML runs with its `SANDBOX` security profile: `!include` cannot read local files or URLs. Its SVG output is sanitized too.
-- Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram naming one is not drawn: on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
+- Network paths (`\\host\share`, `//host/...`, `file://host/...`) are removed from images, links and styles, and a Mermaid diagram that would load one (an image, `url()`, `@import`, an `href`) is not drawn, while a label may still name one as text: on Windows, merely loading one would connect to that host and hand it the user's NTLM hash.
 - The link check looks only at document-relative paths; web, absolute and network paths are never asked of the file system.
 - Front matter, headings and links are read with non-backtracking patterns and plain parsing, so a crafted long line cannot hang Eclipse.
 - Export HTML and Copy HTML use the sanitized preview only, with no scripts.
@@ -160,7 +166,11 @@ Markdown from elsewhere can be opened safely.
 
 ```
 src/io/github/insjang/mdviewer/
-  MarkdownEditor.java          Source/Preview tabs, scroll sync, links, PDF export
+  MarkdownEditor.java          Source/Preview tabs, scroll sync, side by side, links, PDF export
+  SourceScroll.java            the Source's scroll position as a source line (side by side)
+  SplitSideHandler.java        the Side by side button
+  FoldingStrategy.java, FoldBlocks.java   folding in the Source
+  Bookmarks.java               optional bookmark keys in text editors, ribbons on the Preview
   Headings.java, Outline.java  headings of the source, Outline view page
   LinkCheck.java               broken relative links as Problems view warnings
   HtmlExport.java              Export HTML: CSS and fonts in one file, local images linked
@@ -171,9 +181,11 @@ src/io/github/insjang/mdviewer/
   MarkdownPreferencePage.java  preference page
   Contributor.java             undo, find and other editing actions
   TabClose.java                optional double-click on an editor tab to close it
+  editing/                     typing aids, formatting keys, Source links and content assist
   Messages.java, messages*.properties   UI text (English, Korean)
 web/
   preview.html / .js / .css    rendering, sanitizing, scrolling, styles
+  scrollsync.js                Preview <-> Source line map (side by side)
   *.min.js, hl-*.css           bundled libraries
 feature/                       feature.xml, category.xml for the update site
 icons/                         editor icon
@@ -191,7 +203,7 @@ test/
 
 ## License
 
-Source editing, the Eclipse theme setting, the PlantUML switch and the NOTICE details were contributed by [@m-froehlich](https://github.com/m-froehlich). Thank you.
+Source editing, formatting keys, folding, Source links, the in-place Preview update, Side by side, the Eclipse theme setting, the PlantUML switch and the NOTICE details were contributed by [@m-froehlich](https://github.com/m-froehlich). Thank you.
 
 Developed with the help of AI coding assistants, including Claude (Anthropic).
 
