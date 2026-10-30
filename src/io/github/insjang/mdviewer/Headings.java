@@ -180,7 +180,7 @@ public final class Headings {
 	}
 
 	/** The id preview.js gives a heading (before DOMPurify's user-content- prefix). */
-	static String slug(String text) {
+	public static String slug(String text) {
 		return text.strip().toLowerCase(Locale.ROOT).replaceAll("(?U)[^\\p{L}\\p{N}\\s_-]", "").replaceAll("(?U)\\s", "-");
 	}
 

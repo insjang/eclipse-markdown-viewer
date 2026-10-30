@@ -3,7 +3,9 @@ package io.github.insjang.mdviewer;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IFile;
@@ -105,6 +107,7 @@ import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 import io.github.insjang.mdviewer.editing.FormatHandler;
 import io.github.insjang.mdviewer.editing.TableBackTab;
+import io.github.insjang.mdviewer.editing.WikiLinks;
 
 /** Source (generic text editor) + Preview (Edge or WebKitGTK browser) tabs at the bottom of the same editor area. */
 @SuppressWarnings("restriction")
@@ -705,8 +708,27 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private void render() {
 		if (!loaded) return;
 		stale = false;
-		browser.execute("render(" + js(document().get()) + "," + js(baseUrl()) + ")");
+		String src = document().get();
+		browser.execute("render(" + js(src) + "," + js(baseUrl()) + "," + wikiLinks(src) + ")");
 		showBookmarks();
+	}
+
+	/** The wikilink targets the document uses, resolved: {target: file URL or null}, for the Preview (see WikiLinks). */
+	private String wikiLinks(String src) {
+		File doc = localFile();
+		if (doc == null || !src.contains("[[")) return "null";
+		WikiLinks.Vault vault = Activator.vault(doc);
+		Map<String, String> urls = new LinkedHashMap<>();
+		for (String line : Headings.lines(src)) {
+			for (WikiLinks.Link w : WikiLinks.in(line)) {
+				if (w.target().isEmpty() || urls.containsKey(w.target())) continue;
+				File f = vault.resolve(doc.getParentFile(), w.target());
+				urls.put(w.target(), f == null ? "null" : js(fileUrl(f.toURI())));
+			}
+		}
+		StringBuilder b = new StringBuilder("{");
+		urls.forEach((k, v) -> b.append(b.length() > 1 ? "," : "").append(js(k)).append(':').append(v));
+		return b.append('}').toString();
 	}
 
 	private void showBookmarks() {

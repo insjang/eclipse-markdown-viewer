@@ -124,6 +124,12 @@ final class MarkdownLinks {
 
 	/** Whether the index lies in an inline code span: a run of n backticks up to the next run of exactly n. */
 	static boolean inCodeSpan(String line, int index) {
+		return codeSpans(line).get(index);
+	}
+
+	/** The columns of the line that are in inline code spans. */
+	static BitSet codeSpans(String line) {
+		BitSet code = new BitSet();
 		int i = 0;
 		while (i < line.length()) {
 			if (line.charAt(i) != '`') {
@@ -147,10 +153,10 @@ final class MarkdownLinks {
 				i += n;
 				continue;
 			}
-			if (index >= i && index < close) return true;
+			code.set(i, close);
 			i = close;
 		}
-		return false;
+		return code;
 	}
 
 	private static int run(String line, int from) {

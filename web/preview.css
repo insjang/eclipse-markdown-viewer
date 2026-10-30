@@ -43,6 +43,18 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 .markdown-alert-warning { --alert:#d29922 } .markdown-alert-caution { --alert:#f85149 }
 [data-theme=light] .markdown-alert-note { --alert:#0969da } [data-theme=light] .markdown-alert-tip { --alert:#1a7f37 } [data-theme=light] .markdown-alert-important { --alert:#8250df }
 [data-theme=light] .markdown-alert-warning { --alert:#9a6700 } [data-theme=light] .markdown-alert-caution { --alert:#d1242f }
+/* Obsidian callouts: GitHub's five in GitHub's colors, the others after Obsidian's palette; - / + make them fold */
+.callout-note, .callout-info, .callout-todo { --alert:#4493f8 } .callout-abstract { --alert:#39c5cf } .callout-tip, .callout-success { --alert:#3fb950 }
+.callout-important, .callout-example { --alert:#ab7df8 } .callout-question { --alert:#db6d28 } .callout-warning { --alert:#d29922 }
+.callout-caution, .callout-failure, .callout-danger, .callout-bug { --alert:#f85149 } .callout-quote { --alert:var(--quote) }
+[data-theme=light] :is(.callout-note, .callout-info, .callout-todo) { --alert:#0969da } [data-theme=light] .callout-abstract { --alert:#1b7c83 }
+[data-theme=light] :is(.callout-tip, .callout-success) { --alert:#1a7f37 } [data-theme=light] :is(.callout-important, .callout-example) { --alert:#8250df }
+[data-theme=light] .callout-question { --alert:#bc4c00 } [data-theme=light] .callout-warning { --alert:#9a6700 }
+[data-theme=light] :is(.callout-caution, .callout-failure, .callout-danger, .callout-bug) { --alert:#d1242f }
+summary.markdown-alert-title { cursor:pointer; margin:0 0 1em } details.markdown-alert:not([open]) > summary { margin:0 }
+summary.markdown-alert-title::after { content:'\25BE' } details.markdown-alert:not([open]) > summary::after { content:'\25B8' } /* flex drops the marker */
+/* Obsidian wikilinks whose target is not in the project */
+.wikilink-missing { color:var(--link); opacity:.6; border-bottom:1px dashed; cursor:default } .wikilink-missing:hover { text-decoration:none }
 .footnotes { font-size:.875em; color:var(--quote) } hr.footnotes-sep { height:1px }
 .front-matter { margin:0 0 1em; color:var(--quote) }
 .front-matter summary { cursor:pointer; font-size:.875em } .front-matter table { margin:.5em 0 0 } .front-matter td { white-space:pre-wrap }

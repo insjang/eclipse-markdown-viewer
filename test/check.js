@@ -27,11 +27,25 @@ const al = gm.render('> [!NOTE]\n> Read **this**.\n\n> [!warning]\n\n> [!TIP] no
 assert(al.includes('<div class="markdown-alert markdown-alert-note" data-line="0">\n<p class="markdown-alert-title"><svg') && al.includes('Note</p>\n<p data-line="0">Read <strong>this</strong>.</p>\n</div>'), 'note: ' + al);
 assert(al.includes('markdown-alert-warning') && al.includes('Warning</p>\n</div>'), 'marker only: ' + al);
 assert(!al.includes('markdown-alert-tip') && (al.match(/markdown-alert-note/g) || []).length === 1 && al.includes('<blockquote data-line="8">'), 'text after marker, nested: not alerts ' + al);
+// Obsidian callouts: aliases, titles, folds, unknown types as note; GitHub's own five (marker alone) stay as above
+const co = gm.render('> [!faq]- Why *this*?\n> Because.\n\n> [!Summary]\n> s\n\n> [!tip]+ <b>Mine</b>\n\n> [!whatever]\n> w\n\n> [!caution] Careful\n\n> [!constructor]\n');
+assert(co.includes('<details class="markdown-alert callout callout-question" data-line="0">\n<summary class="markdown-alert-title"><svg') && co.includes('Why *this*?</summary>\n<p data-line="0">Because.</p>\n</details>'), 'folded faq: ' + co);
+assert(co.includes('<div class="markdown-alert callout callout-abstract" data-line="3">\n<p class="markdown-alert-title"><svg') && co.includes('Summary</p>'), 'alias, default title as written: ' + co);
+assert(co.includes('<details class="markdown-alert callout callout-tip" open="" data-line="6">') && co.includes('&lt;b&gt;Mine&lt;/b&gt;</summary>\n</details>'), 'open fold, title escaped: ' + co);
+assert(co.includes('callout callout-note" data-line="8">') && co.includes('Whatever</p>'), 'unknown type: a note titled as written: ' + co);
+assert(co.includes('callout callout-caution" data-line="11">') && co.includes('Careful</p>') && co.includes('callout callout-note" data-line="13">'), 'caution keeps its own type; no Object keys: ' + co);
+// wikilinks: resolved by the plugin (env.wiki), #heading to its id, labels, missing ones, image embeds, not in code
+const wiki = { note: 'file:///D:/v/note.md', 'a b': 'file:///D:/v/a%20b.md', 'i.png': 'file:///D:/v/img/i.png', gone: null };
+const wl = md.render('[[note]] [[a b#Part Two|two]] [[#Top]] [[gone]] [[toString]] ![[i.png|300]] ![[note]] `[[note]]` [[x]y]]\n\n```\n[[note]]\n```\n', { wiki });
+assert(wl.includes('<a href="file:///D:/v/note.md">note</a> <a href="file:///D:/v/a%20b.md#part-two">two</a> <a href="#top">Top</a> <a class="wikilink-missing">gone</a> <a class="wikilink-missing">toString</a>'), 'links: ' + wl);
+assert(wl.includes('<img src="file:///D:/v/img/i.png" alt="" width="300"> <a href="file:///D:/v/note.md">note</a> <code>[[note]]</code> [[x]y]]'), 'embeds, code: ' + wl);
+assert(wl.includes('">[[note]]\n</code>') && md.render('[[a]]').includes('wikilink-missing'), 'fence; no map: missing');
 const fn = gm.render('Text[^1] :smile: :) :nope:\n\n[^1]: The note.\n');
 assert(fn.includes('<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>') && fn.includes('<li id="fn1" class="footnote-item">'), 'footnote: ' + fn);
 assert(fn.includes('\u{1F604} :) :nope:'), 'emoji, no smiley shortcuts: ' + fn);
-// crafted input must not backtrack in our rules (front matter rows, alerts)
-for (const bad of ['---\na' + ' '.repeat(100000) + '\n---\n', '---\n' + 'a:'.repeat(50000) + ' x\n---\n', '> [!NOTE]' + ' '.repeat(100000) + 'x\n']) {
+// crafted input must not backtrack in our rules (front matter rows, alerts, wikilinks)
+for (const bad of ['---\na' + ' '.repeat(100000) + '\n---\n', '---\n' + 'a:'.repeat(50000) + ' x\n---\n', '> [!NOTE]' + ' '.repeat(100000) + 'x\n',
+	'[['.repeat(50000), '![[' + 'a'.repeat(100000), '[[a|'.repeat(30000), '> [!a]' + '-'.repeat(100000) + '\n']) {
 	const t = Date.now();
 	gm.render(bad);
 	assert(Date.now() - t < 500, 'slow: ' + (Date.now() - t) + ' ms');

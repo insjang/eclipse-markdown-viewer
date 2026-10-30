@@ -16,9 +16,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
 
+import io.github.insjang.mdviewer.editing.WikiLinks;
+
 /**
  * Broken document-relative links and #anchors as warnings in the Problems view. Only relative paths are looked at:
- * no scheme (http:, C:), no / or \ in front, so a link never makes Eclipse touch a network path.
+ * no scheme (http:, C:), no / or \ in front, so a link never makes Eclipse touch a network path. Wikilinks are looked up in the
+ * vault (see WikiLinks), with the same rules.
  */
 final class LinkCheck {
 	static final String MARKER = Activator.ID + ".link";
@@ -31,8 +34,8 @@ final class LinkCheck {
 	private static final Pattern SCHEME = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:");
 	private static final Pattern ID = Pattern.compile("(?i)\\b(?:id|name)\\s*=\\s*[\"']([^\"']*)[\"']");
 
-	/** src: the document, dir: its folder */
-	static List<Problem> check(String src, File dir) {
+	/** src: the document, dir: its folder, vault: where its wikilinks resolve (null: not checked) */
+	static List<Problem> check(String src, File dir, WikiLinks.Vault vault) {
 		String[] lines = Headings.lines(src);
 		boolean[] code = Headings.code(lines);
 		List<Problem> out = new ArrayList<>();
@@ -67,6 +70,20 @@ final class LinkCheck {
 				}
 				if (msg != null) out.add(new Problem(i, offset + t[0], offset + t[1], msg));
 			}
+			for (WikiLinks.Link w : vault == null ? List.<WikiLinks.Link>of() : WikiLinks.in(lines[i])) {
+				String msg, anchor = w.heading() == null || w.heading().startsWith("^") ? null : Headings.slug(w.heading()); // ^block: not a heading
+				if (w.target().isEmpty()) {
+					if (here == null) here = anchors(src);
+					msg = anchor == null || here.contains(anchor) ? null : NLS.bind(Messages.link_noAnchorHere, "#" + w.heading());
+				} else {
+					File f = vault.resolve(dir, w.target());
+					msg = f == null ? NLS.bind(Messages.link_noWiki, w.target())
+							: anchor != null && f.getName().matches("(?i).*\\.(md|markdown|mdown|mkd)") && lacks(f, anchor)
+									? NLS.bind(Messages.link_noAnchor, "#" + w.heading(), w.target())
+									: null;
+				}
+				if (msg != null) out.add(new Problem(i, offset + w.start(), offset + w.end(), msg));
+			}
 		}
 		return out;
 	}
@@ -82,11 +99,15 @@ final class LinkCheck {
 		File f = new File(dir, path);
 		if (!f.exists()) return NLS.bind(Messages.link_noFile, path);
 		if (hash < 0 || hash == u.length() - 1 || !f.isFile() || !f.getName().matches("(?i).*\\.(md|markdown|mdown|mkd)")) return null;
+		return lacks(f, anchor(u.substring(hash + 1))) ? NLS.bind(Messages.link_noAnchor, u.substring(hash), path) : null;
+	}
+
+	/** whether the file has no such heading or anchor; unreadable: not this check's business */
+	private static boolean lacks(File f, String anchor) {
 		try {
-			return anchors(Files.readString(f.toPath())).contains(anchor(u.substring(hash + 1))) ? null
-					: NLS.bind(Messages.link_noAnchor, u.substring(hash), path);
+			return !anchors(Files.readString(f.toPath())).contains(anchor);
 		} catch (Exception e) {
-			return null; // unreadable: not this check's business
+			return false;
 		}
 	}
 
@@ -139,7 +160,9 @@ final class LinkCheck {
 		if (previous != null) previous.cancel();
 		Job job = Job.create(Messages.link_job, monitor -> {
 			File dir = file.getLocation() == null ? null : file.getLocation().toFile().getParentFile();
-			List<Problem> problems = dir == null || !Activator.prefs().getBoolean(PrefInit.LINK_CHECK) ? List.of() : check(src, dir);
+			File project = file.getProject().getLocation() == null ? null : file.getProject().getLocation().toFile();
+			List<Problem> problems = dir == null || !Activator.prefs().getBoolean(PrefInit.LINK_CHECK) ? List.of()
+					: check(src, dir, project == null || !src.contains("[[") ? null : WikiLinks.vault(project, true));
 			if (monitor.isCanceled() || !file.exists()) return;
 			file.getWorkspace().run(m -> {
 				if (monitor.isCanceled()) return; // the editor closed meanwhile: it has cleared the markers

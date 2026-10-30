@@ -17,9 +17,11 @@ import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.contentassist.IContextInformationValidator;
 
+import io.github.insjang.mdviewer.Activator;
+
 /**
  * Content assist for Markdown: languages after the opening of a fenced code block, files and folders and #anchors inside
- * {@code ](...)} and after {@code [label]:}, labels inside {@code ][...}.
+ * {@code ](...)} and after {@code [label]:}, labels inside {@code ][...}, files of the project and their headings after {@code [[}.
  */
 public class LinkAssist implements IContentAssistProcessor {
 	/** What the preview can highlight, plus the diagram languages it draws. */
@@ -31,6 +33,7 @@ public class LinkAssist implements IContentAssistProcessor {
 	private static final Pattern DEFINITION_DESTINATION = Pattern.compile("^ {0,3}\\[[^\\]]+\\]:[ \\t]*<?([^\\s>]*)$");
 	private static final Pattern INLINE_DESTINATION = Pattern.compile("\\]\\(\\s*<?([^\\s)>]*)$");
 	private static final Pattern REFERENCE_LABEL = Pattern.compile("\\]\\[([^\\]]*)$");
+	private static final Pattern WIKILINK = Pattern.compile("\\[\\[([^\\[\\]|#]*)(?:#([^\\[\\]|]*))?$");
 	private static final Pattern SCHEME = Pattern.compile("(?i)[a-z][a-z0-9+.-]+:.*");
 
 	/** More entries than this of one folder are not offered: the popup would be unusable, and the list costs time to build. */
@@ -50,9 +53,13 @@ public class LinkAssist implements IContentAssistProcessor {
 			String before = doc.get(base, offset - base);
 			MarkdownLinks.Outline outline = MarkdownLinks.outline(doc.get());
 			List<ICompletionProposal> result = new ArrayList<>();
+			Matcher w = WIKILINK.matcher(before);
 			if (outline.isOpeningFence(line)) {
 				Matcher m = FENCE_OPENING.matcher(before);
 				if (m.matches()) languages(m.group(1), offset, result);
+			} else if (!outline.isCode(line) && w.find()) { // the Markdown language servers of Eclipse do not offer these
+				String close = doc.get(offset, Math.min(2, doc.getLength() - offset)).equals("]]") ? "" : "]]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				wikilinks(w.group(1), w.group(2), offset, file, outline, close, result);
 			} else if (!outline.isCode(line) && !ServerCheck.completion(doc)) { // a language server offers these itself: not twice
 				Matcher m = INLINE_DESTINATION.matcher(before);
 				if (m.find() || (m = DEFINITION_DESTINATION.matcher(before)).find()) {
@@ -122,6 +129,34 @@ public class LinkAssist implements IContentAssistProcessor {
 		for (Entry e : entries.subList(0, Math.min(entries.size(), MAX_FILES))) {
 			String text = LinkTarget.encode(e.name()) + (e.folder() ? "/" : ""); //$NON-NLS-1$ //$NON-NLS-2$
 			result.add(new CompletionProposal(text, offset - typed.length(), typed.length(), text.length(), null, e.folder() ? e.name() + "/" : e.name(), null, null)); //$NON-NLS-1$
+		}
+	}
+
+	/**
+	 * After [[: the files of the project whose name starts with what is typed (notes without .md; a name that is in several folders with
+	 * its path), after [[name#: the headings of that note. close: the ]] to add when it is not there yet.
+	 */
+	private static void wikilinks(String typed, String heading, int offset, File doc, MarkdownLinks.Outline outline, String close, List<ICompletionProposal> result) {
+		WikiLinks.Vault vault = Activator.vault(doc);
+		if (heading != null) {
+			File f = typed.isBlank() ? doc : vault.resolve(doc.getParentFile(), typed);
+			MarkdownLinks.Outline o = f == doc ? outline : f != null && LinkTarget.isMarkdown(f) ? MarkdownLinks.outline(LinkTarget.read(f)) : null;
+			for (MarkdownLinks.Heading h : o == null ? List.<MarkdownLinks.Heading>of() : o.headings) {
+				if (startsWith(h.text(), heading)) result.add(new CompletionProposal(h.text() + close, offset - heading.length(), heading.length(), h.text().length() + close.length(), null, "#" + h.text(), null, null)); //$NON-NLS-1$
+			}
+			return;
+		}
+		List<String> names = new ArrayList<>();
+		for (String path : vault.files()) {
+			String name = path.substring(path.lastIndexOf('/') + 1);
+			if (startsWith(typed.indexOf('/') >= 0 ? path : name, typed)) names.add(path);
+		}
+		names.sort(Comparator.comparing((String p) -> p.substring(p.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT)).thenComparing(String::length));
+		for (String path : names.subList(0, Math.min(names.size(), MAX_FILES))) {
+			String name = path.substring(path.lastIndexOf('/') + 1);
+			boolean unique = vault.byName().get(name.toLowerCase(Locale.ROOT)).size() == 1 && typed.indexOf('/') < 0;
+			String text = (unique ? name : path).replaceFirst("(?i)\\.md$", ""); //$NON-NLS-1$ //$NON-NLS-2$
+			result.add(new CompletionProposal(text + close, offset - typed.length(), typed.length(), text.length() + close.length(), null, unique ? name : path, null, null));
 		}
 	}
 

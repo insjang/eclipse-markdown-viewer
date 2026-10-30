@@ -68,6 +68,13 @@ const a = document.createElement('div');
 a.append(sanitize(g.render('> [!CAUTION]\n> Careful[^x].\n\n[^x]: Why.\n')));
 assert(a.querySelector('div.markdown-alert.markdown-alert-caution > p.markdown-alert-title > svg > path[d]'), 'alert kept: ' + a.innerHTML);
 assert(a.querySelector('a[href="#user-content-fn1"][id="user-content-fnref1"]') && a.querySelector('li[id="user-content-fn1"] a[href="#user-content-fnref1"]'), 'footnote anchors: ' + a.innerHTML);
+// callouts (a <details> when folded) and wikilinks: classes, the resolved file URL, an image's width and the #heading stay; a network path does not
+const w = document.createElement('div');
+w.append(sanitize(g.render('> [!faq]- Q\n> A\n\n[[n#Part]] [[gone]] ![[i.png|300]] ![[evil.png]] [[#Q]]\n',
+	{ wiki: { n: 'file:///D:/v/n.md', 'i.png': 'file:///D:/v/i.png', 'evil.png': 'file://h/x.png', gone: null } })));
+assert(w.querySelector('details.markdown-alert.callout-question:not([open]) > summary.markdown-alert-title > svg > path[d]'), 'folded callout: ' + w.innerHTML);
+assert(w.querySelector('a[href="file:///D:/v/n.md#part"]') && w.querySelector('a.wikilink-missing:not([href])') && w.querySelector('img[src="file:///D:/v/i.png"][width="300"]')
+	&& !w.querySelector('img[src*="//h"]') && w.querySelector('a[href="#q"]'), 'wikilinks: ' + w.innerHTML);
 // Mermaid's drawn SVG: the labels (HTML in foreignObject) stay, active content and network paths go
 const v = document.createElement('div');
 v.append(DOMPurify.sanitize('<svg xmlns="http://www.w3.org/2000/svg"><g class="node"><rect width="9" height="9"/><foreignObject width="9" height="9">'

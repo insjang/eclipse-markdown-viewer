@@ -107,13 +107,16 @@ final class LinkTarget {
 			Program.launch(target); // only these schemes: anything else could name an executable
 		} else if (!SCHEME.matcher(target).matches()) {
 			int hash = target.indexOf('#');
-			File f = resolve(doc, hash < 0 ? target : target.substring(0, hash));
-			String fragment = hash < 0 ? null : decode(target.substring(hash + 1)).toLowerCase(Locale.ROOT);
-			if (f != null && f.isFile()) {
-				Display display = viewer.getTextWidget().getDisplay();
-				// after this event is handled: a new editor opening inside it (its Edge browser) hangs WebView2
-				display.asyncExec(() -> open(f, fragment));
-			}
+			follow(viewer, resolve(doc, hash < 0 ? target : target.substring(0, hash)), hash < 0 ? null : decode(target.substring(hash + 1)).toLowerCase(Locale.ROOT));
+		}
+	}
+
+	/** Opens a file (if there is one) at the heading with the anchor (if any): Markdown and text in editors, pictures in the system's viewer. */
+	static void follow(ITextViewer viewer, File f, String fragment) {
+		if (f != null && f.isFile()) {
+			Display display = viewer.getTextWidget().getDisplay();
+			// after this event is handled: a new editor opening inside it (its Edge browser) hangs WebView2
+			display.asyncExec(() -> open(f, fragment));
 		}
 	}
 
