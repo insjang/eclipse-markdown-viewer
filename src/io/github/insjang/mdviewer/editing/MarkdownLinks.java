@@ -123,7 +123,7 @@ final class MarkdownLinks {
 	}
 
 	/** Whether the index lies in an inline code span: a run of n backticks up to the next run of exactly n. */
-	private static boolean inCodeSpan(String line, int index) {
+	static boolean inCodeSpan(String line, int index) {
 		int i = 0;
 		while (i < line.length()) {
 			if (line.charAt(i) != '`') {
@@ -171,6 +171,11 @@ final class MarkdownLinks {
 	private static String referenceLabel(Matcher m) {
 		String label = m.groupCount() >= 2 ? m.group(2) : m.group(1);
 		return label.isBlank() ? m.group(1) : label;
+	}
+
+	/** A cheap look at the line: every kind of link {@link #at} finds has a [ or a < or an http in it, so a line without one needs no document parse. */
+	static boolean mayHaveLink(String line) {
+		return line.indexOf('[') >= 0 || line.indexOf('<') >= 0 || line.contains("http");
 	}
 
 	/** The link of the line which covers the column; the line must not be fenced code. Reference links are only found when the label is defined. */

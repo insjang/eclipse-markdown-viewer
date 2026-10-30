@@ -177,13 +177,14 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 
 	@Override
 	protected void createPages() {
-		getSite().getService(IContextService.class).activateContext(FormatHandler.CONTEXT); // Ctrl+B, Ctrl+I, Ctrl+K
 		source = new ExtensionBasedTextEditor();
 		try {
 			setPageText(addPage(source, getEditorInput()), "Source");
 		} catch (PartInitException e) {
 			throw new IllegalStateException(e);
 		}
+		// on the Source page's own site, so that the context is active only while the Source tab shows: on the Preview Ctrl+B is Eclipse's again
+		source.getSite().getService(IContextService.class).activateContext(FormatHandler.CONTEXT); // Ctrl+B, Ctrl+I, Ctrl+K
 		setPartName(getEditorInput().getName());
 		IAction paste = source.getAction(ITextEditorActionConstants.PASTE);
 		if (paste != null) source.setAction(ITextEditorActionConstants.PASTE, new ImagePaste(paste));

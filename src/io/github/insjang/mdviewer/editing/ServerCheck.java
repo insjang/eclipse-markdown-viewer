@@ -16,8 +16,21 @@ import org.eclipse.lsp4e.LanguageServiceAccessor;
  * Nothing is asked of a server unless one is set up for this kind of document, so that the check costs nothing without one.
  * LSP4E is an optional dependency: without it the answer is always no.
  */
-final class ServerCheck {
+public final class ServerCheck {
 	private ServerCheck() {
+	}
+
+	/**
+	 * A language server is set up for this kind of document: it brings its own folds (ours would show beside them) and, when it runs, its
+	 * own completion and links. Decided by what is registered, not by what is running, so it holds while the server is still starting and
+	 * never waits for it.
+	 */
+	public static boolean registered(IDocument doc) {
+		try {
+			return Servers.registered(doc);
+		} catch (LinkageError | RuntimeException e) { // LSP4E is not installed, or does not answer
+			return false;
+		}
 	}
 
 	static boolean completion(IDocument doc) {

@@ -2,7 +2,6 @@ package io.github.insjang.mdviewer.editing;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +32,11 @@ public class LinkAssist implements IContentAssistProcessor {
 	private static final Pattern INLINE_DESTINATION = Pattern.compile("\\]\\(\\s*<?([^\\s)>]*)$");
 	private static final Pattern REFERENCE_LABEL = Pattern.compile("\\]\\[([^\\]]*)$");
 	private static final Pattern SCHEME = Pattern.compile("(?i)[a-z][a-z0-9+.-]+:.*");
+
+	/** More entries than this of one folder are not offered: the popup would be unusable, and the list costs time to build. */
+	private static final int MAX_FILES = 500;
+
+	private record Entry(String name, boolean folder) {}
 
 	@Override
 	public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer, int offset) {
@@ -104,15 +108,20 @@ public class LinkAssist implements IContentAssistProcessor {
 		File[] children = dir == null ? null : dir.listFiles();
 		if (children == null) return;
 		String wanted = LinkTarget.decode(typed);
-		if (wanted.isEmpty() && dir.getParentFile() != null && !prefix.startsWith("/")) { //$NON-NLS-1$
+		if (wanted.isEmpty() && dir.getParentFile() != null) {
 			result.add(new CompletionProposal("../", offset, 0, 3, null, "../", null, null)); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		Arrays.sort(children, Comparator.comparing((File c) -> !c.isDirectory()).thenComparing(c -> c.getName().toLowerCase(Locale.ROOT)));
+		// whether an entry is a folder is asked once, not again for every comparison; a big folder offers its first MAX_FILES entries
+		List<Entry> entries = new ArrayList<>();
 		for (File c : children) {
 			String name = c.getName();
 			if ((name.startsWith(".") && !wanted.startsWith(".")) || !startsWith(name, wanted)) continue; //$NON-NLS-1$ //$NON-NLS-2$
-			String text = LinkTarget.encode(name) + (c.isDirectory() ? "/" : ""); //$NON-NLS-1$ //$NON-NLS-2$
-			result.add(new CompletionProposal(text, offset - typed.length(), typed.length(), text.length(), null, c.isDirectory() ? name + "/" : name, null, null)); //$NON-NLS-1$
+			entries.add(new Entry(name, c.isDirectory()));
+		}
+		entries.sort(Comparator.comparing((Entry e) -> !e.folder()).thenComparing(e -> e.name().toLowerCase(Locale.ROOT)));
+		for (Entry e : entries.subList(0, Math.min(entries.size(), MAX_FILES))) {
+			String text = LinkTarget.encode(e.name()) + (e.folder() ? "/" : ""); //$NON-NLS-1$ //$NON-NLS-2$
+			result.add(new CompletionProposal(text, offset - typed.length(), typed.length(), text.length(), null, e.folder() ? e.name() + "/" : e.name(), null, null)); //$NON-NLS-1$
 		}
 	}
 
