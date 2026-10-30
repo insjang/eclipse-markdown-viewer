@@ -32,6 +32,8 @@ public class MarkdownLinksCheck {
 		eq(7, o.heading("part-two-1").line());
 		eq(true, o.isOpeningFence(8));
 		eq(true, o.isCode(9) && o.isCode(10) && !o.isCode(7));
+		eq(true, MarkdownLinks.mayHaveLink("see [a](dir/a.md)") && MarkdownLinks.mayHaveLink("<https://e.org/x>") && MarkdownLinks.mayHaveLink("see https://e.org/x. Next")); // every kind at() finds
+		eq(false, MarkdownLinks.mayHaveLink("plain text, nothing to follow") || MarkdownLinks.mayHaveLink("")); // no parse for these lines
 		// crafted lines: no stack overflow, no minutes of backtracking
 		String[] bad = { "[", "[a](", "[a]", "`", "<", "![", "[x\\", "a[b]", "(", "[a](" + "(", "<https:a", "](" };
 		for (String piece : bad) {

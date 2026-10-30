@@ -1,15 +1,12 @@
 package io.github.insjang.mdviewer;
 
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension4;
@@ -24,10 +21,9 @@ import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
-import org.eclipse.lsp4e.ContentTypeToLanguageServerDefinition;
-import org.eclipse.lsp4e.LSPEclipseUtils;
-import org.eclipse.lsp4e.LanguageServersRegistry;
 import org.eclipse.swt.custom.StyledText;
+
+import io.github.insjang.mdviewer.editing.ServerCheck;
 
 /**
  * Folding for Markdown in the Generic Editor: heading sections, fenced code, front matter, HTML comments, tables, block quotes and
@@ -85,7 +81,7 @@ public class FoldingStrategy implements IReconcilingStrategy, IReconcilingStrate
 		long stamp = stamp(doc);
 		Map<Integer, Position> wanted;
 		try {
-			wanted = serverFolds(doc) ? new HashMap<>() : positions(doc.get());
+			wanted = ServerCheck.registered(doc) ? new HashMap<>() : positions(doc.get()); // a language server brings its own folds: ours would show beside them
 		} catch (RuntimeException e) { // the text changed under us: the next reconcile follows
 			return;
 		}
@@ -115,33 +111,6 @@ public class FoldingStrategy implements IReconcilingStrategy, IReconcilingStrate
 			result.putIfAbsent(f.startLine(), new Position(start, end - start));
 		}
 		return result;
-	}
-
-	/**
-	 * A language server (LSP4E) that is set up for this kind of document and so brings its own folds: ours would show beside them, so
-	 * ours are left out. It is decided by what is registered, not by what is running, so it holds while the server is still starting.
-	 * LSP4E is optional.
-	 */
-	private static boolean serverFolds(IDocument doc) {
-		try {
-			return Servers.registered(doc);
-		} catch (LinkageError | RuntimeException e) {
-			return false;
-		}
-	}
-
-	/** Every reference to LSP4E is in here, so that a missing bundle fails on this class only. */
-	private static final class Servers {
-		static boolean registered(IDocument doc) {
-			Collection<IContentType> types = LSPEclipseUtils.getDocumentContentTypes(doc);
-			URI uri = LSPEclipseUtils.toUri(doc);
-			for (ContentTypeToLanguageServerDefinition d : LanguageServersRegistry.getInstance().getContentTypeToLSPExtensions()) {
-				for (IContentType type : types) {
-					if (type.isKindOf(d.getKey()) && d.isEnabled(uri)) return true;
-				}
-			}
-			return false;
-		}
 	}
 
 	private static void apply(ProjectionAnnotationModel model, IDocument doc, Map<Integer, Position> wanted) {

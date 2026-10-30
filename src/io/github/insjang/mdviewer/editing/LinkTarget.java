@@ -69,19 +69,13 @@ final class LinkTarget {
 		return sb.toString();
 	}
 
-	/** The project folder of a file in the workspace, which a destination starting with / is relative to. */
-	private static File projectRoot(File doc) {
-		IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(doc.toURI());
-		return files.length == 0 || files[0].getProject().getLocation() == null ? null : files[0].getProject().getLocation().toFile();
-	}
-
-	/** The file or folder a path (without fragment, still encoded) names, seen from the document; null if it has no local meaning. */
+	/**
+	 * The file or folder a path (without fragment, still encoded) names, seen from the document; null if it has no local meaning: a path
+	 * with / or \ in front is absolute or a network path, which the Preview and the link check do not follow either.
+	 */
 	static File resolve(File doc, String path) {
 		String p = decode(path);
-		if (p.startsWith("/")) {
-			File root = projectRoot(doc);
-			return root == null ? null : new File(root, p.substring(1));
-		}
+		if (p.startsWith("/") || p.startsWith("\\")) return null;
 		return new File(doc.getParentFile(), p);
 	}
 

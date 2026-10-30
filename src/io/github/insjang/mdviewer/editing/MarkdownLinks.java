@@ -173,6 +173,11 @@ final class MarkdownLinks {
 		return label.isBlank() ? m.group(1) : label;
 	}
 
+	/** A cheap look at the line: every kind of link {@link #at} finds has a [ or a < or an http in it, so a line without one needs no document parse. */
+	static boolean mayHaveLink(String line) {
+		return line.indexOf('[') >= 0 || line.indexOf('<') >= 0 || line.contains("http");
+	}
+
 	/** The link of the line which covers the column; the line must not be fenced code. Reference links are only found when the label is defined. */
 	static Link at(String line, int col, Outline outline) {
 		if (line.length() > MAX_LINE) return null;
