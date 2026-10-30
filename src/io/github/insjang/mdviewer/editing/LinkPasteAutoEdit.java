@@ -17,7 +17,8 @@ public class LinkPasteAutoEdit implements IAutoEditStrategy {
 			int line = doc.getLineOfOffset(command.offset), lineStart = doc.getLineOffset(line);
 			if (selected.isBlank() || selected.contains("\n") || selected.contains("\r") || selected.contains("[") || selected.contains("]") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 					|| MarkdownFormat.URL.matcher(selected.trim()).matches() || DocumentFences.inside(doc, line)
-					|| MarkdownFormat.inDestination(doc.get(lineStart, command.offset - lineStart))) return; // over a link's destination it would nest a link
+					|| MarkdownFormat.inDestination(doc.get(lineStart, command.offset - lineStart))
+					|| MarkdownFormat.inLinkText(doc.get(lineStart, command.offset - lineStart), doc.get(command.offset + command.length, lineStart + doc.getLineLength(line) - command.offset - command.length))) return; // over a link's text or destination it would nest a link
 			command.text = "[" + selected + "](" + address + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			command.shiftsCaret = false;
 			command.caretOffset = command.offset + command.text.length();

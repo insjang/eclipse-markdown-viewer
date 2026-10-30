@@ -146,6 +146,16 @@ final class MarkdownFormat {
 		return close >= 0 && before.indexOf(']', i + 1) == close && destinationSoFar(before, close + 2, false);
 	}
 
+	/**
+	 * The selection lies in the text of a link or image: an open [ before it on its line, and after it a ] (no [ in between) that a ( or
+	 * [ follows: {@code [docs/a.md](x)}. A link made of the selection would end up inside that one.
+	 */
+	static boolean inLinkText(String before, String after) {
+		if (before.lastIndexOf('[') <= before.lastIndexOf(']')) return false;
+		int close = after.indexOf(']'), open = after.indexOf('[');
+		return close >= 0 && (open < 0 || open > close) && close + 1 < after.length() && (after.charAt(close + 1) == '(' || after.charAt(close + 1) == '[');
+	}
+
 	/** From {@code from} on the text is blanks, an optional <, and a destination that has not ended yet (one in <> may hold blanks). */
 	private static boolean destinationSoFar(String s, int from, boolean inline) {
 		int i = from;
@@ -240,10 +250,11 @@ final class MarkdownFormat {
 	 * Ctrl+K: makes the selection (or the word at the caret) the text of a link. A web address in the selection becomes the address
 	 * (the caret goes into the empty text), a web address on the clipboard becomes the address of selected text, otherwise the caret
 	 * goes into the empty parentheses. In an existing link it selects the address instead. In code, and for a selection over the
-	 * destination of a link, nothing changes.
+	 * text or destination of a link, nothing changes.
 	 */
 	static Result link(String text, int start, int end, String clipboard) {
-		if (inCode(text, start, end) || start != end && inDestination(text.substring(lineStart(text, start), start))) return null; // code, or a destination that a link would nest in
+		if (inCode(text, start, end) || start != end && (inDestination(text.substring(lineStart(text, start), start))
+				|| inLinkText(text.substring(lineStart(text, start), start), text.substring(end, lineEnd(text, end))))) return null; // code, or a link that a link would nest in
 		if (start == end) {
 			int ls = lineStart(text, start);
 			if (lineEnd(text, start) - ls <= MAX_LINK_LINE) { // LINK starts at every [: on a crafted line of brackets that would take long

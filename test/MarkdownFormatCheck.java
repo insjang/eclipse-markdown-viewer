@@ -54,6 +54,13 @@ public class MarkdownFormatCheck {
 		eq("false", String.valueOf(MarkdownFormat.inDestination("plain text")));
 		eq("false", String.valueOf(MarkdownFormat.inDestination("[a]: b and ")));
 		eq("null", String.valueOf(MarkdownFormat.link("[t](docs/a.md)", 4, 13, "https://example.com/c"))); // Ctrl+K over a destination
+		// a link's text
+		eq("true", String.valueOf(MarkdownFormat.inLinkText("[", "](x)")));
+		eq("true", String.valueOf(MarkdownFormat.inLinkText("see ![a ", " b][ref] more")));
+		eq("false", String.valueOf(MarkdownFormat.inLinkText("[a] ", " [b](x)"))); // the [ before is closed
+		eq("false", String.valueOf(MarkdownFormat.inLinkText("[", "] plain"))); // brackets, not a link
+		eq("false", String.valueOf(MarkdownFormat.inLinkText("[", " [b](x)"))); // the ] belongs to another link
+		eq("null", String.valueOf(MarkdownFormat.link("[docs/a.md](x)", 1, 10, "https://example.com/c"))); // Ctrl+K over a link's text
 		// crafted lines: the caret in the middle of 100000 brackets, or of a link-like run
 		String[] bad = { "[", "[a](", "[a]", "(", "- ", "> ", "#", "* ", "`", "`` `", "](", "**", "*a* " };
 		for (String piece : bad) {
