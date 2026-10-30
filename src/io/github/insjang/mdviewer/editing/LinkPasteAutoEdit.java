@@ -14,8 +14,10 @@ public class LinkPasteAutoEdit implements IAutoEditStrategy {
 		if (!MarkdownFormat.URL.matcher(address).matches()) return; // a typed character is never a whole address
 		try {
 			String selected = doc.get(command.offset, command.length);
+			int line = doc.getLineOfOffset(command.offset), lineStart = doc.getLineOffset(line);
 			if (selected.isBlank() || selected.contains("\n") || selected.contains("\r") || selected.contains("[") || selected.contains("]") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-					|| MarkdownFormat.URL.matcher(selected.trim()).matches() || DocumentFences.inside(doc, doc.getLineOfOffset(command.offset))) return;
+					|| MarkdownFormat.URL.matcher(selected.trim()).matches() || DocumentFences.inside(doc, line)
+					|| MarkdownFormat.inDestination(doc.get(lineStart, command.offset - lineStart))) return; // over a link's destination it would nest a link
 			command.text = "[" + selected + "](" + address + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			command.shiftsCaret = false;
 			command.caretOffset = command.offset + command.text.length();

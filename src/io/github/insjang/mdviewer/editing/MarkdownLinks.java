@@ -123,7 +123,7 @@ final class MarkdownLinks {
 	}
 
 	/** Whether the index lies in an inline code span: a run of n backticks up to the next run of exactly n. */
-	private static boolean inCodeSpan(String line, int index) {
+	static boolean inCodeSpan(String line, int index) {
 		int i = 0;
 		while (i < line.length()) {
 			if (line.charAt(i) != '`') {

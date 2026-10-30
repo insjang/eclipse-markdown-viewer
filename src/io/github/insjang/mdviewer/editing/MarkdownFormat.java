@@ -68,13 +68,95 @@ final class MarkdownFormat {
 		return result;
 	}
 
-	/** Is the marker ({@code n} times {@code c}) around the segment? 0 = no, 1 = markers inside the segment, 2 = right outside it. */
+	/**
+	 * The runs of {@code c} in the segment that carry the marker, as {start, length}: bold (n=2) takes a run of two or more, italic a
+	 * run of odd length. They are the marks that are already there.
+	 */
+	private static List<int[]> marks(String text, int s, int e, char c, int n) {
+		List<int[]> result = new ArrayList<>();
+		for (int i = s; i < e;) {
+			if (text.charAt(i) != c) {
+				i++;
+				continue;
+			}
+			int m = run(text, c, i, 1, s, e);
+			if (present(m, n)) result.add(new int[] { i, m });
+			i += m;
+		}
+		return result;
+	}
+
+	/** The segment without its marks ({@code n} characters off each run of {@link #marks}). */
+	private static String without(String text, int s, int e, List<int[]> marks, int n) {
+		StringBuilder sb = new StringBuilder();
+		int from = s;
+		for (int[] m : marks) {
+			sb.append(text, from, m[0]);
+			from = m[0] + n;
+		}
+		return sb.append(text, from, e).toString();
+	}
+
+	/**
+	 * Is the marker ({@code n} times {@code c}) around the segment? 0 = no, 1 = markers inside the segment, 2 = right outside it. Marks
+	 * in the middle must pair up: {@code **a** b **c**} is bold as a whole only when the marks at its ends close each other, which an
+	 * even number of marks says.
+	 */
 	private static int wrapped(String text, int s, int e, char c, int n) {
 		int lead = run(text, c, s, 1, s, e), trail = run(text, c, e - 1, -1, s, e);
-		if (lead + trail < e - s && present(Math.min(lead, trail), n)) return 1;
+		List<int[]> marks = marks(text, s, e, c, n);
+		if (lead + trail < e - s && present(Math.min(lead, trail), n) && marks.size() % 2 == 0) return 1;
 		int line0 = lineStart(text, s), line1 = lineEnd(text, e);
 		int before = run(text, c, s - 1, -1, line0, s), after = run(text, c, e, 1, e, line1);
-		return present(Math.min(before, after), n) ? 2 : 0;
+		return marks.isEmpty() && present(Math.min(before, after), n) ? 2 : 0;
+	}
+
+	/** Is the line of the offset part of a fenced code block, its fences included? */
+	private static boolean inFence(String[] lines, String text, int offset) {
+		int line = 0;
+		for (int i = text.indexOf('\n'); i >= 0 && i < offset; i = text.indexOf('\n', i + 1)) line++;
+		return Fences.parse(lines[line]) != null || Fences.inside(l -> lines[l], 0, line, false);
+	}
+
+	/** Does the position (between two characters) lie inside an inline code span, not at its backticks' outer edge? */
+	private static boolean inCodeSpan(String text, int offset) {
+		int ls = lineStart(text, offset), le = lineEnd(text, offset);
+		if (le - ls > MarkdownLinks.MAX_LINE || offset <= ls || offset >= le) return false;
+		String line = text.substring(ls, le);
+		return MarkdownLinks.inCodeSpan(line, offset - ls - 1) && MarkdownLinks.inCodeSpan(line, offset - ls);
+	}
+
+	/** An end of the selection (or the caret) in fenced code or inside an inline code span: the formatting keys leave code alone. */
+	private static boolean inCode(String text, int start, int end) {
+		String[] lines = text.split("\n", -1);
+		return inFence(lines, text, start) || inFence(lines, text, end) || inCodeSpan(text, start) || inCodeSpan(text, end);
+	}
+
+	/**
+	 * The text before the selection, on its line, ends inside the destination of a link: {@code [text](docs/a} or {@code [label]: docs/a}.
+	 * A web address pasted over a destination, or Ctrl+K on it, would nest a second link there.
+	 */
+	static boolean inDestination(String before) {
+		int open = before.lastIndexOf("](");
+		if (open >= 0 && destinationSoFar(before, open + 2, true)) return true;
+		int i = 0; // a reference definition: up to three blanks, [label]:, then the destination
+		while (i < before.length() && i < 3 && before.charAt(i) == ' ') i++;
+		if (i >= before.length() || before.charAt(i) != '[') return false;
+		int close = before.indexOf("]:", i + 1);
+		return close >= 0 && before.indexOf(']', i + 1) == close && destinationSoFar(before, close + 2, false);
+	}
+
+	/** From {@code from} on the text is blanks, an optional <, and a destination that has not ended yet (one in <> may hold blanks). */
+	private static boolean destinationSoFar(String s, int from, boolean inline) {
+		int i = from;
+		while (i < s.length() && Character.isWhitespace(s.charAt(i))) i++;
+		boolean angle = i < s.length() && s.charAt(i) == '<';
+		if (angle) i++;
+		for (; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (angle ? c == '>' : Character.isWhitespace(c) || c == '>' || inline && c == ')') return false;
+		}
+		return true;
 	}
 
 	/** In a run of m markers around a text: bold (n=2) is there from two on, italic (n=1) when the count is odd (*** is both). */
@@ -84,9 +166,12 @@ final class MarkdownFormat {
 
 	/**
 	 * Ctrl+B / Ctrl+I: marks the selection (or the word at the caret) with {@code n} times {@code c}, or takes the marks away when they are
-	 * already there. Several lines are marked line by line. Without a selection and without a word the empty pair is inserted.
+	 * already there. Several lines are marked line by line. Without a selection and without a word the empty pair is inserted. Marking
+	 * a text that already has marks inside takes those away first (one pair around the whole), and taking the marks away from a text
+	 * whose inner marks pair up takes all of them away. In code (a fence, an inline span) nothing changes.
 	 */
 	static Result toggle(String text, int start, int end, char c, int n) {
+		if (inCode(text, start, end)) return null;
 		String marker = String.valueOf(c).repeat(n);
 		boolean caretOnly = start == end;
 		int caret = start;
@@ -105,12 +190,25 @@ final class MarkdownFormat {
 		for (int i = 0; i < segs.size(); i++) {
 			int s = segs.get(i)[0], e = segs.get(i)[1];
 			int kind = wrapped(text, s, e, c, n), contentStart, contentEnd;
-			if (!unwrap && kind == 0) { // mark it
+			List<int[]> inner = marks(text, s, e, c, n);
+			if (!unwrap && kind == 0 && !inner.isEmpty()) { // mark it, the marks in it become one pair around the whole
+				String replaced = marker + without(text, s, e, inner, n) + marker;
+				edits.add(new Edit(s, e - s, replaced));
+				contentStart = s + delta + n;
+				contentEnd = s + delta + replaced.length() - n;
+				delta += replaced.length() - (e - s);
+			} else if (!unwrap && kind == 0) { // mark it
 				edits.add(new Edit(s, 0, marker));
 				edits.add(new Edit(e, 0, marker));
 				contentStart = s + delta + n;
 				contentEnd = e + delta + n;
 				delta += 2 * n;
+			} else if (unwrap && kind == 1 && inner.size() > 2) { // marks inside the segment, and pairs of them in between
+				String replaced = without(text, s, e, inner, n);
+				edits.add(new Edit(s, e - s, replaced));
+				contentStart = s + delta;
+				contentEnd = s + delta + replaced.length();
+				delta += replaced.length() - (e - s);
 			} else if (unwrap && kind == 1) { // marks inside the segment
 				edits.add(new Edit(s, n, ""));
 				edits.add(new Edit(e - n, n, ""));
@@ -141,9 +239,11 @@ final class MarkdownFormat {
 	/**
 	 * Ctrl+K: makes the selection (or the word at the caret) the text of a link. A web address in the selection becomes the address
 	 * (the caret goes into the empty text), a web address on the clipboard becomes the address of selected text, otherwise the caret
-	 * goes into the empty parentheses. In an existing link it selects the address instead.
+	 * goes into the empty parentheses. In an existing link it selects the address instead. In code, and for a selection over the
+	 * destination of a link, nothing changes.
 	 */
 	static Result link(String text, int start, int end, String clipboard) {
+		if (inCode(text, start, end) || start != end && inDestination(text.substring(lineStart(text, start), start))) return null; // code, or a destination that a link would nest in
 		if (start == end) {
 			int ls = lineStart(text, start);
 			if (lineEnd(text, start) - ls <= MAX_LINK_LINE) { // LINK starts at every [: on a crafted line of brackets that would take long
