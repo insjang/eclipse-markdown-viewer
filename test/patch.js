@@ -7,7 +7,7 @@ global.window = dom.window; global.document = dom.window.document;
 global.DOMPurify = require('../web/purify.min.js')(dom.window);
 const src = fs.readFileSync(path.join(__dirname, '../web/preview.js'), 'utf8');
 const api = new Function('markdownit', 'markdownitTaskLists', src.replace(/^const md = .*$/m, 'const md = createMd(markdownit, markdownitTaskLists, null, () => "");')
-	+ '; return { md, sanitize, patch, copyButtons, full: () => { FULL = true; } };')(require('../web/markdown-it.min.js'), require('../web/markdown-it-task-lists.min.js'));
+	+ '; return { md, sanitize, patch, copyButtons, setBacklinks, full: () => { FULL = true; } };')(require('../web/markdown-it.min.js'), require('../web/markdown-it-task-lists.min.js'));
 const c = document.getElementById('c');
 const render = text => api.patch(c, api.sanitize(api.md.render(text)));
 const blocks = () => [...c.children];
@@ -74,4 +74,15 @@ assert(c.textContent.includes('data-line="7"') && !c.textContent.includes('data-
 api.full();
 assert.strictEqual(render(redrawn), true, 'full replace after a style change');
 assert.strictEqual(c.querySelectorAll('.copy').length, 0, 'fresh nodes have no button yet');
+// the backlinks section sits below #c: a render or a full replace leaves it, and it is not part of the document
+global.rebuildMap = () => {};
+api.setBacklinks([{ name: 'a', url: 'file:///D:/v/a.md', lines: ['see [[x]]', '<b>raw</b>'] }]);
+render(redrawn + '\nmore\n');
+api.full();
+render(redrawn);
+const back = document.getElementById('backlinks');
+assert(back && back.previousElementSibling === c && !c.contains(back), 'backlinks stay below #c');
+assert(back.querySelector('a').getAttribute('href') === 'file:///D:/v/a.md' && back.querySelectorAll('li li').length === 2 && !back.querySelector('b'), 'entries as text: ' + back.innerHTML);
+api.setBacklinks([]);
+assert(!document.getElementById('backlinks'), 'none: no section');
 console.log('patch ok');

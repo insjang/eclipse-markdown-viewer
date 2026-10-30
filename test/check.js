@@ -40,12 +40,28 @@ const wl = md.render('[[note]] [[a b#Part Two|two]] [[#Top]] [[gone]] [[toString
 assert(wl.includes('<a href="file:///D:/v/note.md">note</a> <a href="file:///D:/v/a%20b.md#part-two">two</a> <a href="#top">Top</a> <a class="wikilink-missing">gone</a> <a class="wikilink-missing">toString</a>'), 'links: ' + wl);
 assert(wl.includes('<img src="file:///D:/v/img/i.png" alt="" width="300"> <a href="file:///D:/v/note.md">note</a> <code>[[note]]</code> [[x]y]]'), 'embeds, code: ' + wl);
 assert(wl.includes('">[[note]]\n</code>') && md.render('[[a]]').includes('wikilink-missing'), 'fence; no map: missing');
+// a wikilink in a link's text is skipped, not an error that blanks the page
+assert(md.render('[a [[b]] c](x.md)').includes('wikilink-missing'), 'wikilink in a link text');
+// Obsidian ==highlight==: not in code, \== and a lone == stay text, markup inside
+const hl = md.render('==hi== `==no==` \\==x== a == b ==x **==y==** ==a *b*== ==a`b==`c==\n');
+assert(hl.includes('<mark>hi</mark> <code>==no==</code> ==x== a == b ==x <strong><mark>y</mark></strong> <mark>a <em>b</em></mark> <mark>a<code>b==</code>c</mark>'), 'highlight: ' + hl);
+// %%comments%%: hidden inline, over lines, and as a block; the blocks after it keep their source line; not in code
+const cm = md.render('a %%b%% c %%x\n\n%%\nhidden\n\nstill\n%%\n# After\n\npara %%two\nlines%% end\n\n`%%k%%`\n\n```\n%%\nf\n%%\n```\n\n%%\nnot closed\n');
+assert(cm.startsWith('<p data-line="0">a  c %%x</p>\n<h1 data-line="7" id="after">After</h1>\n<p data-line="9">para  end</p>\n<p data-line="12"><code>%%k%%</code></p>'), 'comments: ' + cm);
+assert(cm.includes('%%\nf\n%%\n</code>') && cm.includes('<p data-line="20">%%\nnot closed</p>') && !cm.includes('hidden') && !cm.includes('still'), 'fence, unclosed: ' + cm);
+assert(md.render('text\n%%\nx\n%%\nmore\n') === '<p data-line="0">text</p>\n<p data-line="4">more</p>\n', 'a comment block ends a paragraph');
+// #tags: Obsidian's rules, Unicode letters, not a heading, number, URL part, link text or code
+const tg = md.render('#tag #123 #y1984 a#b http://x/#y [#in](u) #한글/sub-x_1 `#c` (#p)\n\n# Head #t\n');
+assert(tg.includes('<span class="tag">#tag</span> #123 <span class="tag">#y1984</span> a#b <a href="http://x/#y">http://x/#y</a> <a href="file:///D:/docs/u">#in</a> <span class="tag">#한글/sub-x_1</span> <code>#c</code> (#p)'), 'tags: ' + tg);
+assert(tg.includes('<h1 data-line="2" id="head-t">Head <span class="tag">#t</span></h1>'), 'tag in a heading: ' + tg);
 const fn = gm.render('Text[^1] :smile: :) :nope:\n\n[^1]: The note.\n');
 assert(fn.includes('<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>') && fn.includes('<li id="fn1" class="footnote-item">'), 'footnote: ' + fn);
 assert(fn.includes('\u{1F604} :) :nope:'), 'emoji, no smiley shortcuts: ' + fn);
 // crafted input must not backtrack in our rules (front matter rows, alerts, wikilinks)
 for (const bad of ['---\na' + ' '.repeat(100000) + '\n---\n', '---\n' + 'a:'.repeat(50000) + ' x\n---\n', '> [!NOTE]' + ' '.repeat(100000) + 'x\n',
-	'[['.repeat(50000), '![[' + 'a'.repeat(100000), '[[a|'.repeat(30000), '> [!a]' + '-'.repeat(100000) + '\n']) {
+	'[['.repeat(50000), '![[' + 'a'.repeat(100000), '[[a|'.repeat(30000), '> [!a]' + '-'.repeat(100000) + '\n',
+	'=='.repeat(100000), '==a'.repeat(50000), '%%'.repeat(100000), 'a %%' + 'b'.repeat(100000), '%%\n'.repeat(50000), '%%\n' + 'a\n'.repeat(50000),
+	' #a'.repeat(50000), '#'.repeat(100000), '#' + 'a'.repeat(100000), '[' + '[%%'.repeat(30000), '[' + ' #a'.repeat(30000)]) {
 	const t = Date.now();
 	gm.render(bad);
 	assert(Date.now() - t < 500, 'slow: ' + (Date.now() - t) + ' ms');

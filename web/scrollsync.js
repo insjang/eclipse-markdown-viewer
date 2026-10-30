@@ -21,7 +21,8 @@ const ScrollSync = (() => {
 			if (a.line === last.line) continue;
 			anchors.push({ line: a.line, y: Math.max(a.y, last.y) });
 		}
-		anchors.push({ line: Math.max(total, anchors[anchors.length - 1].line + 1), y: document.documentElement.scrollHeight });
+		const back = document.getElementById('backlinks'); // below the document, not part of it
+		anchors.push({ line: Math.max(total, anchors[anchors.length - 1].line + 1), y: back ? back.getBoundingClientRect().top + window.scrollY : document.documentElement.scrollHeight });
 	}
 
 	function interp(from, to, v) {

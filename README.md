@@ -36,6 +36,8 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |
 | Obsidian callouts | `> [!info]`, `[!todo]`, `[!faq]`, `[!bug]` and the other Obsidian types and aliases, with an own title (`> [!tip] My title`) and folding (`[!faq]-` collapsed, `[!faq]+` open); an unknown type shows as a note. The five GitHub types written alone keep GitHub's look |
 | Wikilinks | `[[note]]`, `[[note#Heading]]`, `[[note\|label]]` and `[[#Heading]]`, as in an Obsidian vault or an AI-written "LLM wiki": a name is looked up anywhere in the project (the document's folder first, then the shortest path), a path with `/` from the project root. `![[image.png]]` and `![[image.png\|300]]` show the image. A link to a missing page shows dimmed with a dashed underline |
+| Obsidian text | `==highlight==` in a marker color, `%%comment%%` (inline, or `%%` lines around a block) not shown, `#tag` as a small rounded label (not `#123`, not in code or links) |
+| Backlinks | At the end of the Preview, the other Markdown files of the project that link to the document (by wikilink or relative link), each with the lines that do, a click opens it. Found in the background, updated when a Markdown file is saved; not in the PDF / HTML export. Can be switched off in the preferences |
 | Mermaid | ```` ```mermaid ```` blocks, with tighter default spacing and the preview's font |
 | Diagram zoom | Ctrl+wheel over a Mermaid diagram zooms around the pointer, dragging moves it, Original size goes back |
 | Code blocks | A Copy button (shown on hover) copies the code as written |

@@ -140,7 +140,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private String pageUrl;
 	private boolean loaded, stale = true, styling;
 	private Outline outline;
-	private Job linkCheck;
+	private Job linkCheck, backlinks;
 	private final Runnable renderLater = () -> {
 		if (getActivePage() == PREVIEW) render();
 		if (outline != null) outline.update(document().get());
@@ -161,6 +161,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private final IPropertyChangeListener prefListener = e -> {
 		if (PrefInit.LINK_CHECK.equals(e.getProperty())) checkLinks();
 		if (PrefInit.BOOKMARKS.equals(e.getProperty())) Display.getDefault().asyncExec(this::showBookmarks);
+		if (PrefInit.BACKLINKS.equals(e.getProperty())) Display.getDefault().asyncExec(this::findBacklinks);
 		if (styling || browser == null || browser.isDisposed()) return;
 		styling = true;
 		browser.getDisplay().asyncExec(() -> {
@@ -321,6 +322,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 			browser.execute("setLabels(" + labels() + ")");
 			applyStyle();
 			updateSync();
+			findBacklinks();
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
 		browser.setMenu(previewMenu().createContextMenu(browser));
@@ -583,6 +585,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		}
 		if (page == PREVIEW && loaded) {
 			if (stale) render();
+			findBacklinks();
 			// once the browser is showing again; the page itself waits for its layout
 			browser.getDisplay().asyncExec(() -> {
 				if (!browser.isDisposed()) browser.execute("scrollToFraction(" + target + ")");
@@ -702,7 +705,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	private static String labels() {
 		return "{\"frontMatter\":" + js(Messages.preview_frontMatter) + ",\"find\":" + js(Messages.find_find) + ",\"findNone\":" + js(Messages.find_none)
 				+ ",\"findPrev\":" + js(Messages.find_previous) + ",\"findNext\":" + js(Messages.find_next) + ",\"findClose\":" + js(Messages.find_close) + ",\"copy\":" + js(Messages.preview_copy) + ",\"copied\":" + js(Messages.preview_copied)
-				+ ",\"zoomReset\":" + js(Messages.preview_zoomReset) + "}";
+				+ ",\"zoomReset\":" + js(Messages.preview_zoomReset) + ",\"backlinks\":" + js(Messages.preview_backlinks) + "}";
 	}
 
 	private void render() {
@@ -729,6 +732,38 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		StringBuilder b = new StringBuilder("{");
 		urls.forEach((k, v) -> b.append(b.length() > 1 ? "," : "").append(js(k)).append(':').append(v));
 		return b.append('}').toString();
+	}
+
+	/** The Preview's Backlinks section (see Backlinks), found in the background; none when switched off. */
+	private void findBacklinks() {
+		File doc = localFile();
+		if (!loaded || browser.isDisposed() || doc == null) return;
+		if (backlinks != null) backlinks.cancel();
+		boolean on = Activator.prefs().getBoolean(PrefInit.BACKLINKS);
+		Display display = browser.getDisplay();
+		backlinks = Job.create(Messages.backlinks_job, monitor -> {
+			StringBuilder b = new StringBuilder("[");
+			for (Backlinks.Entry e : on ? Backlinks.of(doc, Activator.vault(doc)) : List.<Backlinks.Entry>of()) {
+				b.append(b.length() > 1 ? "," : "").append("{\"name\":").append(js(e.name())).append(",\"url\":").append(js(fileUrl(e.file().toURI()))).append(",\"lines\":[");
+				for (int i = 0; i < e.lines().size(); i++) b.append(i > 0 ? "," : "").append(js(e.lines().get(i)));
+				b.append("]}");
+			}
+			if (monitor.isCanceled()) return;
+			display.asyncExec(() -> {
+				if (!browser.isDisposed()) browser.execute("setBacklinks(" + b + "])");
+			});
+		});
+		backlinks.setSystem(true);
+		backlinks.schedule();
+	}
+
+	/** A Markdown file of these projects was saved, added or removed: the Previews showing a document in one find their backlinks again. */
+	static void backlinksChanged(java.util.Set<File> projects) {
+		Display.getDefault().asyncExec(() -> {
+			for (MarkdownEditor e : OPEN)
+				if (e.previewShowing() && e.getEditorInput() instanceof IFileEditorInput in && in.getFile().getProject().getLocation() != null
+						&& projects.contains(in.getFile().getProject().getLocation().toFile())) e.findBacklinks();
+		});
 	}
 
 	private void showBookmarks() {
@@ -1109,6 +1144,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		document().addDocumentListener(docListener);
 		stale = true;
 		renderLater.run(); // base folder for relative images may have changed too
+		findBacklinks();
 	}
 
 	@Override
@@ -1122,6 +1158,7 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(markerListener);
 		if (getEditorInput() instanceof IFileEditorInput in) LinkCheck.clear(linkCheck, in.getFile()); // only open documents are checked
 		else if (linkCheck != null) linkCheck.cancel();
+		if (backlinks != null) backlinks.cancel();
 		if (stopThemeWatch != null) stopThemeWatch.run();
 		OPEN.remove(this);
 		if (viewer() instanceof ISourceViewer sv) sv.removeViewportListener(viewportListener);

@@ -29,9 +29,6 @@ final class LinkCheck {
 	record Problem(int line, int start, int end, String message) {
 	}
 
-	/** [text]: target at the start of a line, not a footnote [^1]: text */
-	private static final Pattern REF = Pattern.compile("^ {0,3}\\[(?!\\^)[^\\]]+\\]:[ \\t]*(\\S+)");
-	private static final Pattern SCHEME = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:");
 	private static final Pattern ID = Pattern.compile("(?i)\\b(?:id|name)\\s*=\\s*[\"']([^\"']*)[\"']");
 
 	/** src: the document, dir: its folder, vault: where its wikilinks resolve (null: not checked) */
@@ -42,24 +39,8 @@ final class LinkCheck {
 		Set<String> here = null;
 		for (int i = 0, offset = 0; i < lines.length; offset = next(src, offset), i++) {
 			if (code[i]) continue;
-			String l = blankCodeSpans(lines[i]);
-			List<int[]> targets = new ArrayList<>(); // start, end in the line
-			Matcher m = REF.matcher(l);
-			if (m.find()) targets.add(new int[] { m.start(1), m.end(1) });
-			// each character is looked at once: the next search starts after the target just read
-			for (int k = l.indexOf("]("), b; k >= 0; k = l.indexOf("](", Math.max(b, k + 2))) {
-				int a = k + 2;
-				while (a < l.length() && (l.charAt(a) == ' ' || l.charAt(a) == '\t')) a++;
-				if (a < l.length() && l.charAt(a) == '<') {
-					b = l.indexOf('>', ++a);
-					if (b < 0) break; // no > further on either
-				} else {
-					b = a;
-					while (b < l.length() && l.charAt(b) != ')' && l.charAt(b) != ' ' && l.charAt(b) != '\t') b++;
-				}
-				if (b > a) targets.add(new int[] { a, b });
-			}
-			for (int[] t : targets) {
+			String l = Backlinks.blankCodeSpans(lines[i]);
+			for (int[] t : Backlinks.targets(l)) { // start, end in the line
 				String u = l.substring(t[0], t[1]);
 				String msg;
 				if (u.startsWith("#")) {
@@ -90,12 +71,9 @@ final class LinkCheck {
 
 	/** null when fine, or the warning for a relative path[#anchor] */
 	private static String file(String u, File dir) {
-		if (SCHEME.matcher(u).find() || u.startsWith("/") || u.startsWith("\\")) return null; // web, mail, drives, absolute and network paths
+		String path = Backlinks.path(u); // null: web, mail, drives, absolute and network paths
+		if (path == null) return null;
 		int hash = u.indexOf('#');
-		String raw = hash < 0 ? u : u.substring(0, hash);
-		String path = decode(raw.indexOf('?') < 0 ? raw : raw.substring(0, raw.indexOf('?')));
-		// again once decoded: %5C%5Chost, %2F%2Fhost and file%3A//host are network paths as well
-		if (path.isEmpty() || SCHEME.matcher(path).find() || path.startsWith("/") || path.startsWith("\\")) return null;
 		File f = new File(dir, path);
 		if (!f.exists()) return NLS.bind(Messages.link_noFile, path);
 		if (hash < 0 || hash == u.length() - 1 || !f.isFile() || !f.getName().matches("(?i).*\\.(md|markdown|mdown|mkd)")) return null;
@@ -127,32 +105,8 @@ final class LinkCheck {
 	}
 
 	private static String anchor(String a) {
-		a = decode(a);
+		a = Backlinks.decode(a);
 		return a.startsWith("user-content-") ? a.substring("user-content-".length()) : a;
-	}
-
-	/** percent-decoded, + kept (as MarkdownEditor.decode, without loading UI classes) */
-	private static String decode(String s) {
-		try {
-			return java.net.URLDecoder.decode(s.replace("+", "%2B"), java.nio.charset.StandardCharsets.UTF_8);
-		} catch (IllegalArgumentException e) {
-			return s;
-		}
-	}
-
-	/** `code` spans replaced by spaces, so links shown as code are not checked and columns stay */
-	private static String blankCodeSpans(String l) {
-		StringBuilder b = new StringBuilder(l);
-		int open = -1;
-		for (int i = 0; i < b.length(); i++) {
-			if (b.charAt(i) != '`') continue;
-			if (open < 0) open = i;
-			else {
-				for (int j = open; j <= i; j++) b.setCharAt(j, ' ');
-				open = -1;
-			}
-		}
-		return b.toString();
 	}
 
 	/** Replaces this check's markers on the file, in the background. */

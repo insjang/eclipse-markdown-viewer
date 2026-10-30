@@ -1,5 +1,5 @@
 // UI text inside the page, replaced from messages*.properties by the plugin (setLabels)
-const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', findPrev: 'Previous (Shift+Enter)', findNext: 'Next (Enter)', findClose: 'Close (Esc)', copy: 'Copy', copied: 'Copied', zoomReset: 'Original size' };
+const L = { frontMatter: 'Front matter', find: 'Find', findNone: 'No results', findPrev: 'Previous (Shift+Enter)', findNext: 'Next (Enter)', findClose: 'Close (Esc)', copy: 'Copy', copied: 'Copied', zoomReset: 'Original size', backlinks: 'Backlinks' };
 function setLabels(l) { Object.assign(L, l); }
 
 // Markdown -> HTML with source line anchors (data-line), mermaid blocks, math, heading ids, doc-relative links.
@@ -16,6 +16,11 @@ function createMd(markdownit, taskLists, hljs, getBase, mathPlugin, katex, plugi
 	md.renderer.rules.blockquote_open = (tokens, i, opt, env, self) => self.renderToken(tokens, i, opt)
 		+ (tokens[i].meta && tokens[i].meta.alert ? alertTitle(tokens[i].meta.alert) : '');
 	md.inline.ruler.before('link', 'wikilink', wikilink);
+	md.inline.ruler.before('link', 'tag', tag);
+	md.inline.ruler.before('link', 'comment', comment);
+	md.inline.ruler.before('emphasis', 'mark', mark);
+	md.inline.ruler2.before('emphasis', 'mark', markPairs);
+	md.block.ruler.before('paragraph', 'comment', commentBlock, { alt: ['paragraph'] });
 	md.block.ruler.before('table', 'front_matter', frontMatter);
 	md.renderer.rules.front_matter = (tokens, i, opt, env, self) => {
 		const rows = yamlRows(tokens[i].content), e = md.utils.escapeHtml;
@@ -61,7 +66,10 @@ function wikilink(state, silent) {
 	const m = WIKI.exec(state.src.slice(state.pos, state.pos + 4000)); // MarkdownLinks.MAX_LINE
 	const target = m && m[2].trim(), h = m && m[3] && m[3].trim(), label = m && m[4] && m[4].trim();
 	if (!m || !target && !h) return false;
-	if (silent) return true;
+	if (silent) { // inside a link's text: skipped, as markdown-it wants every rule to move on
+		state.pos += m[0].length;
+		return true;
+	}
 	const wiki = state.env.wiki || {}, url = !target ? '' : Object.hasOwn(wiki, target) ? wiki[target] : null; // not toString & co.
 	if (m[1] && url && WIKI_IMAGE.test(target)) {
 		const t = state.push('image', 'img', 0);
@@ -74,6 +82,65 @@ function wikilink(state, silent) {
 		else t.attrSet('href', url + (h ? '#' + slug(h) : ''));
 		state.push('text', '', 0).content = label || (h ? (target ? target + ' > ' : '') + h : target);
 		state.push('link_close', 'a', -1);
+	}
+	state.pos += m[0].length;
+	return true;
+}
+
+// Obsidian ==highlight==: a <mark>, paired by markdown-it like ~~strikethrough~~ (so not inside code, \\== is text, a lone == stays)
+function mark(state, silent) {
+	if (silent || state.src.charCodeAt(state.pos) !== 0x3D) return false; // =
+	const s = state.scanDelims(state.pos, true);
+	let len = s.length;
+	if (len < 2) return false;
+	if (len % 2) { state.push('text', '', 0).content = '='; len--; }
+	for (let i = 0; i < len; i += 2) {
+		state.push('text', '', 0).content = '==';
+		if (s.can_open || s.can_close) state.delimiters.push({ marker: 0x3D, length: 0, token: state.tokens.length - 1, end: -1, open: s.can_open, close: s.can_close });
+	}
+	state.pos += s.length;
+	return true;
+}
+function markPairs(state) {
+	for (const list of [state.delimiters, ...state.tokens_meta.map(m => m && m.delimiters).filter(Boolean)])
+		for (const d of list) {
+			if (d.marker !== 0x3D || d.end < 0) continue;
+			Object.assign(state.tokens[d.token], { type: 'mark_open', tag: 'mark', nesting: 1, markup: '==', content: '' });
+			Object.assign(state.tokens[list[d.end].token], { type: 'mark_close', tag: 'mark', nesting: -1, markup: '==', content: '' });
+		}
+}
+
+// Obsidian %%comments%%, not shown: inline (also over the lines of a paragraph), and a %% line up to the next %% line.
+// A comment block makes no token, so the blocks below keep their own data-line.
+function comment(state, silent) {
+	if (!state.src.startsWith('%%', state.pos)) return false;
+	const end = state.src.indexOf('%%', state.pos + 2);
+	if (end < 0 || end + 2 > state.posMax) return false;
+	state.pos = end + 2;
+	return true;
+}
+function commentBlock(state, start, end, silent) {
+	const text = l => state.src.slice(state.bMarks[l] + state.tShift[l], state.eMarks[l]).trim();
+	if (state.sCount[start] - state.blkIndent >= 4 || text(start) !== '%%') return false;
+	let l = start + 1;
+	while (l < end && text(l) !== '%%') l++;
+	if (l >= end) return false; // not closed: text
+	if (!silent) state.line = l + 1;
+	return true;
+}
+
+// Obsidian #tags: after a blank or at the start, letters, digits, _ - /, not digits only (#123); not in links. Shown, nothing more.
+const TAG = /#[\p{L}\p{M}\p{N}_\/-]+/uy;
+function tag(state, silent) {
+	const p = state.pos;
+	if (state.src.charCodeAt(p) !== 0x23 || state.linkLevel > 0 || p > 0 && !/\s/.test(state.src[p - 1])) return false;
+	TAG.lastIndex = p;
+	const m = TAG.exec(state.src);
+	if (!m || p + m[0].length > state.posMax || /^#\p{N}+$/u.test(m[0])) return false;
+	if (!silent) {
+		state.push('tag_open', 'span', 1).attrSet('class', 'tag');
+		state.push('text', '', 0).content = m[0];
+		state.push('tag_close', 'span', -1);
 	}
 	state.pos += m[0].length;
 	return true;
@@ -428,6 +495,18 @@ function drawMarks() {
 		d.style.top = (b.getBoundingClientRect().top + window.scrollY) + 'px';
 		document.body.append(d);
 	}
+}
+
+// Backlinks from the plugin ([{name, url, lines}], [] for none): a section below #c, so that render, copy, export, find
+// and the line map never see it
+function setBacklinks(list) {
+	let s = document.getElementById('backlinks');
+	if (!list.length) { if (s) { s.remove(); rebuildMap(); } return; }
+	if (!s) document.getElementById('c').after(s = Object.assign(document.createElement('section'), { id: 'backlinks' }));
+	const el = (tag, props, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+	s.replaceChildren(el('h2', { textContent: L.backlinks }), el('ul', {}, ...list.map(b => el('li', {}, el('a', { href: b.url, textContent: b.name }),
+		el('ul', {}, ...b.lines.map(t => el('li', { textContent: t })))))));
+	rebuildMap();
 }
 
 // next (1) or previous (-1) bookmark from the last one reached, or from the top of the view; around the document

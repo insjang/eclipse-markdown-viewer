@@ -53,6 +53,12 @@ hr { height:.25em; padding:0; margin:1.5em 0; border:0; background:var(--border)
 [data-theme=light] :is(.callout-caution, .callout-failure, .callout-danger, .callout-bug) { --alert:#d1242f }
 summary.markdown-alert-title { cursor:pointer; margin:0 0 1em } details.markdown-alert:not([open]) > summary { margin:0 }
 summary.markdown-alert-title::after { content:'\25BE' } details.markdown-alert:not([open]) > summary::after { content:'\25B8' } /* flex drops the marker */
+/* Obsidian ==highlights== and #tags */
+mark { color:inherit; background:#bb800966; border-radius:2px; padding:0 .1em } [data-theme=light] mark { background:#fff8c5 }
+.tag { font-size:.85em; color:var(--link); background:var(--code-bg); border-radius:1em; padding:.1em .6em; white-space:nowrap }
+/* backlinks below the document (not exported) */
+#backlinks { margin-top:2em; border-top:1px solid var(--border); font-size:.9em } #backlinks h2 { font-size:1.1em; border:0; margin:1em 0 .5em }
+#backlinks ul ul { margin:.2em 0 .6em; padding-left:1.2em; color:var(--quote); list-style:none } #backlinks ul ul li { white-space:pre-wrap }
 /* Obsidian wikilinks whose target is not in the project */
 .wikilink-missing { color:var(--link); opacity:.6; border-bottom:1px dashed; cursor:default } .wikilink-missing:hover { text-decoration:none }
 .footnotes { font-size:.875em; color:var(--quote) } hr.footnotes-sep { height:1px }
@@ -75,7 +81,7 @@ code, .mermaid, .plantuml, .katex { letter-spacing:normal } /* code columns, dia
 ::highlight(find-current) { background-color:#f2cc60; color:#1f2328 }
 @page { size:A4; margin:14mm 12mm }
 @media print {
-	#find, .copy, .zoom-reset { display:none }
+	#find, .copy, .zoom-reset, #backlinks { display:none }
 	* { -webkit-print-color-adjust:exact; print-color-adjust:exact }
 	table { display:table; width:100%; max-width:none } pre { white-space:pre-wrap }
 	h1, h2, h3, h4 { break-after:avoid } tr, img, pre, .markdown-alert, .mermaid, .plantuml, .katex-display { break-inside:avoid }

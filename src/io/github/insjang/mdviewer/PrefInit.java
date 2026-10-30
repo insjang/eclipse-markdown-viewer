@@ -9,7 +9,7 @@ import org.eclipse.swt.graphics.FontData;
 
 public class PrefInit extends AbstractPreferenceInitializer {
 	static final String BODY_FONT = "bodyFont", CODE_FONT = "codeFont", LINE_HEIGHT = "lineHeight", LETTER_SPACING = "letterSpacing", THEME = "theme",
-			OPEN_PREVIEW = "openPreview", LINK_CHECK = "linkCheck", BREAKS = "breaks", TAB_CLOSE = "tabClose", BOOKMARKS = "bookmarks", PLANTUML = "plantuml",
+			OPEN_PREVIEW = "openPreview", LINK_CHECK = "linkCheck", BREAKS = "breaks", TAB_CLOSE = "tabClose", BOOKMARKS = "bookmarks", PLANTUML = "plantuml", BACKLINKS = "backlinks",
 			DIAGRAM_NODE_SPACING = "diagramNodeSpacing", DIAGRAM_RANK_SPACING = "diagramRankSpacing", DIAGRAM_PADDING = "diagramPadding";
 
 	@Override
@@ -27,6 +27,7 @@ public class PrefInit extends AbstractPreferenceInitializer {
 		s.setDefault(BOOKMARKS, false);
 		s.setDefault(LINK_CHECK, true);
 		s.setDefault(PLANTUML, true);
+		s.setDefault(BACKLINKS, true);
 		Colors.setDefaults(s);
 		// tighter than Mermaid's own 50 / 50 / 15
 		s.setDefault(DIAGRAM_NODE_SPACING, 25);

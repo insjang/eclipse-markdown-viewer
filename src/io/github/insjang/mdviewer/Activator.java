@@ -6,6 +6,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -27,20 +29,30 @@ public class Activator extends AbstractUIPlugin {
 	private static Activator plugin;
 	/**
 	 * a file or folder added to or removed from a project: its wikilink file list is read again. Build output (derived, such as bin/)
-	 * comes and goes with every build and is left out, so a build does not make the next render walk the project again.
+	 * comes and goes with every build and is left out, so a build does not make the next render walk the project again. That, or a
+	 * Markdown file saved, also makes the open Previews of the project find their backlinks again.
 	 */
 	private static final IResourceChangeListener WIKI_FILES = e -> {
+		Set<File> changed = new HashSet<>();
 		try {
 			if (e.getDelta() != null) e.getDelta().accept(d -> {
-				if (d.getKind() == IResourceDelta.CHANGED) return true;
+				IPath project = d.getResource().getProject() == null ? null : d.getResource().getProject().getLocation();
+				if (d.getKind() == IResourceDelta.CHANGED) {
+					if (project != null && (d.getFlags() & IResourceDelta.CONTENT) != 0 && d.getResource() instanceof IFile f
+							&& f.getName().matches("(?i).*\\.(md|markdown)")) changed.add(project.toFile());
+					return true;
+				}
 				if (d.getResource().isDerived() || d.getResource().getProject() == null) return d.getResource().getProject() == null;
-				IPath project = d.getResource().getProject().getLocation();
-				if (project != null) WikiLinks.forget(project.toFile());
+				if (project != null) {
+					WikiLinks.forget(project.toFile());
+					changed.add(project.toFile());
+				}
 				return false;
 			});
 		} catch (CoreException x) {
 			WikiLinks.forget(null);
 		}
+		if (!changed.isEmpty()) MarkdownEditor.backlinksChanged(changed);
 	};
 
 	@Override
