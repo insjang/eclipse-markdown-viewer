@@ -119,7 +119,7 @@ public final class WikiLinks {
 		else CACHE.remove(root);
 	}
 
-	/** The files under the root, hidden ones (.git, .obsidian, .metadata...) left out, at most MAX_FILES. */
+	/** The regular files under the root, hidden ones (.git, .obsidian, .metadata...) and links left out, at most MAX_FILES. */
 	static Vault walk(File root) {
 		Path r = root.toPath();
 		List<String> files = new ArrayList<>();
@@ -134,7 +134,8 @@ public final class WikiLinks {
 				@Override
 				public FileVisitResult visitFile(Path f, BasicFileAttributes a) {
 					String name = f.getFileName().toString();
-					if (name.startsWith(".")) return FileVisitResult.CONTINUE;
+					// a link (its attributes are the link's own) could point out of the vault, to a network share or a pipe that blocks a read
+					if (name.startsWith(".") || !a.isRegularFile()) return FileVisitResult.CONTINUE;
 					String rel = r.relativize(f).toString().replace('\\', '/');
 					files.add(rel);
 					byName.computeIfAbsent(name.toLowerCase(Locale.ROOT), k -> new ArrayList<>()).add(rel);

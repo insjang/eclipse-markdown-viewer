@@ -1,6 +1,7 @@
 package io.github.insjang.mdviewer.editing;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 // javac -encoding UTF-8 -d build/test src/io/github/insjang/mdviewer/Headings.java src/io/github/insjang/mdviewer/editing/MarkdownLinks.java src/io/github/insjang/mdviewer/editing/WikiLinks.java test/WikiLinksCheck.java && java -cp build/test io.github.insjang.mdviewer.editing.WikiLinksCheck : wikilinks of a line, targets resolved in a vault (shortest path, never out of it), crafted lines
 public class WikiLinksCheck {
@@ -24,8 +25,13 @@ public class WikiLinksCheck {
 				Files.writeString(file.toPath(), "# H\n");
 			}
 			Files.writeString(outside.toPath(), "");
+			try {
+				Files.createSymbolicLink(new File(root, "link.md").toPath(), outside.toPath()); // a link out of the vault
+			} catch (IOException | UnsupportedOperationException e) {
+				// Windows without the right to make links: nothing to check
+			}
 			WikiLinks.Vault v = WikiLinks.walk(root);
-			eq(6, v.files().size()); // hidden folder and file left out
+			eq(6, v.files().size()); // hidden folder and file, and the link, left out
 			File notes = new File(root, "notes"), deep = new File(notes, "deep");
 			eq(new File(notes, "Note.md"), v.resolve(notes, "note")); // the document's folder first, any case
 			eq(new File(root, "Note.md"), v.resolve(deep.getParentFile().getParentFile(), "Note")); // at the root
@@ -39,7 +45,7 @@ public class WikiLinksCheck {
 			eq(new File(notes, "Other.md"), v.resolve(deep, "../Other")); // .. inside the vault is fine
 			// safety: nothing with a scheme, absolute or network paths, nothing outside the vault
 			for (String bad : new String[] { "missing", "", "C:/Windows/win.ini", "file://host/x", "https://e.com/x", "/etc/passwd", "\\\\host\\s\\x",
-					"//host/s/x", "../" + root.getName() + "-out", "notes/../../" + root.getName() + "-out.md", ".obsidian/hidden", "notes/.x", "img" })
+					"//host/s/x", "../" + root.getName() + "-out", "notes/../../" + root.getName() + "-out.md", ".obsidian/hidden", "notes/.x", "img", "link" })
 				eq(null, v.resolve(notes, bad));
 			eq(null, WikiLinks.vault(root, false).resolve(root, "nope"));
 			eq(v.files().size(), WikiLinks.vault(root, false).files().size()); // cached
