@@ -14,6 +14,8 @@
 
 ![머리말, GitHub 알림, 각주와 Outline 뷰, 다크 테마](docs/images/preview-outline.png)
 
+![Source / Preview 탭 줄 오른쪽 끝의 버튼, 내보내기 메뉴를 연 상태: PDF 내보내기, HTML 내보내기, HTML 복사](docs/images/toolbar.png)
+
 스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면, 수식은 [test/math.md](test/math.md).
 
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
@@ -27,7 +29,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 하단 탭 | Source / Preview 탭을 같은 편집 영역에서 전환, 화면 분할 없이 각각 전체 폭 사용 (기본: Preview로 열림) |
 | 아웃라인 | Outline 뷰(Window → Show View → Outline)에 제목 트리 표시, 클릭하면 Source 커서와 Preview가 그 제목으로 이동. 코드 블록·머리말 안의 `#` 줄은 제외 |
 | 위치 동기화 | 탭을 바꿔도 스크롤바 위치 유지: 한쪽 끝이면 다른 쪽도 끝 (스크롤 비율 기준), 양방향. Preview에서 더블클릭하면 그 문단·표 행·목록 항목·다이어그램의 줄로 Source 탭 이동 |
-| 나란히 보기 | `나란히 보기` 버튼(Preview 상단, 메인 툴바): Eclipse 편집기 분할로 왼쪽 Source, 오른쪽 Preview. 두 쪽이 줄 단위로 서로 따라가고, Preview 더블클릭은 Source 커서를 그 줄로 옮김. 다시 누르면 하나로 합침. Eclipse 분할 키(Ctrl+_, Ctrl+{)도 Preview 탭에서 동작 |
+| 나란히 보기 | `나란히 보기` 버튼(탭 줄, 메인 툴바): Eclipse 편집기 분할로 왼쪽 Source, 오른쪽 Preview. 두 쪽이 줄 단위로 서로 따라가고, Preview 더블클릭은 Source 커서를 그 줄로 옮김. 다시 누르면 하나로 합침. Eclipse 분할 키(Ctrl+_, Ctrl+{)도 Preview 탭에서 동작. 버튼은 `Show Source and Preview side by side` 명령이라 기본 키는 없고 Preferences → General → Keys에서 지정 |
 | 렌더링 | GFM 표, 체크박스, 코드 하이라이트, Mermaid, PlantUML, 제목 앵커(목차 링크) |
 | 머리말 (front matter) | 파일 맨 앞 YAML 블록(`---` ~ `---`, SKILL.md·정적 사이트 원고 등)을 가로줄·굵은 글씨 대신 접힌 키·값 표로 표시 |
 | GitHub 문법 | 알림 상자(`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`, GitHub 색), 각주(`[^1]`), 이모지 코드(`:smile:`) |
@@ -37,7 +39,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 이미지 | 문서 기준 상대 경로의 PNG·GIF·SVG, 문서 안 `<svg>`. Source 탭에서 스크린샷(클립보드에 이미지만 있을 때)을 붙여넣으면 문서 옆 `images/image-<날짜>-<시각>.png`로 저장하고 링크 삽입 |
 | 링크 | `.md`·`.markdown`·`.mdown`·`.mkd` 링크: Eclipse에서 열기 / 웹·메일 링크: 기본 브라우저 |
 | PDF 내보내기 | A4, 라이트 색, Mermaid·수식 포함 (Windows: Edge, Linux: Chrome·Chromium 헤드리스 인쇄) |
-| HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함, 로컬 이미지는 저장한 파일 기준 상대 경로로 연결 (이미지를 함께 옮겨야 함). `HTML 복사`: 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
+| HTML | `HTML 내보내기`: 그려진 그대로(다이어그램은 SVG) 스타일을 넣은 파일 하나, 수식이 있으면 KaTeX 글꼴 포함, 로컬 이미지는 저장한 파일 기준 상대 경로로 연결 (이미지를 함께 옮겨야 함). `HTML 복사`(Preview 우클릭 메뉴에도 있음): 요소마다 `style=""`을 넣어 클립보드로 (메일, 위키, 블로그 편집기에 붙여넣기) |
 | 실시간 반영 | 입력하면 바뀐 블록만 다시 그림 (다른 다이어그램은 그대로, 보던 위치 유지). Claude Code, Codex CLI 등 AI 에이전트가 터미널에서 파일을 쓰거나 고치면 Preview가 0.3초 안에 다시 그림 (표, Mermaid, PlantUML 포함). 바로 감지하려면 Preferences → General → Workspace → Refresh using native hooks or polling 켜기. 에디터에 저장 안 한 수정이 있으면 Eclipse가 다시 읽을지 물음 |
 | 소스 편집 | Enter로 목록·체크박스·인용문 이어 쓰기 (빈 항목에서 Enter면 목록 끝), Tab으로 목록 항목 들여쓰기. 백틱은 짝 자동 입력, ```` ``` ```` 뒤 Enter면 코드 블록 닫기. 표 안 Tab은 다음 칸 이동과 열 맞춤 (한글·한자 등 전각 문자는 2칸으로 계산), Enter는 새 행, Shift+Tab은 이전 칸. Ctrl+B·Ctrl+I로 선택 영역이나 단어를 굵게·기울임 (다시 누르면 해제), Ctrl+K로 링크 만들기, 선택한 글자 위에 웹 주소를 붙여넣으면 `[글자](주소)`. TM4E 필요 (Eclipse IDE 패키지에 포함) |
 | 접기 | Source에서 제목 구역, 코드 블록, 머리말, HTML 주석, 표, 긴 인용문, 하위 항목이 있는 목록 접기. Markdown 언어 서버(Wild Web Developer 등)가 접기를 제공하면 서버 것만 사용 (겹치지 않음) |
@@ -45,7 +47,7 @@ Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 �
 | 북마크 | 선택 기능 (기본 꺼짐), 모든 텍스트 편집기에서 동작: Alt+F2 북마크 켜기·끄기, F2·Shift+F2 다음·이전 북마크, Alt+0~9 빠른 북마크 지정, Alt+Shift+0~9 이동. Eclipse 기본 북마크(Bookmarks 뷰)를 쓰고, Preview에도 리본으로 표시되며 같은 키로 이동. 끄면 F2·Shift+F2는 원래 기능 |
 | 찾기 | Preview 탭에서 Ctrl+F: 찾기 막대, 일치 항목 모두 강조(다이어그램 글자 포함), Enter·Shift+Enter 또는 F3·Shift+F3로 다음·이전, 개수 표시, Esc로 닫기. Source 탭의 Ctrl+F는 기존 Eclipse 찾기/바꾸기 |
 | 링크 검사 | 열린 워크스페이스 파일의 깨진 상대 경로 링크·이미지·`#앵커`(제목, HTML `id`/`name`)를 Problems 뷰에 경고로 표시. 웹 링크, 절대·네트워크 경로는 검사 안 함 |
-| 글자 크기 | Preview 상단 `A-` / `A+` |
+| 글자 크기 | 탭 줄의 `글자 작게` / `글자 크게` 버튼 |
 | 설정 | 글꼴, 줄 간격, 자간, 줄바꿈 유지, 다크·라이트 색 (기본: GitHub 색), 북마크 키와 탭 더블클릭으로 에디터 닫기 (선택) |
 | 오프라인 | JS 라이브러리와 PlantUML을 JAR에 포함, 인터넷 불필요 |
 | 언어 | 영어, 한국어 (Eclipse 언어 설정을 따름) |
@@ -89,7 +91,9 @@ ECLIPSE=/path/to/eclipse ./build.sh site       # build/site 에 p2 업데이트 
 - `.md` 파일 더블클릭: Markdown Viewer로 열림
   - Mylyn 편집기로 열리면: 우클릭 → Open With → Markdown Viewer
   - 기본 편집기 지정: Preferences → General → Editors → File Associations → `*.md` → Markdown Viewer → Default
-- Preview 상단 버튼: `PDF 내보내기`, `HTML 내보내기`, `HTML 복사`, `A-`, `A+`, `글꼴 설정...`
+- Source / Preview 탭 줄 오른쪽 끝 버튼 (Eclipse 아이콘, 이름은 툴팁): `나란히 보기`, `탐색기에서 보기`, `내보내기 ▾`(PDF 내보내기, HTML 내보내기, HTML 복사), `글자 작게`, `글자 크게`, `설정`
+  - 내보내기 메뉴는 테마 색으로 위쪽에 열림
+  - 편집기가 좁으면 버튼이 탭 아래 줄로 내려감
 - 저장(`Ctrl+S`)과 실행 취소는 Source 탭 편집기 기준으로 동작
 
 ## 설정
@@ -229,7 +233,7 @@ javac -cp build/classes -d build/test test/HeadingsCheck.java && java -cp build/
 
 ## 제약
 
-- PDF 내보내기는 Chromium 계열 브라우저 필요: Windows는 `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge, 그 밖은 `PATH`의 Chrome·Chromium, 없으면 버튼 숨김
+- PDF 내보내기는 Chromium 계열 브라우저 필요: Windows는 `C:\Program Files (x86)` 또는 `C:\Program Files`의 Edge, 그 밖은 `PATH`의 Chrome·Chromium, 없으면 내보내기 메뉴에서 PDF 항목 숨김
   - snap 패키지 Chromium은 홈 폴더 밖, 홈 바로 아래 숨김 폴더의 파일을 못 읽음: 워크스페이스(`.metadata`에 인쇄용 페이지를 둠)가 그런 위치면 Google Chrome 패키지 사용
   - macOS(`/Applications/Google Chrome.app`)는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선

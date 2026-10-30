@@ -2,7 +2,7 @@
 
 A Markdown editor for Eclipse with a preview tab.
 Source and Preview are tabs of one editor, not a split screen or a separate view, so the document gets the whole editor area and a terminal or other views keep their room beside it.
-It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams and math, keeps the source and the preview at the same scroll position, and exports a PDF in one click.
+It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams and math, keeps the source and the preview at the same scroll position, and exports PDF and HTML from one menu.
 
 [한국어 README](README.ko.md)
 
@@ -18,6 +18,8 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 
 ![Front matter, GitHub alerts, a footnote and the Outline view, dark theme](docs/images/preview-outline.png)
 
+![The buttons at the right end of the Source / Preview tab row, with the Export menu open: Export PDF, Export HTML, Copy HTML](docs/images/toolbar.png)
+
 The screenshots show [docs/sample.md](docs/sample.md) with the default settings, the math one [test/math.md](test/math.md).
 
 ## Features
@@ -25,9 +27,10 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Feature | Details |
 |---|---|
 | Tabs | Source and Preview tabs in one editor area, each using its full width with no split screen, opening on Preview by default |
+| Toolbar | Buttons at the right end of the Source / Preview tab row, with Eclipse's icons and tooltips: Side by side, Show in Explorer, Export ▾ (Export PDF, Export HTML, Copy HTML), Smaller / Larger text and Settings. The Export menu opens upwards in the theme's colors. On a narrow editor the buttons move below the tabs |
 | Outline | The Outline view (Window > Show View > Outline) lists the headings as a tree; a click moves the Source caret and the Preview to the heading. Headings in code blocks and front matter are left out |
 | Scroll sync | Switching tabs keeps the scrollbar position: at the bottom of one means at the bottom of the other. A double-click in the Preview opens the Source tab at the line of that paragraph, table row, list item or diagram |
-| Side by side | The `Side by side` button (Preview toolbar and main toolbar) puts the Source on the left and the Preview on the right with Eclipse's split editor; the two follow each other by line, a double-click in the Preview moves the Source caret there, and a second press joins them again. Ctrl+_ / Ctrl+{ (Eclipse's split keys) work on the Preview tab too. The button is the command `Show Source and Preview side by side`, which has no default key: bind one under Preferences > General > Keys |
+| Side by side | The `Side by side` button (tab row and main toolbar) puts the Source on the left and the Preview on the right with Eclipse's split editor; the two follow each other by line, a double-click in the Preview moves the Source caret there, and a second press joins them again. Ctrl+_ / Ctrl+{ (Eclipse's split keys) work on the Preview tab too. The button is the command `Show Source and Preview side by side`, which has no default key: bind one under Preferences > General > Keys |
 | Rendering | GFM tables, task lists, syntax highlighting, heading anchors (table of contents links) |
 | Front matter | A YAML block at the top of the file (`---` to `---`), as in SKILL.md files or static site pages, shows as a collapsed key/value table instead of a rule and bold text |
 | GitHub syntax | Alerts (`> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) in GitHub's colors, footnotes (`[^1]`), emoji shortcodes (`:smile:`) |
@@ -39,7 +42,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Images | PNG, GIF and SVG relative to the document, inline `<svg>`. Pasting a screenshot (an image alone on the clipboard) in the Source tab saves it as `images/image-<date>-<time>.png` next to the document and inserts the link |
 | Links | `.md`, `.markdown`, `.mdown`, `.mkd` links open in Eclipse, web and mail links in the system browser |
 | PDF export | A4, light colors, diagrams and math included, printed by headless Edge (Windows) or Chrome / Chromium (Linux) |
-| HTML | Export HTML saves one file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts inside; local images are linked relative to the saved file, so keep them beside it); Copy HTML puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
+| HTML | Export HTML saves one file (the preview as drawn, diagrams as SVG, styles inline, KaTeX fonts inside; local images are linked relative to the saved file, so keep them beside it); Copy HTML (also in the Preview context menu) puts it on the clipboard with every element's look in `style=""`, for mail, wikis and blog editors |
 | Live reload | Typing updates the Preview in place: only the blocks that changed are drawn again, so diagrams elsewhere stay and the page keeps its place. When the file changes on disk, for example written by an AI coding agent such as Claude Code or Codex CLI in a terminal, the Preview re-renders it within 0.3 s, diagrams included. Eclipse notices the change right away with Preferences > General > Workspace > Refresh using native hooks or polling; with unsaved edits in the editor, Eclipse asks before reloading |
 | Source editing | Enter continues list items, task lists and quotes (an empty item ends the list), Tab nests a list item; a backtick gets its pair, ```` ``` ```` + Enter closes the code fence; Tab in a table moves to the next cell and lines up the columns (wide CJK characters count as two), Enter adds a row, Shift+Tab goes back a cell. Ctrl+B / Ctrl+I mark the selection or word bold / italic (again to remove), Ctrl+K makes it a link, and a web address pasted over selected text becomes `[text](address)`. Needs TM4E, as in the Eclipse IDE packages |
 | Folding | Heading sections, fenced code, front matter, HTML comments, tables, longer quotes and list items with nested items fold in the Source. When a Markdown language server (such as Wild Web Developer's) folds the document, its folds are used instead, never both |
@@ -47,7 +50,7 @@ The screenshots show [docs/sample.md](docs/sample.md) with the default settings,
 | Bookmarks | Optional (off by default), in every text editor: Alt+F2 toggles a bookmark, F2 / Shift+F2 go to the next / previous one, Alt+0-9 set a quick bookmark and Alt+Shift+0-9 go to it. They are Eclipse's own bookmarks (Bookmarks view), shown as ribbons on the Preview too, where the same keys work. Off, F2 and Shift+F2 do what they did before |
 | Find | Ctrl+F on the Preview tab opens a find bar: all matches highlighted (diagram text too), Enter / Shift+Enter or F3 / Shift+F3 for next / previous, the count, Esc to close. On the Source tab Ctrl+F stays Eclipse's Find/Replace |
 | Link check | Broken document-relative links, images and `#anchors` (headings, `id`/`name` in HTML) of an open workspace file show as warnings in the Problems view; web links and absolute or network paths are not looked at |
-| Font size | `A-` / `A+` on the preview toolbar |
+| Font size | `Smaller text` / `Larger text` buttons in the tab row |
 | Preferences | Fonts, line height, letter spacing, line breaks, dark and light colors (GitHub colors by default), diagram spacing, optional bookmark keys and double-click to close editor tabs |
 | Offline | All JavaScript and PlantUML are inside the plugin JAR |
 | Languages | English, Korean |
@@ -159,7 +162,7 @@ Markdown from elsewhere can be opened safely.
 
 ## Limitations
 
-- PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; the button is hidden when there is none. The snap package of Chromium cannot read files outside the home folder or in a hidden folder directly under it, where it would find the page in the workspace's `.metadata`: with such a workspace, use the Google Chrome package. macOS (`/Applications/Google Chrome.app`) is untested.
+- PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; Export PDF is left out of the Export menu when there is none. The snap package of Chromium cannot read files outside the home folder or in a hidden folder directly under it, where it would find the page in the workspace's `.metadata`: with such a workspace, use the Google Chrome package. macOS (`/Applications/Google Chrome.app`) is untested.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
 
 ## Source layout
