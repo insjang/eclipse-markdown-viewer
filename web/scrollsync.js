@@ -89,10 +89,15 @@ const ScrollSync = (() => {
 	}
 
 	// the layout changed (diagram drawn, image loaded, window or sash resized, text re-rendered):
-	// find the blocks again and keep the editor's top line where it was
+	// find the blocks again and keep the editor's top line where it was. While no Source is followed nothing reads the map: it is
+	// dropped here and built again when the sync starts (setActive) or a position is asked for (syncTo, currentLine)
 	function relayout() {
+		if (!active) {
+			anchors = [];
+			return;
+		}
 		rebuild();
-		if (active && lastLine !== null) setY(toY(lastLine));
+		if (lastLine !== null) setY(toY(lastLine));
 	}
 
 	function setActive(on) {
