@@ -57,9 +57,10 @@ public class Activator extends AbstractUIPlugin {
 					changed.add(project);
 					return false;
 				}
+				// what the list leaves out, new or not, with all that is in it: a file added to bin/ or node_modules/ stays out too
+				if (r.getType() != IResource.PROJECT && d.getKind() != IResourceDelta.REMOVED && !listed(r.createProxy())) return false;
 				switch (d.getKind()) {
 				case IResourceDelta.ADDED -> {
-					if (!listed(r.createProxy())) return false;
 					if (r.getType() == IResource.FILE) added.computeIfAbsent(project, k -> new ArrayList<>()).add(r.getProjectRelativePath().toString());
 					changed.add(project);
 				}
