@@ -947,6 +947,14 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 						"--print-to-pdf=" + pdf, fileUrl(page.toURI()))).redirectErrorStream(true).start();
 				p.getInputStream().transferTo(java.io.OutputStream.nullOutputStream());
 				p.waitFor();
+				// msedge.exe can hand the page to another Edge process and return before the PDF is written (seen with Edge 154 while an
+				// update waits for a restart): wait until the file is there and its size holds, for as long as the page may take
+				for (long size = -1, until = System.currentTimeMillis() + 30_000; System.currentTimeMillis() < until && !monitor.isCanceled();) {
+					long now = pdf.length();
+					if (now > 0 && now == size) break;
+					size = now;
+					Thread.sleep(500);
+				}
 				boolean ok = pdf.length() > 0;
 				if (ok) Files.move(pdf.toPath(), new File(out).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 				display.asyncExec(() -> {
