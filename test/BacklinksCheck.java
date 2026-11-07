@@ -43,6 +43,18 @@ public class BacklinksCheck {
 			eq("[a, b, notes/a, Other]", Backlinks.of(target, v).stream().map(Backlinks.Entry::name).toList());
 			b.setLastModified(t + 5000);
 			eq("[a, notes/a, Other]", Backlinks.of(target, v).stream().map(Backlinks.Entry::name).toList());
+			// a file listed through a link out of the vault (as the workspace lists it) is not read
+			File out = Files.createTempFile("mdback-out", ".md").toFile();
+			try {
+				Files.writeString(out.toPath(), "[[Target]] outside\n");
+				Files.createSymbolicLink(new File(root, "link.md").toPath(), out.toPath());
+				WikiLinks.Vault listed = new WikiLinks.Vault(root, java.util.List.of("a.md", "link.md"), java.util.Map.of("target.md", java.util.List.of("Target.md")));
+				eq("[a]", Backlinks.of(target, listed).stream().map(Backlinks.Entry::name).toList());
+			} catch (java.io.IOException | UnsupportedOperationException e) {
+				// Windows without the right to make links: nothing to check
+			} finally {
+				out.delete();
+			}
 			// relative paths: the link check's rules
 			for (String bad : new String[] { "https://e.com/x", "C:/x.md", "/x.md", "\\\\h\\x.md", "%2F%2Fh/x.md", "file%3A//h/x.md", "#top", "" })
 				eq(null, Backlinks.path(bad));

@@ -326,6 +326,28 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 		}));
 		browser.addLocationListener(LocationListener.changingAdapter(this::linkClicked));
 		browser.setMenu(previewMenu().createContextMenu(browser));
+		try {
+			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
+			// The functions are made after the editor: making the first one waits for WebView2 and runs the event loop meanwhile, and
+			// inside createPartControl the theme would then style tab folders that have no size yet (SWT logs "Argument not valid").
+			// SWT's Edge browser registers a BrowserFunction made inside another WebView2 callback later, through asyncExec, and the
+			// registration only applies to the next document: the page is loaded after it, the same way
+			Display display = browser.getDisplay();
+			display.asyncExec(() -> {
+				if (browser.isDisposed()) return;
+				addFunctions();
+				display.asyncExec(() -> {
+					if (!browser.isDisposed()) browser.setUrl(pageUrl + firstPaintQuery());
+				});
+			});
+		} catch (Exception e) {
+			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
+		}
+		return c;
+	}
+
+	/** The Preview's calls into Eclipse: PlantUML, scrolling, source lines, keys, copy. */
+	private void addFunctions() {
 		new BrowserFunction(browser, "mdPlantUml") { //$NON-NLS-1$
 			@Override
 			public Object function(Object[] args) {
@@ -391,17 +413,6 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 				return null;
 			}
 		};
-		try {
-			pageUrl = fileUrl(new File(Activator.web(), "preview.html").toURI());
-			// SWT's Edge browser registers a BrowserFunction created inside another WebView2 callback later, through asyncExec, and the
-			// registration only applies to the next document: the page is loaded after it, the same way
-			browser.getDisplay().asyncExec(() -> {
-				if (!browser.isDisposed()) browser.setUrl(pageUrl + firstPaintQuery());
-			});
-		} catch (Exception e) {
-			browser.setText("<pre>Markdown Viewer: " + e + "</pre>");
-		}
-		return c;
 	}
 
 	/** Replaces the browser's own menu (Back, Refresh, Inspect...): copy, select all and the workbench Show In. */

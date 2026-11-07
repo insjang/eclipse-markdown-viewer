@@ -49,6 +49,30 @@ public class WikiLinksCheck {
 				eq(null, v.resolve(notes, bad));
 			eq(null, WikiLinks.vault(root, false).resolve(root, "nope"));
 			eq(v.files().size(), WikiLinks.vault(root, false).files().size()); // cached
+			// a project's list comes from the workspace, which follows links: a target found through one is still not used
+			boolean link = Files.isSymbolicLink(new File(root, "link.md").toPath());
+			WikiLinks.Vault listed = WikiLinks.of(root, java.util.List.of("Note.md", "notes/Other.md", "link.md"));
+			eq(new File(root, "Note.md"), listed.resolve(root, "Note"));
+			if (link) eq(null, listed.resolve(root, "link"));
+			// the kept list takes in what the workspace reports, and is not listed again meanwhile
+			File project = new File(root, "notes");
+			int[] lists = { 0 };
+			java.util.function.Supplier<java.util.Collection<String>> list = () -> {
+				lists[0]++;
+				return java.util.List.of("Other.md");
+			};
+			eq(new File(project, "Other.md"), WikiLinks.vault(project, list).resolve(project, "Other"));
+			eq(null, WikiLinks.vault(project, list).resolve(project, "Note"));
+			WikiLinks.update(project, java.util.List.of("Note.md", "deep/Note.md"), java.util.List.of("Other.md"));
+			eq(new File(project, "Note.md"), WikiLinks.vault(project, list).resolve(project, "Note"));
+			eq(null, WikiLinks.vault(project, list).resolve(project, "Other"));
+			eq("[Note.md, deep/Note.md]", WikiLinks.vault(project, list).files());
+			eq(1, lists[0]);
+			WikiLinks.forget(project);
+			eq(new File(project, "Other.md"), WikiLinks.vault(project, list).resolve(project, "Other")); // listed again
+			eq(2, lists[0]);
+			WikiLinks.update(new File(root, "never"), java.util.List.of("x.md"), java.util.List.of()); // not kept: nothing to patch
+			eq(null, WikiLinks.vault(new File(root, "never"), () -> java.util.List.of()).resolve(root, "x"));
 		} finally { // no temporary files left behind
 			outside.delete();
 			try (var w = Files.walk(root.toPath())) {

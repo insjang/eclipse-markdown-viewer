@@ -5,14 +5,21 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceProxy;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -27,33 +34,57 @@ import io.github.insjang.mdviewer.editing.WikiLinks;
 public class Activator extends AbstractUIPlugin {
 	static final String ID = "io.github.insjang.mdviewer";
 	private static Activator plugin;
+	/** Folders of packages and caches, never notes (as in Foam's default excludes); hidden ones (.venv, .git) are left out anyway. */
+	private static final Set<String> NOT_NOTES = Set.of("node_modules", "__pycache__", "venv", "site-packages");
+
 	/**
-	 * a file or folder added to or removed from a project: its wikilink file list is read again. Build output (derived, such as bin/)
-	 * comes and goes with every build and is left out, so a build does not make the next render walk the project again. That, or a
-	 * Markdown file saved, also makes the open Previews of the project find their backlinks again.
+	 * Files added to or removed from a project go into or out of its wikilink file list (moves are both), so the project is not listed
+	 * again. What the list leaves out (see {@link #listed}), such as build output, is not looked into. That, or a Markdown file saved,
+	 * also makes the open Previews of the project find their backlinks again. A project opened, closed or moved is listed again.
 	 */
 	private static final IResourceChangeListener WIKI_FILES = e -> {
 		Set<File> changed = new HashSet<>();
+		Map<File, List<String>> added = new HashMap<>(), removed = new HashMap<>();
 		try {
 			if (e.getDelta() != null) e.getDelta().accept(d -> {
-				IPath project = d.getResource().getProject() == null ? null : d.getResource().getProject().getLocation();
-				if (d.getKind() == IResourceDelta.CHANGED) {
-					if (project != null && (d.getFlags() & IResourceDelta.CONTENT) != 0 && d.getResource() instanceof IFile f
-							&& f.getName().matches("(?i).*\\.(md|markdown)")) changed.add(project.toFile());
-					return true;
+				IResource r = d.getResource();
+				if (r.getProject() == null) return true; // the workspace root
+				IPath location = r.getProject().getLocation();
+				if (location == null) return false;
+				File project = location.toFile();
+				if (r.getType() == IResource.PROJECT && (d.getKind() != IResourceDelta.CHANGED || (d.getFlags() & (IResourceDelta.OPEN | IResourceDelta.DESCRIPTION)) != 0)) {
+					WikiLinks.forget(project);
+					changed.add(project);
+					return false;
 				}
-				if (d.getResource().isDerived() || d.getResource().getProject() == null) return d.getResource().getProject() == null;
-				if (project != null) {
-					WikiLinks.forget(project.toFile());
-					changed.add(project.toFile());
+				switch (d.getKind()) {
+				case IResourceDelta.ADDED -> {
+					if (!listed(r.createProxy())) return false;
+					if (r.getType() == IResource.FILE) added.computeIfAbsent(project, k -> new ArrayList<>()).add(r.getProjectRelativePath().toString());
+					changed.add(project);
 				}
-				return false;
+				case IResourceDelta.REMOVED -> {
+					if (r.getType() == IResource.FILE) removed.computeIfAbsent(project, k -> new ArrayList<>()).add(r.getProjectRelativePath().toString());
+					changed.add(project);
+				}
+				default -> {
+					if ((d.getFlags() & IResourceDelta.CONTENT) != 0 && r.getType() == IResource.FILE && r.getName().matches("(?i).*\\.(md|markdown)")) changed.add(project);
+				}
+				}
+				return true;
 			});
 		} catch (CoreException x) {
 			WikiLinks.forget(null);
 		}
+		for (File p : changed) WikiLinks.update(p, added.getOrDefault(p, List.of()), removed.getOrDefault(p, List.of()));
 		if (!changed.isEmpty()) MarkdownEditor.backlinksChanged(changed);
 	};
+
+	/** Whether a resource is in a project's wikilink file list: not hidden, derived (build output), team private, linked or a package folder. */
+	private static boolean listed(IResourceProxy r) {
+		return !r.getName().startsWith(".") && !r.isDerived() && !r.isTeamPrivateMember() && !r.isHidden() && !r.isLinked()
+				&& !(r.getType() == IResource.FOLDER && NOT_NOTES.contains(r.getName()));
+	}
 
 	@Override
 	public void start(BundleContext context) throws Exception {
@@ -97,8 +128,25 @@ public class Activator extends AbstractUIPlugin {
 	/** Where the wikilinks of a document resolve: the project it is in, or its own folder outside the workspace. */
 	public static WikiLinks.Vault vault(File doc) {
 		IFile[] in = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(doc.toURI());
-		IPath project = in.length > 0 ? in[0].getProject().getLocation() : null;
-		return project == null ? WikiLinks.vault(doc.getParentFile(), false) : WikiLinks.vault(project.toFile(), true);
+		return in.length > 0 && in[0].getProject().getLocation() != null ? vault(in[0].getProject()) : WikiLinks.vault(doc.getParentFile(), false);
+	}
+
+	/** The wikilink vault of a project with a location, its files listed from the workspace's resource tree. */
+	static WikiLinks.Vault vault(IProject project) {
+		return WikiLinks.vault(project.getLocation().toFile(), () -> {
+			List<String> files = new ArrayList<>();
+			try {
+				project.accept(r -> {
+					if (r.getType() == IResource.PROJECT) return true;
+					if (files.size() >= WikiLinks.MAX_FILES || !listed(r)) return false;
+					if (r.getType() == IResource.FILE) files.add(r.requestFullPath().removeFirstSegments(1).toString());
+					return true;
+				}, IResource.NONE);
+			} catch (CoreException e) {
+				// closed meanwhile: what was listed
+			}
+			return files;
+		});
 	}
 
 	/** A-/A+ buttons: change body and code font size together. */

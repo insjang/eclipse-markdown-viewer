@@ -51,7 +51,10 @@ final class Backlinks {
 			long modified = f.lastModified(), size = f.length();
 			if (size > MAX_SIZE) continue;
 			Read r = old.get(rel);
-			if (r == null || r.modified() != modified || r.size() != size) r = new Read(modified, size, candidates(read(f)));
+			if (r == null || r.modified() != modified || r.size() != size) {
+				if (vault.inside(f) == null) continue; // a link out of the vault: not read
+				r = new Read(modified, size, candidates(read(f)));
+			}
 			now.put(rel, r);
 			if (f.toPath().toAbsolutePath().normalize().equals(t)) continue;
 			List<String> lines = new ArrayList<>();

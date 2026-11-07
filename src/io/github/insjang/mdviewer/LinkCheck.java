@@ -116,7 +116,7 @@ final class LinkCheck {
 			File dir = file.getLocation() == null ? null : file.getLocation().toFile().getParentFile();
 			File project = file.getProject().getLocation() == null ? null : file.getProject().getLocation().toFile();
 			List<Problem> problems = dir == null || !Activator.prefs().getBoolean(PrefInit.LINK_CHECK) ? List.of()
-					: check(src, dir, project == null || !src.contains("[[") ? null : WikiLinks.vault(project, true));
+					: check(src, dir, project == null || !src.contains("[[") ? null : Activator.vault(file.getProject()));
 			if (monitor.isCanceled() || !file.exists()) return;
 			file.getWorkspace().run(m -> {
 				if (monitor.isCanceled()) return; // the editor closed meanwhile: it has cleared the markers

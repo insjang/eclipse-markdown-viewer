@@ -9,11 +9,14 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -27,7 +30,7 @@ public final class WikiLinks {
 	public record Link(int start, int end, String target, String heading) {}
 
 	/** A folder walk stops here, so a huge project cannot keep the UI waiting. */
-	static final int MAX_FILES = 20000;
+	public static final int MAX_FILES = 20000;
 	private static final Pattern SCHEME = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*:");
 
 	/** The links of a line that are not in a code span; none in a line longer than {@link MarkdownLinks#MAX_LINE}. */
@@ -77,22 +80,34 @@ public final class WikiLinks {
 							if (!p.startsWith(r) || p.equals(r)) continue;
 							String rel = r.relativize(p).toString().replace('\\', '/');
 							for (String f : byName.getOrDefault(p.getFileName().toString().toLowerCase(Locale.ROOT), List.of()))
-								if (f.equalsIgnoreCase(rel)) return r.resolve(f).toFile();
+								if (f.equalsIgnoreCase(rel)) return inside(r.resolve(f).toFile());
 						}
 						continue;
 					}
 					String here = d.startsWith(r) ? r.relativize(d).toString().replace('\\', '/') : null, best = null;
 					if (here != null && !here.isEmpty()) here += "/";
 					for (String f : byName.getOrDefault(name.toLowerCase(Locale.ROOT), List.of())) {
-						if (here != null && f.length() - name.length() == here.length() && f.startsWith(here)) return r.resolve(f).toFile();
+						if (here != null && f.length() - name.length() == here.length() && f.startsWith(here)) return inside(r.resolve(f).toFile());
 						if (best == null || f.length() < best.length() || f.length() == best.length() && f.compareTo(best) < 0) best = f;
 					}
-					if (best != null) return r.resolve(best).toFile();
+					if (best != null) return inside(r.resolve(best).toFile());
 				}
 			} catch (RuntimeException e) {
 				// InvalidPathException: a name Windows does not take (*, ?, :) is no file
 			}
 			return null;
+		}
+
+		/**
+		 * The file, if it is in the vault also after links are followed, else null. A list from the workspace has links in it (Eclipse
+		 * follows them), and what a resolved target names is read (headings, backlinks).
+		 */
+		public File inside(File f) {
+			try {
+				return f != null && f.toPath().toRealPath().startsWith(root.toPath().toRealPath()) ? f : null;
+			} catch (IOException | RuntimeException e) {
+				return null;
+			}
 		}
 	}
 
@@ -101,8 +116,27 @@ public final class WikiLinks {
 	private static final Map<File, Cached> CACHE = new ConcurrentHashMap<>();
 
 	/**
-	 * The vault at a root, its file list kept until {@link #forget(File)} (watched: a project, whose files the workspace reports) or for 10 s
-	 * (a folder outside the workspace).
+	 * The vault of a project from the workspace's list of its files (in memory, so no disk is read), kept and patched by
+	 * {@link #update} until {@link #forget(File)}.
+	 */
+	public static Vault vault(File root, Supplier<Collection<String>> files) {
+		return CACHE.compute(root, (r, c) -> c != null && c.watched() ? c : new Cached(System.currentTimeMillis(), true, of(r, files.get()))).vault();
+	}
+
+	/** Files added to and removed from a project: its kept vault takes them in, if there is one; the next vault() builds it otherwise. */
+	public static void update(File root, Collection<String> added, Collection<String> removed) {
+		CACHE.computeIfPresent(root, (r, c) -> {
+			if (!c.watched()) return c;
+			LinkedHashSet<String> files = new LinkedHashSet<>(c.vault().files());
+			files.removeAll(removed);
+			files.addAll(added);
+			return new Cached(c.time(), true, of(r, files));
+		});
+	}
+
+	/**
+	 * The vault at a folder walked on disk, its file list kept until {@link #forget(File)} (watched) or for 10 s (a folder outside the
+	 * workspace).
 	 */
 	public static Vault vault(File root, boolean watched) {
 		Cached c = CACHE.get(root);
@@ -123,7 +157,6 @@ public final class WikiLinks {
 	static Vault walk(File root) {
 		Path r = root.toPath();
 		List<String> files = new ArrayList<>();
-		Map<String, List<String>> byName = new HashMap<>();
 		try {
 			Files.walkFileTree(r, new SimpleFileVisitor<>() {
 				@Override
@@ -138,7 +171,6 @@ public final class WikiLinks {
 					if (name.startsWith(".") || !a.isRegularFile()) return FileVisitResult.CONTINUE;
 					String rel = r.relativize(f).toString().replace('\\', '/');
 					files.add(rel);
-					byName.computeIfAbsent(name.toLowerCase(Locale.ROOT), k -> new ArrayList<>()).add(rel);
 					return files.size() >= MAX_FILES ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
 				}
 
@@ -150,7 +182,14 @@ public final class WikiLinks {
 		} catch (IOException e) {
 			// what was read so far
 		}
-		return new Vault(root, files, byName);
+		return of(root, files);
+	}
+
+	/** The vault of these files, paths from the root with /. */
+	static Vault of(File root, Collection<String> files) {
+		Map<String, List<String>> byName = new HashMap<>();
+		for (String rel : files) byName.computeIfAbsent(rel.substring(rel.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT), k -> new ArrayList<>()).add(rel);
+		return new Vault(root, List.copyOf(files), byName);
 	}
 
 	private WikiLinks() {
