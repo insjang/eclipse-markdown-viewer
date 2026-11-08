@@ -16,11 +16,14 @@
 
 ![Source / Preview 탭 줄 오른쪽 끝의 버튼, 내보내기 메뉴를 연 상태: PDF 내보내기, HTML 내보내기, HTML 복사](docs/images/toolbar.png)
 
-스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면, 수식은 [test/math.md](test/math.md).
+![Eclipse 프로젝트로 연 Obsidian식 볼트: 이름으로 찾는 위키 링크 (Roadmap은 Projects/, 일일 노트는 Daily/에 있음), 아직 없는 문서 링크(점선), 그림 임베드, 콜아웃, 형광펜, 태그, Preview 끝의 백링크](docs/images/vault.png)
+
+스크린샷은 기본 설정으로 [docs/sample.md](docs/sample.md)를 연 화면, 수식은 [test/math.md](test/math.md), 볼트는 [docs/vault](docs/vault/Index.md).
 
 Eclipse용 Markdown 편집기 겸 미리보기 플러그인.
 Source와 Preview가 한 편집기의 탭이라 화면을 나누거나 별도 뷰를 띄우지 않음: 문서가 편집 영역 전체를 쓰고, 옆에 터미널 등 다른 뷰를 둘 공간이 남음.
 기본 Mylyn WikiText 미리보기가 지원하지 않는 GFM 표·체크박스·Mermaid를 VS Code와 같은 파서(markdown-it)로 표시.
+Obsidian 볼트와 AI가 쓰는 "LLM 위키"도 읽음: 프로젝트에서 이름으로 찾는 위키 링크, 그림 임베드, 콜아웃, 형광펜, 태그, 문서마다 백링크.
 
 ## 주요 기능
 
@@ -117,6 +120,7 @@ Preferences → General → Editors → Markdown Viewer
 | 원문 줄바꿈 그대로 표시 | 켜짐 (끄면 표준 Markdown처럼 한 문단으로 합침) |
 | Preview 탭으로 시작 | 켜짐 |
 | 깨진 상대 링크·#앵커를 Problems 뷰에 표시 | 켜짐 |
+| Preview 끝에 백링크 표시 | 켜짐 |
 | 북마크 키 사용 | 꺼짐 (켜면 위 북마크 키 사용, 북마크는 워크스페이스 안의 파일에만) |
 | 탭 더블클릭으로 에디터 닫기 | 꺼짐 (켜면 최대화 대신 닫기, 모든 에디터 탭에 적용, Ctrl+M은 계속 최대화) |
 | 다크·라이트 색 13종 | GitHub 색 (`Restore Defaults`로 복원) |
@@ -241,3 +245,4 @@ javac -cp build/classes -d build/test test/HeadingsCheck.java && java -cp build/
   - snap 패키지 Chromium은 홈 폴더 밖, 홈 바로 아래 숨김 폴더의 파일을 못 읽음: 워크스페이스(`.metadata`에 인쇄용 페이지를 둠)가 그런 위치면 Google Chrome 패키지 사용
   - macOS(`/Applications/Google Chrome.app`)는 미확인
 - 워크스페이스 밖 파일(`File → Open File`)도 열리지만 `.md` 링크 이동은 워크스페이스 파일 우선
+- Wild Web Developer의 Markdown 언어 서버는 위키 링크를 몰라서 하나마다 "No link definition found" 경고를 냄: Obsidian 볼트에서는 Preferences → Markdown (Wild Web Developer) → Reference links validation severity를 Ignore로. 없는 문서는 Markdown Viewer 링크 검사가 계속 알려 줌

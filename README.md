@@ -3,6 +3,7 @@
 A Markdown editor for Eclipse with a preview tab.
 Source and Preview are tabs of one editor, not a split screen or a separate view, so the document gets the whole editor area and a terminal or other views keep their room beside it.
 It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-it), draws Mermaid and PlantUML diagrams and math, keeps the source and the preview at the same scroll position, and exports PDF and HTML from one menu.
+It also reads Obsidian vaults and AI-written "LLM wikis": wikilinks found by name in the project, image embeds, callouts, highlights, tags and the backlinks of each page.
 
 [한국어 README](README.ko.md)
 
@@ -20,7 +21,9 @@ It renders GitHub Flavored Markdown with the same parser VS Code uses (markdown-
 
 ![The buttons at the right end of the Source / Preview tab row, with the Export menu open: Export PDF, Export HTML, Copy HTML](docs/images/toolbar.png)
 
-The screenshots show [docs/sample.md](docs/sample.md) with the default settings, the math one [test/math.md](test/math.md).
+![An Obsidian-style vault as an Eclipse project: wikilinks found by name (Roadmap is in Projects/, the daily note in Daily/), a link to a page not written yet (dashed), an image embed, callouts, a highlight, tags and the backlinks at the end of the Preview](docs/images/vault.png)
+
+The screenshots show [docs/sample.md](docs/sample.md) with the default settings, the math one [test/math.md](test/math.md), the vault one [docs/vault](docs/vault/Index.md).
 
 ## Features
 
@@ -120,6 +123,7 @@ Preferences > General > Editors > Markdown Viewer
 | Keep line breaks as written | On (off: standard Markdown, lines join into one paragraph) |
 | Open files on the Preview tab | On |
 | Show broken relative links and #anchors in the Problems view | On |
+| Show backlinks at the end of the Preview | On |
 | Bookmark keys in text editors | Off (on: Alt+F2, F2 / Shift+F2, Alt+0-9, Alt+Shift+0-9 as above; bookmarks need a file in the workspace) |
 | Double-click a tab to close the editor | Off (on: applies to every editor tab, instead of maximizing; Ctrl+M still maximizes) |
 | Dark and light colors (13 each) | GitHub colors, `Restore Defaults` brings them back |
@@ -168,6 +172,7 @@ Markdown from elsewhere can be opened safely.
 
 - PDF export needs a Chromium-based browser: Edge from `C:\Program Files (x86)` or `C:\Program Files` on Windows, Chrome or Chromium on `PATH` elsewhere; Export PDF is left out of the Export menu when there is none. The snap package of Chromium cannot read files outside the home folder or in a hidden folder directly under it, where it would find the page in the workspace's `.metadata`: with such a workspace, use the Google Chrome package. macOS (`/Applications/Google Chrome.app`) is untested.
 - PlantUML's built-in layout engine (smetana) ignores spacing settings; its default layout is already compact.
+- The Wild Web Developer Markdown language server does not know wikilinks and reports each one as "No link definition found". In an Obsidian vault, set Preferences > Markdown (Wild Web Developer) > Reference links validation severity to Ignore; the Markdown Viewer link check still reports missing pages.
 
 ## Source layout
 
