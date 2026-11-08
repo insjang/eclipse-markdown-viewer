@@ -775,5 +775,5 @@ function exportDoc() {
 	return `<!doctype html><html data-theme="light" style="${vars}"><head><meta charset="utf-8">`
 		+ '<link rel="stylesheet" href="preview.css"><link rel="stylesheet" href="hl-light.css"><link rel="stylesheet" href="katex.min.css">'
 		+ '<script src="mermaid.min.js"></script><script>mermaid.initialize(' + JSON.stringify({ ...MERMAID, startOnLoad: true, theme: 'default' }).replace(/</g, '\\u003c') + ')</script>'
-		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC, { wiki: WIKILINKS }))); drawPlantUml(d, 'light'); return d.innerHTML; })()}</div></body></html>`;
+		+ `</head><body class="export"><div id="c">${(() => { const d = document.createElement('div'); d.append(sanitize(md.render(SRC, { wiki: WIKILINKS }))); drawPlantUml(d, 'light'); d.querySelectorAll('details.callout').forEach(x => x.open = true); /* paper cannot unfold */ return d.innerHTML; })()}</div></body></html>`;
 }
