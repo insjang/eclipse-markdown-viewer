@@ -589,12 +589,10 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	protected void pageChange(int page) {
 		// both ways by the scrollbar: the position, as a fraction, is read from the page
 		// being left and applied to the one shown, once it is showing and laid out
-		double previewAt = page == SOURCE && loaded ? ((Number) browser.evaluate("return scrollFraction();")).doubleValue() : 0;
+		boolean toSource = page == SOURCE && loaded;
 		String target = page == PREVIEW ? previewTarget() : null;
+		if (toSource) fromPage("return scrollFraction();", v -> browser.getDisplay().asyncExec(() -> revealFraction(((Number) v).doubleValue()))); //$NON-NLS-1$
 		super.pageChange(page);
-		if (page == SOURCE && loaded) {
-			browser.getDisplay().asyncExec(() -> revealFraction(previewAt));
-		}
 		if (page == PREVIEW && loaded) {
 			if (stale) render();
 			findBacklinks();
@@ -787,8 +785,21 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	}
 
 	/** The source line (from 0) of the first block that starts in view on the Preview. */
-	int previewTopLine() {
-		return browser.evaluate("return topLine();") instanceof Number n ? n.intValue() : 0;
+	void previewTopLine(java.util.function.IntConsumer use) {
+		fromPage("return topLine();", v -> use.accept(v instanceof Number n ? n.intValue() : 0)); //$NON-NLS-1$
+	}
+
+	/**
+	 * What a script on the page returns, to use. A key pressed in the Preview runs its command (Ctrl+C, Alt+F2, Ctrl+Page Down) inside
+	 * a WebView2 callback on Windows, where SWT's Edge only runs the script and gives null: then the script is asked again once the
+	 * callback is over. The scripts here never return null themselves.
+	 */
+	void fromPage(String script, java.util.function.Consumer<Object> use) {
+		Object v = browser.evaluate(script);
+		if (v != null) use.accept(v);
+		else browser.getDisplay().asyncExec(() -> {
+			if (!browser.isDisposed() && browser.evaluate(script) instanceof Object again) use.accept(again);
+		});
 	}
 
 	void stepBookmark(boolean next) {
@@ -848,7 +859,9 @@ public class MarkdownEditor extends MultiPageEditorPart implements ITextEditor {
 	/** Ctrl+F (Find/Replace) while the Preview tab shows: the page's find bar. */
 	/** Copy (Ctrl+C and the context menu) on the Preview tab: the selection as text, see plainText in preview.js. */
 	void copyInPreview() {
-		if (loaded && browser.evaluate("return copyText()") instanceof String text && !text.isEmpty()) toClipboard(text); //$NON-NLS-1$
+		if (loaded) fromPage("return copyText()", v -> { //$NON-NLS-1$
+			if (v instanceof String text && !text.isEmpty()) toClipboard(text);
+		});
 	}
 
 	void selectAllInPreview() {

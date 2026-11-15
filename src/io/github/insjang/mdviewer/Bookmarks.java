@@ -97,7 +97,17 @@ public class Bookmarks extends AbstractHandler implements IStartup {
 			}
 			IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 			MarkdownEditor preview = part instanceof MarkdownEditor m && m.previewShowing() ? m : null; // the same keys on the Preview
-			int line = preview != null ? preview.previewTopLine() : doc.getLineOfOffset(((ITextSelection) editor.getSelectionProvider().getSelection()).getOffset());
+			String n = event.getParameter("number"); //$NON-NLS-1$
+			if (preview != null) preview.previewTopLine(line -> apply(id, n, part, editor, file, doc, preview, line));
+			else apply(id, n, part, editor, file, doc, null, doc.getLineOfOffset(((ITextSelection) editor.getSelectionProvider().getSelection()).getOffset()));
+		} catch (CoreException | BadLocationException e) {
+			ILog.of(Bookmarks.class).error("bookmark", e); //$NON-NLS-1$
+		}
+		return null;
+	}
+
+	private static void apply(String id, String n, IEditorPart part, ITextEditor editor, IResource file, IDocument doc, MarkdownEditor preview, int line) {
+		try {
 			IMarker[] marks = Arrays.stream(file.findMarkers(IMarker.BOOKMARK, true, IResource.DEPTH_ZERO))
 					.sorted(Comparator.comparingInt(m -> line(editor, doc, m))).toArray(IMarker[]::new);
 			IMarker here = Arrays.stream(marks).filter(m -> line(editor, doc, m) == line).findFirst().orElse(null);
@@ -105,7 +115,6 @@ public class Bookmarks extends AbstractHandler implements IStartup {
 				if (here != null) here.delete();
 				else add(file, doc, line, null);
 			} else if (id.endsWith(".set")) { //$NON-NLS-1$
-				String n = event.getParameter("number"); //$NON-NLS-1$
 				IMarker old = quick(n);
 				if (old != null && old != here) old.delete();
 				if (here != null) here.delete(); // one bookmark a line: the quick one takes its place
@@ -128,7 +137,6 @@ public class Bookmarks extends AbstractHandler implements IStartup {
 		} catch (CoreException | BadLocationException e) {
 			ILog.of(Bookmarks.class).error("bookmark", e); //$NON-NLS-1$
 		}
-		return null;
 	}
 
 	private static void add(IResource file, IDocument doc, int line, String quick) throws CoreException, BadLocationException {
